@@ -19,6 +19,12 @@
     <!-- App styles -->
     <link rel="stylesheet" href="styles/stroke-icons/style.css"/>
     <link rel="stylesheet" href="styles/style.css">
+
+    <!-- Tailwind (Play CDN; preflight off so the reset can't restyle the legacy shell) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {corePlugins: {preflight: false}};
+    </script>
 </head>
 <body>
 
@@ -99,150 +105,126 @@
 
     <!-- Main content-->
     <section class="content">
-        <div class="container-fluid">
+        <div class="px-4">
 
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="view-header">
-                        <div class="pull-right text-right" style="line-height: 14px">
-                            <small>Luna Admin Theme<br>Dashboard<br> <span class="c-white">v.1.4</span></small>
-                        </div>
-                        <div class="header-icon">
-                            <i class="ph page-header-icon ph-shield"></i>
-                        </div>
-                        <div class="header-title">
-                            <h3 class="m-b-xs">Luna Admin Theme</h3>
-                            <small>
-                                Special minimal admin theme with Dark UI style for monitoring or administration web applications.
-                            </small>
-                        </div>
+            <div class="view-header flex items-start justify-between">
+                <div>
+                    <div class="header-icon">
+                        <i class="ph page-header-icon ph-shield"></i>
                     </div>
-                    <hr>
+                    <div class="header-title">
+                        <h3 class="m-b-xs">Luna Admin Theme</h3>
+                        <small>
+                            Special minimal admin theme with Dark UI style for monitoring or administration web applications.
+                        </small>
+                    </div>
+                </div>
+                <div class="text-right leading-[14px]">
+                    <small>Luna Admin Theme<br>Dashboard<br> <span class="c-white">v.1.4</span></small>
                 </div>
             </div>
+            <hr>
 
-            <div class="row">
+            <div class="grid grid-cols-2 lg:grid-cols-6 gap-x-8">
 
-                <div class="col-lg-2 col-xs-6">
-                    <div class="panel panel-filled">
+                <div class="panel panel-filled">
+                    <div class="panel-body">
+                        <h2 class="m-b-none">
+                            206 <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +20%</span>
+                        </h2>
 
-                        <div class="panel-body">
-                            <h2 class="m-b-none">
-                                206 <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +20%</span>
-                            </h2>
-
-                            <div class="small">% New Sessions</div>
-                            <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">10:22pm</span></div>
-                        </div>
+                        <div class="small">% New Sessions</div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">10:22pm</span></div>
                     </div>
                 </div>
-                <div class="col-lg-2 col-xs-6">
-                    <div class="panel panel-filled">
-                        <div class="panel-body">
-                            <h2 class="m-b-none">
-                                140 <span class="slight"><i class="ph ph-caret-down c-white"> </i> 5%</span>
-                            </h2>
+                <div class="panel panel-filled">
+                    <div class="panel-body">
+                        <h2 class="m-b-none">
+                            140 <span class="slight"><i class="ph ph-caret-down c-white"> </i> 5%</span>
+                        </h2>
 
-                            <div class="small">Total visitors</div>
-                            <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">9:10am</span></div>
-                        </div>
+                        <div class="small">Total visitors</div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">9:10am</span></div>
                     </div>
                 </div>
-                <div class="col-lg-2 col-xs-6">
-                    <div class="panel panel-filled">
-                        <div class="panel-body">
-                            <h2 class="m-b-none">
-                                262 <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +56%</span>
-                            </h2>
+                <div class="panel panel-filled">
+                    <div class="panel-body">
+                        <h2 class="m-b-none">
+                            262 <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +56%</span>
+                        </h2>
 
-                            <div class="small">Total users</div>
-                            <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">05:42pm</span></div>
-                        </div>
+                        <div class="small">Total users</div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">05:42pm</span></div>
                     </div>
                 </div>
-                <div class="col-lg-2 col-xs-6">
-                    <div class="panel panel-filled">
-                        <div class="panel-body">
-                            <h2 class="m-b-none">
-                                62% <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +18%</span>
-                            </h2>
+                <div class="panel panel-filled">
+                    <div class="panel-body">
+                        <h2 class="m-b-none">
+                            62% <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +18%</span>
+                        </h2>
 
-                            <div class="small">Bounce Rate</div>
-                            <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">04:00am</span></div>
-                        </div>
+                        <div class="small">Bounce Rate</div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">04:00am</span></div>
                     </div>
                 </div>
 
-
-                <div class="col-lg-4 col-xs-12">
-                    <div class="panel panel-filled" style="position:relative;height: 114px">
-                        <div style="position: absolute;bottom: 0;left: 0;right: 0">
-                            <span class="sparkline"></span>
-                        </div>
-                        <div class="panel-body">
-                            <div class="m-t-sm">
-                                <div class="pull-right">
-                                    <a href="index.html#" class="btn btn-default btn-xs">See locations</a>
-                                </div>
+                <div class="col-span-2 panel panel-filled relative h-[114px]">
+                    <div class="absolute inset-x-0 bottom-0">
+                        <span class="sparkline"></span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="m-t-sm flex items-start justify-between">
+                            <div>
                                 <div class="c-white"><span class="label label-accent">+45</span> New visitor</div>
                                 <span class="small c-white">120,312 <i class="ph ph-caret-up text-warning"> </i> -22%</span>
                             </div>
+                            <a href="index.html#" class="btn btn-default btn-xs">See locations</a>
                         </div>
                     </div>
                 </div>
 
             </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel">
-                        <div class="row">
-                            <div class="col-md-4">
-
-                                <div class="panel-body h-200 list">
-                                    <div class="stats-title">
-                                        <h4><i class="ph ph-chart-bar text-warning" aria-hidden="true"></i> Traffic source</h4>
-                                    </div>
-                                    <div class="small">
-                                        Total users from the beginning of activity. See detailed charts for more information locations and traffic source.
-                                    </div>
-
-                                    <div class="sparkline3"></div>
-
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <small class="stat-label">Today</small>
-                                            <h4 class="m-t-xs">170,20 <i class="ph ph-trend-up text-warning"></i></h4>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <small class="stat-label">Last month %</small>
-                                            <h4 class="m-t-xs">%20,20 <i class="ph ph-trend-down c-white"></i></h4>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <small class="stat-label">Year</small>
-                                            <h4 class="m-t-xs">2180,50 <i class="ph ph-trend-up text-warning"></i></h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-8">
-                                <div class="panel-body">
-                                    <div class="text-center slight">
-                                    </div>
-
-                                    <div class="flot-chart" style="height: 160px;margin-top: 5px">
-                                        <div class="flot-chart-content" id="flot-line-chart"></div>
-                                    </div>
-
-                                    <div class="small text-center">All active users from last month.</div>
-                                </div>
-                            </div>
-
+            <div class="panel">
+                <div class="grid md:grid-cols-3">
+                    <div class="panel-body h-200 list">
+                        <div class="stats-title">
+                            <h4><i class="ph ph-chart-bar text-warning" aria-hidden="true"></i> Traffic source</h4>
                         </div>
+                        <div class="small">
+                            Total users from the beginning of activity. See detailed charts for more information locations and traffic source.
+                        </div>
+
+                        <div class="sparkline3"></div>
+
+                        <div class="grid md:grid-cols-3 gap-x-8">
+                            <div>
+                                <small class="stat-label">Today</small>
+                                <h4 class="m-t-xs">170,20 <i class="ph ph-trend-up text-warning"></i></h4>
+                            </div>
+                            <div>
+                                <small class="stat-label">Last month %</small>
+                                <h4 class="m-t-xs">%20,20 <i class="ph ph-trend-down c-white"></i></h4>
+                            </div>
+                            <div>
+                                <small class="stat-label">Year</small>
+                                <h4 class="m-t-xs">2180,50 <i class="ph ph-trend-up text-warning"></i></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body md:col-span-2">
+                        <div class="text-center slight">
+                        </div>
+
+                        <div class="flot-chart h-[160px] mt-[5px]">
+                            <div class="flot-chart-content" id="flot-line-chart"></div>
+                        </div>
+
+                        <div class="small text-center">All active users from last month.</div>
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-8">
+            <div class="grid md:grid-cols-3 gap-x-8">
+                <div class="md:col-span-2">
                     <div class="panel panel-filled">
                         <div class="panel-body">
                             <table class="table table-responsive-sm">
@@ -302,15 +284,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div>
 
                     <div class="panel panel-b-accent">
                         <div class="panel-body text-center p-m">
                             <h2 class="font-light">
                                 +280k downloads
                             </h2>
-                            <small>New downloads from the last month.</small>
-                            <br/>
+                            <div class="mb-2"><small>New downloads from the last month.</small></div>
                             120,312 <span class="slight"><i class="ph ph-caret-up c-white"> </i> -22%</span>
 
                             <div class="sparkline7 m-t-xs"></div>
