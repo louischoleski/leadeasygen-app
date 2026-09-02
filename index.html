@@ -11,6 +11,7 @@
     <title>LUNA | Responsive Admin Theme</title>
 
     <!-- Vendor styles -->
+    <!-- TODO: extract to component when moving to React -->
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"/>
     <link rel="stylesheet" href="vendor/animate.css/animate.css"/>
     <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css"/>
@@ -36,8 +37,8 @@
         <div class="navbar-header">
             <div id="mobile-menu">
                 <div class="left-nav-toggle">
-                    <a href="index.html#">
-                        <i class="stroke-hamburgermenu"></i>
+                    <a href="index.html#" aria-label="Toggle navigation">
+                        <i class="stroke-hamburgermenu" aria-hidden="true"></i>
                     </a>
                 </div>
             </div>
@@ -48,8 +49,8 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <div class="left-nav-toggle">
-                <a href="index.html">
-                    <i class="stroke-hamburgermenu"></i>
+                <a href="index.html" aria-label="Toggle navigation">
+                    <i class="stroke-hamburgermenu" aria-hidden="true"></i>
                 </a>
             </div>
             <form class="navbar-form mr-auto">
@@ -82,7 +83,7 @@
                 </li>
                 <li>
                     <a href="index.html#common" data-toggle="collapse" aria-expanded="false">
-                        Common <span class="sub-nav-icon"> <i class="stroke-arrow"></i> </span>
+                        Common <span class="sub-nav-icon"> <i class="stroke-arrow" aria-hidden="true"></i> </span>
                     </a>
                     <ul id="common" class="nav nav-second collapse">
                         <li><a href="login.html">Login</a></li>
@@ -91,7 +92,7 @@
                     </ul>
                 </li>
                 <li class="nav-info">
-                    <i class="ph ph-shield text-accent"></i>
+                    <i class="ph ph-shield text-accent" aria-hidden="true"></i>
 
                     <div class="m-t-xs">
                         <span class="c-white">LUNA</span> admin theme with Dark UI style for monitoring and administration web applications.
@@ -110,7 +111,7 @@
             <div class="view-header flex items-start justify-between">
                 <div>
                     <div class="header-icon">
-                        <i class="ph page-header-icon ph-shield"></i>
+                        <i class="ph page-header-icon ph-shield" aria-hidden="true"></i>
                     </div>
                     <div class="header-title">
                         <h3 class="m-b-xs">Luna Admin Theme</h3>
@@ -130,41 +131,41 @@
                 <div class="panel panel-filled">
                     <div class="panel-body">
                         <h2 class="m-b-none">
-                            206 <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +20%</span>
+                            206 <span class="slight"><i class="ph ph-caret-up text-warning" aria-hidden="true"> </i> +20%</span>
                         </h2>
 
                         <div class="small">% New Sessions</div>
-                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">10:22pm</span></div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock" aria-hidden="true"> </i> Updated: <span class="c-white">10:22pm</span></div>
                     </div>
                 </div>
                 <div class="panel panel-filled">
                     <div class="panel-body">
                         <h2 class="m-b-none">
-                            140 <span class="slight"><i class="ph ph-caret-down c-white"> </i> 5%</span>
+                            140 <span class="slight"><i class="ph ph-caret-down c-white" aria-hidden="true"> </i> 5%</span>
                         </h2>
 
                         <div class="small">Total visitors</div>
-                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">9:10am</span></div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock" aria-hidden="true"> </i> Updated: <span class="c-white">9:10am</span></div>
                     </div>
                 </div>
                 <div class="panel panel-filled">
                     <div class="panel-body">
                         <h2 class="m-b-none">
-                            262 <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +56%</span>
+                            262 <span class="slight"><i class="ph ph-caret-up text-warning" aria-hidden="true"> </i> +56%</span>
                         </h2>
 
                         <div class="small">Total users</div>
-                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">05:42pm</span></div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock" aria-hidden="true"> </i> Updated: <span class="c-white">05:42pm</span></div>
                     </div>
                 </div>
                 <div class="panel panel-filled">
                     <div class="panel-body">
                         <h2 class="m-b-none">
-                            62% <span class="slight"><i class="ph ph-caret-up text-warning"> </i> +18%</span>
+                            62% <span class="slight"><i class="ph ph-caret-up text-warning" aria-hidden="true"> </i> +18%</span>
                         </h2>
 
                         <div class="small">Bounce Rate</div>
-                        <div class="slight m-t-sm"><i class="ph ph-clock"> </i> Updated: <span class="c-white">04:00am</span></div>
+                        <div class="slight m-t-sm"><i class="ph ph-clock" aria-hidden="true"> </i> Updated: <span class="c-white">04:00am</span></div>
                     </div>
                 </div>
 
@@ -176,9 +177,9 @@
                         <div class="m-t-sm flex items-start justify-between">
                             <div>
                                 <div class="c-white"><span class="label label-accent">+45</span> New visitor</div>
-                                <span class="small c-white">120,312 <i class="ph ph-caret-up text-warning"> </i> -22%</span>
+                                <span class="small c-white">120,312 <i class="ph ph-caret-up text-warning" aria-hidden="true"> </i> -22%</span>
                             </div>
-                            <a href="index.html#" class="btn btn-default btn-xs">See locations</a>
+                            <button type="button" class="btn btn-default btn-xs" disabled>See locations</button>
                         </div>
                     </div>
                 </div>
@@ -199,22 +200,19 @@
                         <div class="grid md:grid-cols-3 gap-x-8">
                             <div>
                                 <small class="stat-label">Today</small>
-                                <h4 class="m-t-xs">170,20 <i class="ph ph-trend-up text-warning"></i></h4>
+                                <h4 class="m-t-xs">170,20 <i class="ph ph-trend-up text-warning" aria-hidden="true"></i></h4>
                             </div>
                             <div>
                                 <small class="stat-label">Last month %</small>
-                                <h4 class="m-t-xs">%20,20 <i class="ph ph-trend-down c-white"></i></h4>
+                                <h4 class="m-t-xs">%20,20 <i class="ph ph-trend-down c-white" aria-hidden="true"></i></h4>
                             </div>
                             <div>
                                 <small class="stat-label">Year</small>
-                                <h4 class="m-t-xs">2180,50 <i class="ph ph-trend-up text-warning"></i></h4>
+                                <h4 class="m-t-xs">2180,50 <i class="ph ph-trend-up text-warning" aria-hidden="true"></i></h4>
                             </div>
                         </div>
                     </div>
                     <div class="panel-body md:col-span-2">
-                        <div class="text-center slight">
-                        </div>
-
                         <div class="flot-chart h-[160px] mt-[5px]">
                             <div class="flot-chart-content" id="flot-line-chart"></div>
                         </div>
@@ -247,7 +245,7 @@
                                         <div class="sparkline8"></div>
                                     </td>
                                     <td>Vosselaar</td>
-                                    <td><a href="index.html#" class="btn btn-default btn-xs">View</a></td>
+                                    <td><button type="button" class="btn btn-default btn-xs" disabled>View</button></td>
                                 </tr>
                                 <tr>
                                     <td>Phelan</td>
@@ -257,7 +255,7 @@
                                         <div class="sparkline10"></div>
                                     </td>
                                     <td>Lavoir</td>
-                                    <td><a href="index.html#" class="btn btn-default btn-xs active">View</a></td>
+                                    <td><button type="button" class="btn btn-default btn-xs" disabled>View</button></td>
                                 </tr>
                                 <tr>
                                     <td>Raya</td>
@@ -267,7 +265,7 @@
                                         <div class="sparkline11"></div>
                                     </td>
                                     <td>Santomenna</td>
-                                    <td><a href="index.html#" class="btn btn-default btn-xs">View</a></td>
+                                    <td><button type="button" class="btn btn-default btn-xs" disabled>View</button></td>
                                 </tr>
                                 <tr>
                                     <td>Azalia</td>
@@ -277,7 +275,7 @@
                                         <div class="sparkline12"></div>
                                     </td>
                                     <td>Newtown</td>
-                                    <td><a href="index.html#" class="btn btn-default btn-xs">View</a></td>
+                                    <td><button type="button" class="btn btn-default btn-xs" disabled>View</button></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -292,7 +290,7 @@
                                 +280k downloads
                             </h2>
                             <div class="mb-2"><small>New downloads from the last month.</small></div>
-                            120,312 <span class="slight"><i class="ph ph-caret-up c-white"> </i> -22%</span>
+                            120,312 <span class="slight"><i class="ph ph-caret-up c-white" aria-hidden="true"> </i> -22%</span>
 
                             <div class="sparkline7 m-t-xs"></div>
                         </div>
@@ -309,6 +307,7 @@
 <!-- End wrapper-->
 
 <!-- Vendor scripts -->
+<!-- TODO: extract to component when moving to React -->
 <script src="vendor/pacejs/pace.min.js"></script>
 <script src="vendor/jquery/dist/jquery.min.js"></script>
 <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
@@ -345,15 +344,6 @@
                 width: '100%'
             });
 
-            $(".sparkline1").sparkline([0, 6, 8, 3, 2, 4, 3, 4, 9, 5, 3, 4, 4, 5, 1, 6, 7, 15, 6, 4, 0], {
-                type: 'line',
-                lineColor: '#2978BB',
-                lineWidth: 3,
-                fillColor: '#2978BB',
-                height: 170,
-                width: '100%'
-            });
-
             $(".sparkline3").sparkline([-8, 2, 4, 3, 5, 4, 3, 5, 5, 6, 3, 9, 7, 3, 5, 6, 9, 5, 6, 7, 2, 3, 9, 6, 6, 7, 8, 10, 15, 16, 17, 15], {
 
                 type: 'line',
@@ -364,26 +354,7 @@
                 width: '100%'
             });
 
-            $(".sparkline5").sparkline([0, 6, 8, 3, 2, 4, 3, 4, 9, 5, 3, 4, 4, 5], {
-                type: 'line',
-                lineColor: '#f7af3e',
-                lineWidth: 2,
-                fillColor: '#2F323B',
-                height: 20,
-                width: '100%'
-            });
-            $(".sparkline6").sparkline([0, 1, 4, 2, 2, 4, 1, 4, 3, 2, 3, 4, 4, 2, 4, 2, 1, 3], {
-                type: 'bar',
-                barColor: '#f7af3e',
-                height: 20,
-                width: '100%'
-            });
-
             $(".sparkline8").sparkline([4, 2], {
-                type: 'pie',
-                sliceColors: ['#f7af3e', '#404652']
-            });
-            $(".sparkline9").sparkline([3, 2], {
                 type: 'pie',
                 sliceColors: ['#f7af3e', '#404652']
             });
@@ -396,10 +367,6 @@
                 sliceColors: ['#f7af3e', '#404652']
             });
             $(".sparkline12").sparkline([3, 5], {
-                type: 'pie',
-                sliceColors: ['#f7af3e', '#404652']
-            });
-            $(".sparkline13").sparkline([6, 2], {
                 type: 'pie',
                 sliceColors: ['#f7af3e', '#404652']
             });
