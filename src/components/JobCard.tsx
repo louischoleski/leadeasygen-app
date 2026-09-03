@@ -1,4 +1,5 @@
 import { Download } from '@phosphor-icons/react'
+import { Link } from 'react-router-dom'
 import type { Job, JobStatus } from '../data/jobs'
 import { cn } from '../lib/cn'
 import { downloadJobCsv } from '../lib/csv'
@@ -6,7 +7,7 @@ import { Button } from './Button'
 import { Card } from './Card'
 import { Progress } from './Progress'
 
-const statusConfig: Record<JobStatus, { label: string; className: string }> = {
+export const statusConfig: Record<JobStatus, { label: string; className: string }> = {
   queued: { label: 'Queued', className: 'bg-surface-2 text-ink-subtle' },
   running: { label: 'Running', className: 'bg-primary/10 text-link' },
   completed: { label: 'Completed', className: 'bg-success/10 text-success' },
@@ -23,12 +24,11 @@ const formatDate = (timestamp: number) =>
 
 interface JobCardProps {
   job: Job
-  onViewResults: (jobId: string) => void
   onRetry: (jobId: string) => void
   onCancel: (jobId: string) => void
 }
 
-export function JobCard({ job, onViewResults, onRetry, onCancel }: JobCardProps) {
+export function JobCard({ job, onRetry, onCancel }: JobCardProps) {
   const status = statusConfig[job.status]
 
   return (
@@ -64,7 +64,7 @@ export function JobCard({ job, onViewResults, onRetry, onCancel }: JobCardProps)
 
       {job.status === 'failed' && (
         <p className="mt-4 text-sm text-error">
-          Job did not complete.
+          {job.error ?? 'Job did not complete.'}
           {job.refunded && <span className="ml-1 text-ink-subtle">· {job.creditCost} credits refunded</span>}
         </p>
       )}
@@ -75,8 +75,8 @@ export function JobCard({ job, onViewResults, onRetry, onCancel }: JobCardProps)
             <Button size="sm" variant="secondary" iconLeft={Download} onClick={() => downloadJobCsv(job)}>
               Download CSV
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => onViewResults(job.id)}>
-              View {job.results.length} leads
+            <Button size="sm" variant="ghost" asChild>
+              <Link to={`/jobs/${job.id}`}>View {job.results.length} leads</Link>
             </Button>
           </>
         )}

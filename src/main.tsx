@@ -23,6 +23,7 @@ const Settings = lazy(() => import('./pages/Settings'))
 
 // Lazy so the charting library loads only with the dashboard, not the auth pages
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const JobDetail = lazy(() => import('./pages/JobDetail'))
 
 function AppToaster() {
   const { theme } = useTheme()
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')!).render(
           <Route element={<AppLayout />}>
           <Route index element={<Suspense fallback={null}><Dashboard /></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={null}><Settings /></Suspense>} />
+          <Route path="/jobs/:id" element={<Suspense fallback={null}><JobDetail /></Suspense>} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/billing/success" element={<CheckoutSuccess />} />
           <Route path="/billing/cancelled" element={<CheckoutCancelled />} />

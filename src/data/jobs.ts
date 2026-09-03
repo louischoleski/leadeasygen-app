@@ -29,6 +29,7 @@ export interface Job {
   createdAt: number
   results: Lead[]
   refunded?: boolean
+  error?: string // set when status is 'failed'; maps to the API's errorMessage
 }
 
 export const jobCategories = [
@@ -135,6 +136,12 @@ const nameSuffixes: Record<string, string[]> = {
 }
 const streets = ['Main St', 'Oak Ave', 'Market St', 'Hill Rd', 'Station Blvd', 'Park Lane']
 
+const failureReasons = [
+  'Source page layout changed mid-scrape',
+  'Rate limited by the source — try again shortly',
+  'Timed out while loading results',
+]
+
 function makeLead(location: string, category: string): Lead {
   const name = `${pick(namePrefixes)} ${pick(nameSuffixes[category] ?? nameSuffixes.Retail)}`
   const slug = name.toLowerCase().replace(/[^a-z]+/g, '')
@@ -167,7 +174,7 @@ function tick() {
 
     if (Math.random() < FAILURE_CHANCE && job.progress < 90) {
       refundCredits(job.creditCost, `Refund — failed job (${job.location})`)
-      return { ...job, status: 'failed' as JobStatus, refunded: true }
+      return { ...job, status: 'failed' as JobStatus, refunded: true, error: pick(failureReasons) }
     }
 
     const progress = Math.min(100, job.progress + randomInt(7, 15))
@@ -241,7 +248,7 @@ export function cancelJob(id: string) {
     jobs.map((job) => {
       if (job.id !== id || (job.status !== 'queued' && job.status !== 'running')) return job
       refundCredits(job.creditCost, `Refund — cancelled job (${job.location})`)
-      return { ...job, status: 'failed' as JobStatus, refunded: true }
+      return { ...job, status: 'failed' as JobStatus, refunded: true, error: 'Cancelled by user' }
     }),
   )
 }
