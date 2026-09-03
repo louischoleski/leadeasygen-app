@@ -60,7 +60,5 @@ export function useTheme() {
     theme,
     mode: currentMode,
     setThemeMode,
-    // The compact navbar toggle flips the resolved appearance as an explicit choice
-    toggleTheme: () => setThemeMode(theme === 'dark' ? 'light' : 'dark'),
   }
 }
