@@ -30,10 +30,6 @@ function TokenPackages() {
 
   return (
     <section id="packages" className="scroll-mt-20 space-y-4">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight text-ink">Token Packages</h2>
-        <p className="text-sm text-ink-subtle">One-time purchases, never expire</p>
-      </div>
       <div className="grid gap-4 md:grid-cols-3">
         {tokenPackages.map((pkg) => (
           <Card key={pkg.id} className={cn('relative p-6', pkg.popular && 'border-primary shadow-sm')}>
@@ -163,11 +159,6 @@ function SubscriptionPlans() {
 
   return (
     <section id="plans" className="scroll-mt-20 space-y-4">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight text-ink">Subscription Plans</h2>
-        <p className="text-sm text-ink-subtle">Recurring plans for unlimited scraping</p>
-      </div>
-
       <div className="flex justify-center">
         <div className="flex items-center gap-2 rounded-lg border border-hairline bg-surface-2 p-1">
           <button
@@ -305,16 +296,6 @@ export default function Billing() {
         )}
       </Card>
 
-      <div className="flex justify-center">
-        <Toggle
-          pressed={showSubscription}
-          onPressedChange={setShowSubscription}
-          unpressedLabel="Buy Credits"
-          pressedLabel="Subscribe"
-          aria-label="Choose billing mode"
-        />
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <CurrentPlanCard
@@ -327,10 +308,31 @@ export default function Billing() {
               { label: 'API calls', used: usage.apiCalls, total: activeTier.limits.apiCalls },
               { label: 'Storage', used: usage.storageGB, total: activeTier.limits.storageGB, unit: 'GB' },
             ]}
-            onCancel={() => toast('Cancel subscription — Demo mode, no action taken')}
+            onCancel={
+              activeTier.id !== 'free'
+                ? () => toast('Cancel subscription — Demo mode, no action taken')
+                : undefined
+            }
           />
         </div>
         <div className="min-w-0 lg:col-span-2">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-ink">
+                {showSubscription ? 'Subscription Plans' : 'Token Packages'}
+              </h2>
+              <p className="text-sm text-ink-subtle">
+                {showSubscription ? 'Recurring plans for unlimited scraping' : 'One-time purchases, never expire'}
+              </p>
+            </div>
+            <Toggle
+              pressed={showSubscription}
+              onPressedChange={setShowSubscription}
+              unpressedLabel="Buy Credits"
+              pressedLabel="Subscribe"
+              aria-label="Choose billing mode"
+            />
+          </div>
           {showSubscription ? <SubscriptionPlans /> : <TokenPackages />}
         </div>
       </div>

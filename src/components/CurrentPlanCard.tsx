@@ -16,7 +16,7 @@ interface CurrentPlanCardProps {
   billingCycle: BillingCycle
   nextBillingDate: string
   metrics: UsageMetric[]
-  onCancel: () => void
+  onCancel?: () => void // omit when there is nothing to cancel (free tier)
 }
 
 function MetricRow({ label, used, total, unit }: UsageMetric) {
@@ -32,8 +32,9 @@ function MetricRow({ label, used, total, unit }: UsageMetric) {
     )
   }
 
-  const pct = Math.min(100, Math.round((used / total) * 100))
-  const status = pct > 80 ? 'error' : pct > 50 ? 'warning' : 'success'
+  // red only when genuinely over the limit; at-limit reads as warning
+  const pct = (used / total) * 100
+  const status = pct > 100 ? 'error' : pct > 50 ? 'warning' : 'success'
   return <UsageBar label={label} used={used} total={total} suffix={unit} status={status} />
 }
 
@@ -75,11 +76,13 @@ export function CurrentPlanCard({
         ))}
       </div>
 
-      <div className="px-6 pb-6">
-        <Button variant="secondary" fullWidth onClick={onCancel}>
-          Cancel Subscription
-        </Button>
-      </div>
+      {onCancel && (
+        <div className="px-6 pb-6">
+          <Button variant="secondary" fullWidth onClick={onCancel}>
+            Cancel Subscription
+          </Button>
+        </div>
+      )}
     </Card>
   )
 }

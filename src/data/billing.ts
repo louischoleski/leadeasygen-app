@@ -98,7 +98,7 @@ const defaults: BillingState = {
   creditBalance: 247,
   subscriptionTier: 'free',
   billingCycle: 'monthly',
-  usage: { jobs: 12, teamSeats: 3, apiCalls: 7500, storageGB: 2.5 },
+  usage: { jobs: 0, teamSeats: 1, apiCalls: 420, storageGB: 0.3 },
 }
 
 function readStored(): BillingState {
