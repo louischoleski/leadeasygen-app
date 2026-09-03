@@ -9,7 +9,7 @@ const packages = [
 
 export default function Credits() {
   return (
-    <div className="mx-auto max-w-[960px]">
+    <div className="w-full">
       <h1 className="text-headline mb-1 text-ink">Buy credits</h1>
       <p className="mb-6 text-sm text-ink-subtle">
         Credits are spent when running scraping jobs.{' '}

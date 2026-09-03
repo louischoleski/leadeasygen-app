@@ -45,7 +45,7 @@ function ProfileCard() {
           toast.success('Profile updated')
         }}
       >
-        <div className="mt-4 grid gap-x-8 gap-y-3 lg:grid-cols-2">
+        <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="name">Full name</label>
             <input type="text" defaultValue="Luna Admin" name="name" id="name" className="input" />
@@ -116,7 +116,7 @@ function SecurityCard() {
           e.currentTarget.reset()
         }}
       >
-        <div className="mt-4 grid gap-x-8 gap-y-3 lg:grid-cols-2">
+        <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
           <div>
             <label className={labelClass} htmlFor="currentPassword">Current password</label>
             <input type="password" required name="currentPassword" id="currentPassword" className="input" />
@@ -201,13 +201,15 @@ function SecurityCard() {
 
 function CreditsCard() {
   return (
-    <section id="credits" className="card scroll-mt-20 p-5">
-      <h2 className="text-card-title text-ink">Credits</h2>
-      <p className="mt-1 text-sm text-ink-subtle">Buy credits to run scraping jobs.</p>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+    <section id="credits" className="card scroll-mt-20 flex flex-wrap items-center justify-between gap-3 p-5">
+      <div>
+        <h2 className="text-card-title text-ink">Credits</h2>
+        <p className="mt-1 text-sm text-ink-subtle">Buy credits to run scraping jobs.</p>
+      </div>
+      <div className="flex items-center gap-6">
         <div>
           <span className="text-3xl font-bold text-ink">247</span>
-          <span className="ml-1 text-sm text-ink-subtle">credits remaining</span>
+          <span className="ml-1 text-sm text-ink-subtle">remaining</span>
         </div>
         <Link to="/credits" className="btn btn-primary">Buy credits</Link>
       </div>
@@ -246,7 +248,7 @@ function DangerCard() {
 
 export default function Settings() {
   return (
-    <div className="mx-auto max-w-[960px]">
+    <div className="w-full">
       <h1 className="text-headline mb-6 text-ink">Settings</h1>
       <div className="mb-4 lg:hidden">
         <label className="sr-only" htmlFor="settings-section">Settings section</label>
@@ -262,7 +264,7 @@ export default function Settings() {
         </select>
       </div>
       <div className="flex gap-8">
-        <nav className="hidden w-[200px] shrink-0 lg:block" aria-label="Settings sections">
+        <nav className="hidden w-[180px] shrink-0 lg:block" aria-label="Settings sections">
           <ul className="space-y-1">
             {sections.map((s) => (
               <li key={s.id}>
