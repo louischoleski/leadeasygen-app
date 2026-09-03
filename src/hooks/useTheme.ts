@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { createSubscribable } from './subscribable'
 
 export type Theme = 'light' | 'dark'
 
@@ -9,7 +10,7 @@ export type Theme = 'light' | 'dark'
 // same value. Persisting only on explicit toggle keeps first visits following
 // the OS preference live instead of freezing a snapshot of it.
 let theme: Theme = document.documentElement.classList.contains('light') ? 'light' : 'dark'
-const listeners = new Set<() => void>()
+const store = createSubscribable()
 
 function applyTheme(next: Theme) {
   theme = next
@@ -21,18 +22,11 @@ function applyTheme(next: Theme) {
   } catch {
     // storage unavailable: keep the in-memory value for this session
   }
-  listeners.forEach((listener) => listener())
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener)
-  return () => {
-    listeners.delete(listener)
-  }
+  store.emit()
 }
 
 export function useTheme() {
-  const current = useSyncExternalStore(subscribe, () => theme)
+  const current = useSyncExternalStore(store.subscribe, () => theme)
   return {
     theme: current,
     toggleTheme: () => applyTheme(current === 'dark' ? 'light' : 'dark'),
