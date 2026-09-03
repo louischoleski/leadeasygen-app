@@ -2,6 +2,7 @@ import { CaretDown, Moon, Sun, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { locales, useLocale } from '../hooks/useLocale'
+import useLocalStorage from '../hooks/useLocalStorage'
 import { useTheme } from '../hooks/useTheme'
 
 const tips = [
@@ -27,12 +28,9 @@ export default function Sidebar({ open, onNavigate }: Props) {
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale } = useLocale()
   const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
-  const [tipVisible, setTipVisible] = useState(() => localStorage.getItem('hideSidebarTip') !== 'true')
+  const [tipHidden, setTipHidden] = useLocalStorage('hideSidebarTip', false)
 
-  const dismissTip = () => {
-    localStorage.setItem('hideSidebarTip', 'true')
-    setTipVisible(false)
-  }
+  const dismissTip = () => setTipHidden(true)
 
   return (
     <aside
@@ -82,7 +80,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
       </nav>
 
       {/* Rotating onboarding tip — desktop only, the drawer is too cramped */}
-      {tipVisible && (
+      {!tipHidden && (
         <div className="relative mx-2 mt-auto mb-4 hidden rounded-lg border border-hairline bg-surface-2 p-3 md:block">
           <button
             type="button"
