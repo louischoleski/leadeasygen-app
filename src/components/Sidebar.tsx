@@ -4,6 +4,13 @@ import { NavLink } from 'react-router-dom'
 import { locales, useLocale } from '../hooks/useLocale'
 import { useTheme } from '../hooks/useTheme'
 
+const tips = [
+  { label: 'Tip', text: 'Use radius + keywords together for tighter lead targeting.' },
+  { label: 'Tip', text: 'Radius under 5km finds hyper-local businesses.' },
+  { label: 'New', text: 'Export results directly to CSV from the dashboard.' },
+  { label: 'Did you know?', text: "Visiting a business's website often reveals emails not listed on Maps." },
+]
+
 const categoryClass = 'mt-2.5 px-6 py-2 text-eyebrow text-ink'
 const itemClass = 'mx-2 flex h-11 items-center rounded-lg px-4 transition-colors'
 const linkClass = `${itemClass} text-ink-muted hover:bg-surface-2/50 hover:text-ink`
@@ -19,6 +26,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
   const [commonOpen, setCommonOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale } = useLocale()
+  const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
 
   return (
     <aside
@@ -74,6 +82,13 @@ export default function Sidebar({ open, onNavigate }: Props) {
         </ul>
       </nav>
 
+      {/* Rotating onboarding tip — desktop only, the drawer is too cramped */}
+      <div className="mx-2 mt-auto mb-4 hidden rounded-lg border border-hairline bg-surface-2 p-3 md:block">
+        <p className="text-xs text-ink-subtle">
+          <span className="font-medium text-link">{tip.label}:</span> {tip.text}
+        </p>
+      </div>
+
       {/* Locale and theme live in the navbar on md+; the drawer hosts them on mobile */}
       <div className="border-t border-hairline px-6 py-4 md:hidden">
         <div className="text-eyebrow mb-2 text-ink">Settings</div>
@@ -101,7 +116,6 @@ export default function Sidebar({ open, onNavigate }: Props) {
           {theme === 'dark' ? 'Dark mode' : 'Light mode'}
         </button>
       </div>
-      <div className="border-t border-hairline px-6 py-3 text-xs text-ink-subtle">Luna v1.4</div>
     </aside>
   )
 }

@@ -41,7 +41,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       {/* Brand slab: desktop luxury only — 140px on tablet, 200px on desktop, gone on mobile */}
       <Link
         to="/"
-        className="hidden h-full shrink-0 items-center gap-2 bg-primary transition-colors hover:bg-primary-hover md:flex md:w-[140px] md:px-4 lg:w-[200px] lg:px-5"
+        className="hidden h-full shrink-0 items-center justify-between bg-primary transition-colors hover:bg-primary-hover md:flex md:w-[140px] md:px-4 lg:w-[200px] lg:px-5"
       >
         <span className="text-sm font-semibold tracking-[0.2em] text-on-primary uppercase lg:tracking-[0.3em]">
           Luna
@@ -55,7 +55,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         type="button"
         aria-label="Toggle navigation"
         onClick={onToggleNav}
-        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:text-ink md:ml-3 md:h-9 md:w-9 md:border md:border-hairline md:bg-surface-2 md:hover:bg-surface-3"
+        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:text-ink md:ml-2 md:h-9 md:w-9"
       >
         <List size={20} aria-hidden="true" />
       </button>
@@ -68,7 +68,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           type="search"
           aria-label="Search"
           placeholder="Search data for analysis"
-          className="w-[220px] rounded-md border border-hairline bg-surface-2 py-1.5 pr-12 pl-3 text-sm text-ink outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-primary-focus/50"
+          className="w-[250px] rounded-md border border-hairline bg-surface-2 py-1.5 pr-12 pl-3 text-sm text-ink outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-primary-focus/50"
         />
         <kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-hairline bg-surface-1 px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle">
           {SHORTCUTS.search.label(os)}
