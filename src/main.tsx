@@ -10,8 +10,10 @@ import AuthLayout from './layouts/AuthLayout'
 import Billing from './pages/Billing'
 import CheckoutCancelled from './pages/CheckoutCancelled'
 import CheckoutSuccess from './pages/CheckoutSuccess'
+import Faq from './pages/Faq'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
+import NotFound from './pages/NotFound'
 import Privacy from './pages/Privacy'
 import Register from './pages/Register'
 import Terms from './pages/Terms'
@@ -42,6 +44,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/billing" element={<Billing />} />
           <Route path="/billing/success" element={<CheckoutSuccess />} />
           <Route path="/billing/cancelled" element={<CheckoutCancelled />} />
+          <Route path="/faq" element={<Faq />} />
           {/* Legacy paths from earlier iterations */}
           <Route path="/credits" element={<Navigate to="/billing" replace />} />
           <Route path="/subscription" element={<Navigate to="/billing" replace />} />
@@ -63,7 +66,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/login.html" element={<Navigate to="/login" replace />} />
         <Route path="/register.html" element={<Navigate to="/register" replace />} />
         <Route path="/forgotPassword.html" element={<Navigate to="/forgot-password" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <AppToaster />
     </BrowserRouter>

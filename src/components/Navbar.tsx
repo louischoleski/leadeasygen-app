@@ -1,8 +1,9 @@
-import { Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
+import { Coin, Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
 import { useAuth } from '../data/auth'
+import { useBilling } from '../data/billing'
 import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
 import { SHORTCUTS } from '../constants/shortcuts'
@@ -18,6 +19,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { isMobile } = useViewport()
   const os = useOS()
   const { user, logout } = useAuth()
+  const { creditBalance } = useBilling()
   const [localeOpen, setLocaleOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -82,8 +84,17 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         className="ml-auto md:hidden"
       />
 
+      <Link
+        to="/billing"
+        className="mr-2 ml-auto hidden items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-link transition-colors hover:bg-primary/15 md:inline-flex"
+      >
+        <Coin className="h-4 w-4" aria-hidden="true" />
+        {creditBalance.toLocaleString()}
+        <span className="hidden lg:inline">credits</span>
+      </Link>
+
       <div
-        className="relative mr-1 ml-auto hidden md:block"
+        className="relative mr-1 hidden md:block"
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget)) setLocaleOpen(false)
         }}
