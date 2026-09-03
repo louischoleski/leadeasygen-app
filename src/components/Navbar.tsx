@@ -1,4 +1,4 @@
-import { CaretDown, Globe, List, MagnifyingGlass, Moon, Sun, X } from '@phosphor-icons/react'
+import { CaretDown, Globe, List, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
@@ -6,16 +6,19 @@ import { SHORTCUTS } from '../constants/shortcuts'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 import { locales, useLocale } from '../hooks/useLocale'
 import { useOS } from '../hooks/useOS'
-import { useTheme } from '../hooks/useTheme'
+import { themeModes, useTheme } from '../hooks/useTheme'
 import { useViewport } from '../hooks/useViewport'
 
 export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, mode, setThemeMode } = useTheme()
   const { locale, setLocale } = useLocale()
   const { isMobile } = useViewport()
   const os = useOS()
   const [localeOpen, setLocaleOpen] = useState(false)
+  const [themeOpen, setThemeOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+
+  const ThemeIcon = mode === 'system' ? Monitor : theme === 'dark' ? Moon : Sun
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // The overlay is a mobile-only pattern: close it when the viewport leaves mobile
@@ -121,16 +124,42 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           </div>
         )}
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={theme === 'dark'}
-        aria-label="Toggle theme"
-        onClick={toggleTheme}
-        className="mr-4 hidden cursor-pointer text-ink-subtle hover:text-ink md:block"
+      <div
+        className="relative mr-4 hidden md:block"
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setThemeOpen(false)
+        }}
       >
-        {theme === 'dark' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
-      </button>
+        <button
+          type="button"
+          aria-label={`Theme: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`}
+          aria-haspopup="menu"
+          aria-expanded={themeOpen}
+          onClick={() => setThemeOpen((o) => !o)}
+          className="block cursor-pointer text-ink-subtle transition-colors hover:text-ink"
+        >
+          <ThemeIcon size={18} aria-hidden="true" />
+        </button>
+        {themeOpen && (
+          <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-28 p-1">
+            {themeModes.map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="menuitemradio"
+                aria-checked={m === mode}
+                onClick={() => {
+                  setThemeMode(m)
+                  setThemeOpen(false)
+                }}
+                className={`block w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-2 ${m === mode ? 'font-medium text-ink' : 'text-ink-muted'}`}
+              >
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <Link to="/login" className="flex h-11 items-center gap-2 p-1 text-sm text-ink-subtle hover:text-ink">
         <span className="hidden lowercase md:inline">luna@company.io</span>
         <img src={profile} alt="Account" className="h-9 w-9 rounded-full" />
