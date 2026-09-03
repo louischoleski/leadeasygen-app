@@ -42,16 +42,14 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
 
   return (
     <nav className="fixed inset-x-0 top-0 z-30 flex h-14 items-center border-b border-hairline bg-canvas pr-3 pl-1 md:pr-4 md:pl-0">
-      {/* Brand slab: desktop luxury only — 140px on tablet, 200px on desktop, gone on mobile */}
+      {/* Brand slab: md+ only, 200px to align with the sidebar edge, gone on mobile */}
       <Link
         to="/"
-        className="hidden h-full shrink-0 items-center justify-between bg-primary transition-colors hover:bg-primary-hover md:flex md:w-[140px] md:px-4 lg:w-[200px] lg:px-5"
+        className="hidden h-full w-[200px] shrink-0 items-center justify-between bg-primary px-5 transition-colors hover:bg-primary-hover md:flex"
       >
-        <span className="text-sm font-semibold tracking-[0.2em] text-on-primary uppercase lg:tracking-[0.3em]">
-          Luna
-        </span>
+        <span className="text-sm font-semibold tracking-[0.3em] text-on-primary uppercase">Luna</span>
         {/* black-tint pill: the white-tint fails AA contrast under the wordmark */}
-        <span className="hidden rounded-full bg-overlay/25 px-1.5 py-0.5 text-[10px] font-medium text-on-primary lg:inline">
+        <span className="rounded-full bg-overlay/25 px-1.5 py-0.5 text-[10px] font-medium text-on-primary">
           v1.4
         </span>
       </Link>
@@ -145,7 +143,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         )}
       </div>
       <Link to="/login" className="flex h-11 items-center gap-2 p-1 text-sm text-ink-subtle hover:text-ink">
-        <span className="hidden lowercase md:inline">luna@company.io</span>
+        <span className="hidden lowercase lg:inline">luna@company.io</span>
         <img src={profile} alt="Account" className="h-9 w-9 rounded-full" />
       </Link>
 
