@@ -1,11 +1,11 @@
-import { CaretDown, Globe, List, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
+import { Globe, List, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
 import LocaleMenu from './LocaleMenu'
 import { SHORTCUTS } from '../constants/shortcuts'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
-import { useLocale } from '../hooks/useLocale'
+import { localeNames, useLocale } from '../hooks/useLocale'
 import { useOS } from '../hooks/useOS'
 import { themeModes, useTheme } from '../hooks/useTheme'
 import { useViewport } from '../hooks/useViewport'
@@ -89,28 +89,27 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       </button>
 
       <div
-        className="relative mr-3 ml-auto hidden md:block"
+        className="relative mr-1 ml-auto hidden md:block"
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget)) setLocaleOpen(false)
         }}
       >
         <button
           type="button"
-          aria-label={`Language: ${locale.toUpperCase()}`}
+          aria-label={`Language: ${localeNames[locale]}`}
           aria-haspopup="menu"
           aria-expanded={localeOpen}
           onClick={() => setLocaleOpen((o) => !o)}
-          className="flex cursor-pointer items-center gap-1 rounded-md border border-hairline bg-surface-1 px-2 py-1 text-xs font-medium text-ink transition-colors outline-none hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-primary-focus/50"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink"
         >
-          <Globe size={14} aria-hidden="true" /> {locale.toUpperCase()}
-          <CaretDown size={10} aria-hidden="true" />
+          <Globe size={18} aria-hidden="true" />
         </button>
         {localeOpen && (
           <LocaleMenu className="top-full right-0 mt-1 w-36" onSelect={() => setLocaleOpen(false)} />
         )}
       </div>
       <div
-        className="relative mr-4 hidden md:block"
+        className="relative mr-3 hidden md:block"
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget)) setThemeOpen(false)
         }}
@@ -121,7 +120,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           aria-haspopup="menu"
           aria-expanded={themeOpen}
           onClick={() => setThemeOpen((o) => !o)}
-          className="block cursor-pointer text-ink-subtle transition-colors hover:text-ink"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink"
         >
           <ThemeIcon size={18} aria-hidden="true" />
         </button>

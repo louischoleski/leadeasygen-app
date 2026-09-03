@@ -1,16 +1,22 @@
-import { CaretDown, Globe, X } from '@phosphor-icons/react'
+import { CaretDown, Globe, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import LocaleMenu from './LocaleMenu'
-import { localeNames, useLocale } from '../hooks/useLocale'
+import { useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
-import { themeModes, useTheme } from '../hooks/useTheme'
+import { themeModes, useTheme, type ThemeMode } from '../hooks/useTheme'
+
+const themeModeIcons: Record<ThemeMode, typeof Monitor> = {
+  system: Monitor,
+  light: Sun,
+  dark: Moon,
+}
 
 const tips = [
   { label: 'Tip', text: 'Use radius + keywords together for tighter lead targeting.' },
   { label: 'Tip', text: 'Radius under 5km finds hyper-local businesses.' },
   { label: 'New', text: 'Export results directly to CSV from the dashboard.' },
-  { label: 'Did you know?', text: "Visiting a business's website often reveals emails not listed on Maps." },
+  { label: 'Did you know', text: "Visiting a business's website often reveals emails not listed on Maps." },
 ]
 
 const categoryClass = 'mt-2.5 px-6 py-2 text-eyebrow text-ink'
@@ -99,8 +105,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
       )}
 
       {/* Locale and theme live in the navbar on md+; the drawer hosts them on mobile */}
-      <div className="border-t border-hairline px-6 py-4 md:hidden">
-        <div className="text-eyebrow mb-2 text-ink">Settings</div>
+      <div className="space-y-2 border-t border-hairline px-4 py-3 md:hidden">
         <div
           className="relative"
           onBlur={(e) => {
@@ -112,12 +117,14 @@ export default function Sidebar({ open, onNavigate }: Props) {
             aria-haspopup="menu"
             aria-expanded={localeOpen}
             onClick={() => setLocaleOpen((o) => !o)}
-            className="flex h-11 w-full cursor-pointer items-center justify-between rounded-lg border border-hairline bg-surface-2 px-3 text-sm text-ink transition-colors hover:bg-surface-3"
+            className="flex h-11 w-full cursor-pointer items-center justify-between rounded-lg px-1 text-sm transition-colors hover:bg-surface-2"
           >
-            <span className="flex items-center gap-2">
-              <Globe size={16} aria-hidden="true" className="text-ink-subtle" /> {localeNames[locale]}
+            <span className="flex items-center gap-2 text-ink-muted">
+              <Globe size={16} aria-hidden="true" className="text-ink-subtle" /> Language
             </span>
-            <CaretDown size={12} aria-hidden="true" className="text-ink-subtle" />
+            <span className="flex items-center gap-1 text-ink">
+              {locale.toUpperCase()} <CaretDown size={12} aria-hidden="true" className="text-ink-subtle" />
+            </span>
           </button>
           {/* Opens upward: the trigger sits at the drawer bottom, and a downward
               menu would be clipped by the drawer's own scroll container */}
@@ -125,22 +132,28 @@ export default function Sidebar({ open, onNavigate }: Props) {
             <LocaleMenu className="bottom-full left-0 mb-1 w-full" onSelect={() => setLocaleOpen(false)} />
           )}
         </div>
-        <div className="mt-3 flex items-center justify-between px-1">
-          <span className="text-sm text-ink-muted">Theme</span>
+        <div className="flex h-11 items-center justify-between px-1">
+          <span className="flex items-center gap-2 text-sm text-ink-muted">
+            <Monitor size={16} aria-hidden="true" className="text-ink-subtle" /> Theme
+          </span>
           <div className="flex rounded-full border border-hairline bg-surface-2 p-0.5" role="group" aria-label="Theme">
-            {themeModes.map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={mode === m}
-                onClick={() => setThemeMode(m)}
-                className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                  mode === m ? 'bg-surface-1 text-ink shadow-sm' : 'text-ink-subtle hover:text-ink'
-                }`}
-              >
-                {m.charAt(0).toUpperCase() + m.slice(1)}
-              </button>
-            ))}
+            {themeModes.map((m) => {
+              const ModeIcon = themeModeIcons[m]
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  aria-label={m.charAt(0).toUpperCase() + m.slice(1)}
+                  aria-pressed={mode === m}
+                  onClick={() => setThemeMode(m)}
+                  className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-full transition-colors ${
+                    mode === m ? 'bg-surface-1 text-ink shadow-sm' : 'text-ink-subtle hover:text-ink'
+                  }`}
+                >
+                  <ModeIcon size={14} aria-hidden="true" />
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
