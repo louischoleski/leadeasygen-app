@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import profile from '../assets/profile.jpg'
-import { localeNames, locales, useLocale, type Locale } from '../hooks/useLocale'
+import { Select } from '../components/Select'
+import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
 
 const sections = [
@@ -12,7 +13,10 @@ const sections = [
   { id: 'danger', label: 'Danger zone' },
 ]
 
-const timezones = ['UTC', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Asia/Tokyo']
+const timezoneOptions = ['UTC', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Asia/Tokyo'].map(
+  (tz) => ({ value: tz, label: tz }),
+)
+const languageOptions = locales.map((l) => ({ value: l, label: localeNames[l] }))
 
 const newBackupCodes = () =>
   Array.from({ length: 8 }, () => Math.random().toString(36).slice(2, 10))
@@ -67,25 +71,25 @@ function ProfileCard() {
           </div>
           <div>
             <label className={labelClass} htmlFor="timezone">Timezone</label>
-            <select name="timezone" id="timezone" defaultValue="Europe/Paris" className="input">
-              {timezones.map((tz) => (
-                <option key={tz} value={tz}>{tz}</option>
-              ))}
-            </select>
+            <Select
+              inputId="timezone"
+              name="timezone"
+              options={timezoneOptions}
+              defaultValue={timezoneOptions.find((o) => o.value === 'Europe/Paris')}
+              isSearchable
+            />
           </div>
           <div>
             <label className={labelClass} htmlFor="language">Language</label>
-            <select
-              id="language"
-              className="input"
-              value={locale}
-              onChange={(e) => setLocale(e.target.value as Locale)}
-            >
-              {locales.map((l) => (
-                <option key={l} value={l}>{localeNames[l]}</option>
-              ))}
-            </select>
-            <span className="text-xs text-ink-subtle">Applies immediately across the app</span>
+            <Select
+              inputId="language"
+              options={languageOptions}
+              value={languageOptions.find((o) => o.value === locale)}
+              onChange={(option) => option && setLocale(option.value)}
+              placeholder="Select language..."
+              isSearchable
+            />
+            <p className="mt-1 text-xs text-ink-subtle">Applies immediately across the app</p>
           </div>
         </div>
         <div className="mt-4 flex justify-end">
