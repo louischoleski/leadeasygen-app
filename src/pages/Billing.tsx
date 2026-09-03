@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
 import { Tabs } from '../components/Tabs'
@@ -240,12 +241,15 @@ function CreditActivityTable() {
 
 function SubscriptionPlans() {
   const { billingCycle, setBillingCycle, subscriptionTier, setSubscription } = useBilling()
+  const [confirmingDowngrade, setConfirmingDowngrade] = useState(false)
 
   const choose = (tier: SubscriptionTier) => {
+    if (tier.id === 'free') {
+      setConfirmingDowngrade(true)
+      return
+    }
     setSubscription(tier.id)
-    toast.success(tier.id === 'free' ? 'Switched to the Free plan' : `Subscribed to ${tier.name}`, {
-      description: 'Demo mode — no payment processed.',
-    })
+    toast.success(`Subscribed to ${tier.name}`, { description: 'Demo mode — no payment processed.' })
   }
 
   return (
@@ -329,6 +333,20 @@ function SubscriptionPlans() {
           )
         })}
       </div>
+
+      <ConfirmDialog
+        open={confirmingDowngrade}
+        title="Downgrade to Free?"
+        description="You'll lose unlimited jobs and credits, and Free-tier limits apply immediately."
+        confirmLabel="Downgrade"
+        danger
+        onConfirm={() => {
+          setConfirmingDowngrade(false)
+          setSubscription('free')
+          toast.success('Switched to the Free plan', { description: 'Demo mode — no payment processed.' })
+        }}
+        onClose={() => setConfirmingDowngrade(false)}
+      />
     </section>
   )
 }
@@ -338,6 +356,7 @@ export default function Billing() {
   const { activeJobs } = useJobs()
   const [showSubscription, setShowSubscription] = useState(false)
   const [activeTab, setActiveTab] = useState('history')
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
   // Card is always shown; a null subscription displays under the free tier's limits
   const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier) ?? subscriptionTiers[0]
@@ -400,11 +419,19 @@ export default function Billing() {
               { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
               { label: 'Credits this month', used: usage.creditsUsed, total: activeTier.limits.creditsPerMonth },
             ]}
-            onCancel={
-              activeTier.id !== 'free'
-                ? () => toast('Cancel subscription — Demo mode, no action taken')
-                : undefined
-            }
+            onCancel={activeTier.id !== 'free' ? () => setConfirmingCancel(true) : undefined}
+          />
+          <ConfirmDialog
+            open={confirmingCancel}
+            title="Cancel subscription?"
+            description={`Your ${activeTier.name} plan stays active until the end of the billing period, then you move to the Free tier.`}
+            confirmLabel="Cancel subscription"
+            danger
+            onConfirm={() => {
+              setConfirmingCancel(false)
+              toast('Cancel subscription — Demo mode, no action taken')
+            }}
+            onClose={() => setConfirmingCancel(false)}
           />
         </div>
         <div className="min-w-0 lg:col-span-2">

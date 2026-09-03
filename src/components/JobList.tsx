@@ -2,6 +2,7 @@ import { Download, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { cancelJob, retryJob, useJobs } from '../data/jobs'
+import { ConfirmDialog } from './ConfirmDialog'
 import { downloadJobCsv } from '../lib/csv'
 import { Button } from './Button'
 import { Card } from './Card'
@@ -55,8 +56,17 @@ export function JobList() {
   const { activeJobs, completedJobs } = useJobs()
   const [activeTab, setActiveTab] = useState('active')
   const [viewingJobId, setViewingJobId] = useState<string | null>(null)
+  const [cancellingJobId, setCancellingJobId] = useState<string | null>(null)
 
   const displayJobs = activeTab === 'active' ? activeJobs : completedJobs
+  const cancellingJob = activeJobs.find((job) => job.id === cancellingJobId)
+
+  const handleCancelConfirm = () => {
+    if (!cancellingJob) return
+    cancelJob(cancellingJob.id)
+    toast('Job cancelled', { description: `${cancellingJob.creditCost} credits refunded.` })
+    setCancellingJobId(null)
+  }
 
   const handleRetry = (id: string) => {
     const result = retryJob(id)
@@ -91,13 +101,28 @@ export function JobList() {
               job={job}
               onViewResults={setViewingJobId}
               onRetry={handleRetry}
-              onCancel={cancelJob}
+              onCancel={setCancellingJobId}
             />
           ))}
         </div>
       )}
 
       {viewingJobId && <ResultsOverlay jobId={viewingJobId} onClose={() => setViewingJobId(null)} />}
+
+      <ConfirmDialog
+        open={cancellingJob !== undefined}
+        title="Cancel this job?"
+        description={
+          cancellingJob
+            ? `Scraping ${cancellingJob.location} stops and ${cancellingJob.creditCost} credits are refunded.`
+            : ''
+        }
+        confirmLabel="Cancel job"
+        cancelLabel="Keep running"
+        danger
+        onConfirm={handleCancelConfirm}
+        onClose={() => setCancellingJobId(null)}
+      />
     </div>
   )
 }
