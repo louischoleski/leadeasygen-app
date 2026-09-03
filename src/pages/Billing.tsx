@@ -13,6 +13,7 @@ import {
   creditPacks,
   useBilling,
   type BillingRecord,
+  type LedgerEntryType,
   type SubscriptionTier,
 } from '../data/billing'
 import { useJobs } from '../data/jobs'
@@ -139,6 +140,90 @@ function BillingHistoryTable() {
                     />
                   </div>
                 </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  )
+}
+
+const ledgerBadge: Record<LedgerEntryType, { label: string; className: string }> = {
+  purchase: { label: 'Purchase', className: 'bg-primary/10 text-link' },
+  spend: { label: 'Spend', className: 'bg-surface-2 text-ink-subtle' },
+  refund: { label: 'Refund', className: 'bg-success/10 text-success' },
+  grant: { label: 'Grant', className: 'bg-success/10 text-success' },
+}
+
+const ledgerDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+function CreditActivityTable() {
+  const { ledger } = useBilling()
+
+  if (ledger.length === 0) {
+    return (
+      <Card className="p-12 text-center">
+        <Coin className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
+        <p className="text-ink-subtle">No credit activity yet.</p>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm whitespace-nowrap">
+          <thead>
+            <tr className="border-b border-hairline bg-surface-2">
+              {['Date', 'Description', 'Type'].map((heading) => (
+                <th
+                  key={heading}
+                  scope="col"
+                  className="h-10 px-4 text-left text-xs font-medium tracking-wider text-ink-subtle uppercase"
+                >
+                  {heading}
+                </th>
+              ))}
+              {['Amount', 'Balance'].map((heading) => (
+                <th
+                  key={heading}
+                  scope="col"
+                  className="h-10 px-4 text-right text-xs font-medium tracking-wider text-ink-subtle uppercase"
+                >
+                  {heading}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {ledger.map((entry) => (
+              <tr
+                key={entry.id}
+                className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
+              >
+                <td className="p-4 text-ink-subtle">{ledgerDate(entry.date)}</td>
+                <td className="p-4 text-ink">{entry.description}</td>
+                <td className="p-4">
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold',
+                      ledgerBadge[entry.type].className,
+                    )}
+                  >
+                    {ledgerBadge[entry.type].label}
+                  </span>
+                </td>
+                <td
+                  className={cn(
+                    'p-4 text-right font-medium',
+                    entry.amount > 0 ? 'text-success' : 'text-ink',
+                  )}
+                >
+                  {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
+                </td>
+                <td className="p-4 text-right font-medium text-ink">{entry.balanceAfter}</td>
               </tr>
             ))}
           </tbody>
@@ -343,6 +428,7 @@ export default function Billing() {
         <Tabs
           tabs={[
             { id: 'history', label: 'Billing History' },
+            { id: 'activity', label: 'Credit Activity' },
             { id: 'methods', label: 'Payment Methods' },
           ]}
           activeTab={activeTab}
@@ -350,6 +436,7 @@ export default function Billing() {
         />
         <div className="mt-2">
           {activeTab === 'history' && <BillingHistoryTable />}
+          {activeTab === 'activity' && <CreditActivityTable />}
           {activeTab === 'methods' && (
             <Card className="p-12 text-center">
               <CreditCard className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
