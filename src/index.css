@@ -44,7 +44,7 @@
   --color-primary-hover: #4f5ac2;
   --color-primary-focus: #5e69d1;
   --color-link: #4b55b8; /* darker than primary: lavender that passes AA as text on white and surface tints */
-  --color-success: #1a7a31;
+  --color-success: #136e2b; /* darker: passes AA as 12px text on bg-success/10 over surface-2 */
   --color-warning: #b45309;
   --color-error: #b91c1c; /* deep enough to pass AA on error-tinted surfaces */
   --color-chart-1: #5e6ad2;
