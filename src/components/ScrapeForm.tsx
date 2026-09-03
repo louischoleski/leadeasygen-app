@@ -62,7 +62,7 @@ export function ScrapeForm() {
       <h2 className="text-card-title text-ink">New scrape job</h2>
       <p className="mt-1 mb-4 text-sm text-ink-subtle">Find local businesses on Google Maps</p>
       <form noValidate onSubmit={handleSubmit}>
-        <div className="grid gap-x-6 gap-y-3 md:grid-cols-2">
+        <div className="grid gap-x-4 gap-y-3 md:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_1.5fr]">
           <Input
             label="Location"
             id="job-location"
@@ -72,15 +72,6 @@ export function ScrapeForm() {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
-          <div>
-            <label className={labelClass} htmlFor="job-radius">Radius</label>
-            <Select
-              inputId="job-radius"
-              options={radiusOptions}
-              value={radiusOptions.find((o) => o.value === radiusKm)}
-              onChange={(option) => option && setRadiusKm(option.value)}
-            />
-          </div>
           <Input
             label="Keywords"
             id="job-keywords"
@@ -91,6 +82,15 @@ export function ScrapeForm() {
             onChange={(e) => setKeywords(e.target.value)}
             helperText="Comma-separated search terms"
           />
+          <div>
+            <label className={labelClass} htmlFor="job-radius">Radius</label>
+            <Select
+              inputId="job-radius"
+              options={radiusOptions}
+              value={radiusOptions.find((o) => o.value === radiusKm)}
+              onChange={(option) => option && setRadiusKm(option.value)}
+            />
+          </div>
           <div>
             <label className={labelClass} htmlFor="job-category">Category</label>
             <Select
