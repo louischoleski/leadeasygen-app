@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { applyAuthError } from '../lib/authErrors'
 import { useAppSession } from '../lib/session'
 
 interface LoginValues {
@@ -24,6 +25,7 @@ export default function Login() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<LoginValues>()
 
@@ -38,7 +40,12 @@ export default function Login() {
       await refresh({ force: true })
       navigate(from, { replace: true })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Login failed')
+      applyAuthError(
+        err,
+        setError,
+        { INVALID_CREDENTIALS: 'password', email: 'email', password: 'password' },
+        'Login failed',
+      )
     }
   }
 

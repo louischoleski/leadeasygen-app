@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { applyAuthError } from '../lib/authErrors'
 import { useAppSession } from '../lib/session'
 
 interface RegisterValues {
@@ -25,6 +26,7 @@ export default function Register() {
     register,
     handleSubmit,
     getValues,
+    setError,
     formState: { errors },
   } = useForm<RegisterValues>()
 
@@ -40,7 +42,18 @@ export default function Register() {
       await refresh({ force: true })
       navigate('/')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Registration failed')
+      applyAuthError(
+        err,
+        setError,
+        {
+          USER_ALREADY_EXISTS: 'email',
+          email: 'email',
+          password: 'password',
+          firstName: 'name',
+          lastName: 'name',
+        },
+        'Registration failed',
+      )
     }
   }
 
