@@ -45,6 +45,7 @@
   --color-primary-focus: #5e69d1;
   --color-link: #4b55b8; /* darker than primary: lavender that passes AA as text on white and surface tints */
   --color-success: #1a7a31;
+  --color-warning: #b45309;
   --color-error: #b91c1c; /* deep enough to pass AA on error-tinted surfaces */
   --color-chart-1: #5e6ad2;
   --color-chart-1-fill: rgb(94 106 210 / 0.12);
@@ -71,6 +72,7 @@
   --color-primary-hover: #828fff;
   --color-link: #828fff;
   --color-success: #27a644;
+  --color-warning: #d97706;
   --color-error: #ef4444;
   --color-chart-1-fill: rgb(94 106 210 / 0.35);
   --color-chart-2-fill: rgb(122 127 173 / 0.35);

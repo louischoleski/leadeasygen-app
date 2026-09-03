@@ -14,7 +14,7 @@ export function Select<Option>(props: ReactSelectProps<Option, false>) {
           borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-hairline)',
           borderWidth: '1px',
           borderRadius: '8px',
-          minHeight: '42px',
+          minHeight: '44px',
           boxShadow: state.isFocused ? '0 0 0 2px var(--color-primary-focus)' : 'none',
           '&:hover': {
             borderColor: 'var(--color-hairline-strong)',

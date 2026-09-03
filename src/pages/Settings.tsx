@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Envelope, Phone, User } from '@phosphor-icons/react'
 import profile from '../assets/profile.jpg'
+import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
@@ -50,25 +52,25 @@ function ProfileCard() {
         }}
       >
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
-          <div>
-            <label className={labelClass} htmlFor="name">Full name</label>
-            <input type="text" defaultValue="Luna Admin" name="name" id="name" className="input" />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="email">Email address</label>
-            <input
-              type="email"
-              value="luna@company.io"
-              id="email"
-              disabled
-              className="input cursor-not-allowed bg-surface-2"
-            />
-            <p className="mt-1 text-xs text-ink-subtle">Contact support to change your email</p>
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="phone">Phone</label>
-            <input type="tel" defaultValue="" name="phone" id="phone" className="input" />
-          </div>
+          <Input label="Full name" name="name" id="name" defaultValue="Luna Admin" iconLeft={User} />
+          <Input
+            label="Email address"
+            type="email"
+            id="email"
+            value="luna@company.io"
+            disabled
+            iconLeft={Envelope}
+            helperText="Contact support to change your email"
+          />
+          <Input
+            label="Phone"
+            name="phone"
+            id="phone"
+            type="tel"
+            format="phone"
+            iconLeft={Phone}
+            placeholder="(555) 000-0000"
+          />
           <div>
             <label className={labelClass} htmlFor="timezone">Timezone</label>
             <Select
@@ -121,18 +123,9 @@ function SecurityCard() {
         }}
       >
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
-          <div>
-            <label className={labelClass} htmlFor="currentPassword">Current password</label>
-            <input type="password" required name="currentPassword" id="currentPassword" className="input" />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="newPassword">New password</label>
-            <input type="password" required name="newPassword" id="newPassword" className="input" />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="repeatPassword">Repeat new password</label>
-            <input type="password" required name="repeatPassword" id="repeatPassword" className="input" />
-          </div>
+          <Input label="Current password" type="password" required name="currentPassword" id="currentPassword" />
+          <Input label="New password" type="password" required name="newPassword" id="newPassword" />
+          <Input label="Repeat new password" type="password" required name="repeatPassword" id="repeatPassword" />
         </div>
         <div className="mt-4 flex justify-end">
           <button type="submit" className="btn btn-primary">Change password</button>
