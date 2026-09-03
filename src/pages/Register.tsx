@@ -1,3 +1,4 @@
+import { useRegister } from '@fonderie/react-auth'
 import { Envelope, GoogleLogo, User } from '@phosphor-icons/react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
@@ -5,7 +6,7 @@ import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
-import { login } from '../data/auth'
+import { useAppSession } from '../lib/session'
 
 interface RegisterValues {
   name: string
@@ -17,6 +18,8 @@ interface RegisterValues {
 
 export default function Register() {
   const navigate = useNavigate()
+  const { register: registerAccount, isLoading } = useRegister()
+  const { refresh } = useAppSession()
 
   const {
     register,
@@ -25,9 +28,20 @@ export default function Register() {
     formState: { errors },
   } = useForm<RegisterValues>()
 
-  const onSubmit = ({ name, email }: RegisterValues) => {
-    login({ name: name.trim() || email.trim().split('@')[0], email: email.trim() })
-    navigate('/')
+  const onSubmit = async ({ name, email, password }: RegisterValues) => {
+    const [firstName, ...rest] = name.trim().split(/\s+/)
+    try {
+      await registerAccount({
+        email: email.trim(),
+        password,
+        firstName,
+        lastName: rest.join(' ') || undefined,
+      })
+      await refresh({ force: true })
+      navigate('/')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Registration failed')
+    }
   }
 
   return (
@@ -106,7 +120,7 @@ export default function Register() {
           )}
         </div>
         <div className="space-y-2">
-          <Button type="submit" fullWidth>Sign up</Button>
+          <Button type="submit" fullWidth loading={isLoading}>Sign up</Button>
           <Button
             type="button"
             variant="secondary"

@@ -1,8 +1,11 @@
+import { FonderieProvider } from '@fonderie/react'
 import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import './index.css'
+import { fonderie } from './lib/fonderie'
+import { SessionProvider } from './lib/session'
 import { GuestOnly, RequireAuth } from './components/RouteGuards'
 import { useTheme } from './hooks/useTheme'
 import AppLayout from './layouts/AppLayout'
@@ -34,7 +37,9 @@ function AppToaster() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    <FonderieProvider client={fonderie}>
+      <SessionProvider>
+        <BrowserRouter>
       <Routes>
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
@@ -67,8 +72,10 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/register.html" element={<Navigate to="/register" replace />} />
         <Route path="/forgotPassword.html" element={<Navigate to="/forgot-password" replace />} />
         <Route path="*" element={<NotFound />} />
-      </Routes>
-      <AppToaster />
-    </BrowserRouter>
+          </Routes>
+          <AppToaster />
+        </BrowserRouter>
+      </SessionProvider>
+    </FonderieProvider>
   </StrictMode>,
 )

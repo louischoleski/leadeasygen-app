@@ -9,8 +9,8 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { Toggle } from '../components/Toggle'
-import { useAuth } from '../data/auth'
 import { subscriptionTiers, useBilling } from '../data/billing'
+import { useAppSession, userDisplayName } from '../lib/session'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
 
@@ -33,14 +33,14 @@ const labelClass = 'mb-1 block text-sm font-medium text-ink'
 
 function ProfileCard() {
   const { locale, setLocale } = useLocale()
-  const { user } = useAuth()
+  const { user } = useAppSession()
 
   return (
     <Card as="section" id="profile" className="scroll-mt-20 p-5">
       <div className="flex items-center gap-3">
         <img src={profile} alt="" className="h-16 w-16 rounded-full object-cover" />
         <div className="flex-1">
-          <h2 className="font-medium text-ink">{user?.name}</h2>
+          <h2 className="font-medium text-ink">{userDisplayName(user)}</h2>
           <p className="text-sm text-ink-subtle">{user?.email}</p>
         </div>
         <Button variant="secondary" size="xs" onClick={() => toast('Avatar upload is not wired up yet')}>
@@ -55,7 +55,7 @@ function ProfileCard() {
         }}
       >
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
-          <Input label="Full name" name="name" id="name" defaultValue={user?.name ?? ''} iconLeft={User} />
+          <Input label="Full name" name="name" id="name" defaultValue={userDisplayName(user)} iconLeft={User} />
           <Input
             label="Email address"
             type="email"

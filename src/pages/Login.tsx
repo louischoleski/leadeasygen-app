@@ -1,3 +1,4 @@
+import { isMfaRequired, useLogin } from '@fonderie/react-auth'
 import { Envelope, GoogleLogo } from '@phosphor-icons/react'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -5,7 +6,7 @@ import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
-import { login } from '../data/auth'
+import { useAppSession } from '../lib/session'
 
 interface LoginValues {
   email: string
@@ -15,6 +16,8 @@ interface LoginValues {
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { login, isLoading } = useLogin()
+  const { refresh } = useAppSession()
   // RequireAuth stashes the page the visitor was headed for
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/'
 
@@ -24,10 +27,19 @@ export default function Login() {
     formState: { errors },
   } = useForm<LoginValues>()
 
-  const onSubmit = ({ email }: LoginValues) => {
-    const local = email.trim().split('@')[0]
-    login({ name: local.charAt(0).toUpperCase() + local.slice(1), email: email.trim() })
-    navigate(from, { replace: true })
+  const onSubmit = async ({ email, password }: LoginValues) => {
+    try {
+      const result = await login({ email: email.trim(), password })
+      if (isMfaRequired(result)) {
+        // Challenge UI lands with the MFA phase; surface the state honestly
+        toast('This account requires MFA — the challenge screen is not wired up yet')
+        return
+      }
+      await refresh({ force: true })
+      navigate(from, { replace: true })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Login failed')
+    }
   }
 
   return (
@@ -61,7 +73,7 @@ export default function Login() {
           {...register('password', { required: 'Enter your password' })}
         />
         <div className="space-y-2">
-          <Button type="submit" fullWidth>Login</Button>
+          <Button type="submit" fullWidth loading={isLoading}>Login</Button>
           <Button
             type="button"
             variant="secondary"

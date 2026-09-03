@@ -2,8 +2,8 @@ import { Coin, Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun,
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
-import { useAuth } from '../data/auth'
 import { useBilling } from '../data/billing'
+import { useAppSession, userDisplayName } from '../lib/session'
 import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
 import { SHORTCUTS } from '../constants/shortcuts'
@@ -18,7 +18,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { locale } = useLocale()
   const { isMobile } = useViewport()
   const os = useOS()
-  const { user, logout } = useAuth()
+  const { user, logout } = useAppSession()
   const { creditBalance } = useBilling()
   const [localeOpen, setLocaleOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
@@ -167,7 +167,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         {accountOpen && (
           <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-52 p-1">
             <div className="border-b border-hairline px-2 pt-1.5 pb-2">
-              <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
+              <p className="truncate text-sm font-medium text-ink">{userDisplayName(user)}</p>
               <p className="truncate text-xs text-ink-subtle">{user?.email}</p>
             </div>
             <Link
@@ -181,7 +181,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
             <button
               type="button"
               role="menuitem"
-              onClick={logout}
+              onClick={() => void logout()}
               className="block w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
             >
               Log out

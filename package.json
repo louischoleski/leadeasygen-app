@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fonderie/client": "^0.10.0",
+    "@fonderie/react": "^0.2.0",
+    "@fonderie/react-auth": "^0.7.0",
     "@phosphor-icons/react": "^2.1.10",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
