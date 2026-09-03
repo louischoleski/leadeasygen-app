@@ -9,6 +9,9 @@ import AuthLayout from './layouts/AuthLayout'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ResetPassword from './pages/ResetPassword'
+import Settings from './pages/Settings'
+import VerifyEmail from './pages/VerifyEmail'
 
 // Lazy so the charting library loads only with the dashboard, not the auth pages
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -24,11 +27,14 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<Suspense fallback={null}><Dashboard /></Suspense>} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify" element={<VerifyEmail />} />
         </Route>
         {/* Redirects for URLs of the former static site */}
         <Route path="/index.html" element={<Navigate to="/" replace />} />

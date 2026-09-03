@@ -61,7 +61,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       >
         <List size={20} aria-hidden="true" />
       </button>
-      <Link to="/" className="ml-1 text-base font-bold tracking-widest text-primary uppercase md:hidden">
+      <Link to="/" className="ml-1 text-base font-bold tracking-widest text-link uppercase md:hidden">
         Luna
       </Link>
       <form className="relative ml-3 hidden md:block" role="search" onSubmit={(e) => e.preventDefault()}>

@@ -57,6 +57,15 @@ export default function Sidebar({ open, onNavigate }: Props) {
               Dashboard
             </NavLink>
           </li>
+          <li>
+            <NavLink
+              to="/settings"
+              onClick={onNavigate}
+              className={({ isActive }) => (isActive ? activeClass : linkClass)}
+            >
+              Settings
+            </NavLink>
+          </li>
           <li className={categoryClass}>App Pages</li>
           <li>
             <button

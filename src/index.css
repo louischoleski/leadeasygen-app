@@ -104,6 +104,9 @@ body {
   .btn-secondary {
     @apply border-hairline bg-surface-1 text-ink hover:bg-surface-2;
   }
+  .btn-danger {
+    @apply border-error text-error hover:bg-error/10;
+  }
   .btn-xs {
     @apply px-2 py-1 text-xs;
   }
