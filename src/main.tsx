@@ -6,6 +6,7 @@ import './index.css'
 import { useTheme } from './hooks/useTheme'
 import AppLayout from './layouts/AppLayout'
 import AuthLayout from './layouts/AuthLayout'
+import Credits from './pages/Credits'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<AppLayout />}>
           <Route index element={<Suspense fallback={null}><Dashboard /></Suspense>} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/credits" element={<Credits />} />
         </Route>
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
