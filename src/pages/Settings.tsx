@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Envelope, Phone, User } from '@phosphor-icons/react'
 import profile from '../assets/profile.jpg'
+import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
+import { Toggle } from '../components/Toggle'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
 
@@ -36,13 +38,9 @@ function ProfileCard() {
           <h2 className="font-medium text-ink">Luna Admin</h2>
           <p className="text-sm text-ink-subtle">luna@company.io</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-secondary btn-xs"
-          onClick={() => toast('Avatar upload is not wired up yet')}
-        >
+        <Button variant="secondary" size="xs" onClick={() => toast('Avatar upload is not wired up yet')}>
           Change avatar
-        </button>
+        </Button>
       </div>
       <form
         noValidate
@@ -95,7 +93,7 @@ function ProfileCard() {
           </div>
         </div>
         <div className="mt-4 flex justify-end">
-          <button type="submit" className="btn btn-primary">Save profile</button>
+          <Button type="submit">Save profile</Button>
         </div>
       </form>
     </section>
@@ -128,7 +126,7 @@ function SecurityCard() {
           <Input label="Repeat new password" type="password" required name="repeatPassword" id="repeatPassword" />
         </div>
         <div className="mt-4 flex justify-end">
-          <button type="submit" className="btn btn-primary">Change password</button>
+          <Button type="submit">Change password</Button>
         </div>
       </form>
       <hr className="my-4 border-hairline" />
@@ -138,46 +136,30 @@ function SecurityCard() {
           <p className="text-xs text-ink-subtle">A one-time code from an authenticator app on every login.</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink">
-            {mfaEnabled ? 'Enabled' : 'Disabled'}
-          </span>
-          {mfaEnabled ? (
-            <>
-              <button
-                type="button"
-                className="btn btn-secondary btn-xs"
-                onClick={() => {
-                  setBackupCodes(newBackupCodes())
-                  toast.success('New backup codes generated')
-                }}
-              >
-                Regenerate codes
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-xs"
-                onClick={() => {
-                  setMfaEnabled(false)
-                  setBackupCodes(null)
-                  toast('Two-factor authentication disabled')
-                }}
-              >
-                Disable
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-primary btn-xs"
+          {mfaEnabled && (
+            <Button
+              variant="secondary"
+              size="xs"
               onClick={() => {
-                setMfaEnabled(true)
                 setBackupCodes(newBackupCodes())
-                toast.success('Two-factor authentication enabled')
+                toast.success('New backup codes generated')
               }}
             >
-              Enable
-            </button>
+              Regenerate codes
+            </Button>
           )}
+          <Toggle
+            pressed={mfaEnabled}
+            onPressedChange={(next) => {
+              setMfaEnabled(next)
+              setBackupCodes(next ? newBackupCodes() : null)
+              if (next) toast.success('Two-factor authentication enabled')
+              else toast('Two-factor authentication disabled')
+            }}
+            unpressedLabel="Disabled"
+            pressedLabel="Enabled"
+            aria-label="Two-factor authentication"
+          />
         </div>
       </div>
       {backupCodes && (
@@ -208,7 +190,7 @@ function CreditsCard() {
           <span className="text-3xl font-bold text-ink">247</span>
           <span className="ml-1 text-sm text-ink-subtle">remaining</span>
         </div>
-        <Link to="/credits" className="btn btn-primary">Buy credits</Link>
+        <Button asChild><Link to="/credits">Buy credits</Link></Button>
       </div>
     </section>
   )
@@ -224,9 +206,8 @@ function DangerCard() {
         Permanently delete your account and all associated data. This cannot be undone.
       </p>
       <div className="mt-4">
-        <button
-          type="button"
-          className="btn btn-danger"
+        <Button
+          variant="danger"
           onClick={() => {
             if (!deleteArmed) {
               setDeleteArmed(true)
@@ -237,7 +218,7 @@ function DangerCard() {
           }}
         >
           {deleteArmed ? 'Click again to confirm deletion' : 'Delete account'}
-        </button>
+        </Button>
       </div>
     </section>
   )

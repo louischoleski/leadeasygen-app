@@ -1,6 +1,7 @@
 import { CaretUp, ChartBar, Shield, TrendDown, TrendUp } from '@phosphor-icons/react'
 import { useEffect } from 'react'
 import { toast } from 'sonner'
+import { Button } from '../components/Button'
 import { ActiveUsersChart, SharePie, Spark } from '../components/charts'
 import StatCard from '../components/StatCard'
 import ViewHeader from '../components/ViewHeader'
@@ -64,9 +65,9 @@ export default function Dashboard() {
                   120,312 <CaretUp size={11} aria-hidden="true" className="inline text-success" /> -22%
                 </span>
               </div>
-              <button type="button" className="btn btn-secondary btn-xs relative z-10" disabled>
+              <Button variant="secondary" size="xs" className="relative z-10" disabled>
                 See locations
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -135,7 +136,7 @@ export default function Dashboard() {
                     <td className="p-3"><SharePie values={customer.share} /></td>
                     <td className="p-3">{customer.city}</td>
                     <td className="p-3">
-                      <button type="button" className="btn btn-secondary btn-xs" disabled>View</button>
+                      <Button variant="secondary" size="xs" disabled>View</Button>
                     </td>
                   </tr>
                 ))}

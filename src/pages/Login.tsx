@@ -1,6 +1,7 @@
 import { LockOpen } from '@phosphor-icons/react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
+import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
@@ -41,8 +42,8 @@ export default function Login() {
             containerClassName="mb-4"
           />
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-primary">Login</button>
-            <Link to="/register" className="btn btn-secondary">Register</Link>
+            <Button type="submit">Login</Button>
+            <Button asChild variant="secondary"><Link to="/register">Register</Link></Button>
             <Link to="/forgot-password" className="text-xs text-link hover:underline">Forgot password?</Link>
           </div>
         </form>

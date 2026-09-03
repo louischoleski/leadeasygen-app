@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Button } from '../components/Button'
 
 const packages = [
   { credits: 100, price: '$9' },
@@ -21,13 +22,9 @@ export default function Credits() {
             <div className="text-3xl font-bold text-ink">{p.credits}</div>
             <div className="text-xs text-ink-subtle">credits</div>
             <div className="text-card-title mt-2 text-ink">{p.price}</div>
-            <button
-              type="button"
-              className="btn btn-primary mt-4 w-full"
-              onClick={() => toast('Checkout is not wired up yet')}
-            >
+            <Button fullWidth className="mt-4" onClick={() => toast('Checkout is not wired up yet')}>
               Select
-            </button>
+            </Button>
           </div>
         ))}
       </div>

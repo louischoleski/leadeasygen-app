@@ -1,6 +1,7 @@
 import { UserPlus } from '@phosphor-icons/react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
+import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
@@ -43,8 +44,8 @@ export default function Register() {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-primary">Register</button>
-            <Link to="/login" className="btn btn-secondary">Login</Link>
+            <Button type="submit">Register</Button>
+            <Button asChild variant="secondary"><Link to="/login">Login</Link></Button>
           </div>
         </form>
       </div>

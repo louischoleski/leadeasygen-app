@@ -1,6 +1,7 @@
 import { IdentificationCard } from '@phosphor-icons/react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
+import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
@@ -32,8 +33,8 @@ export default function ForgotPassword() {
             containerClassName="mb-4"
           />
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-primary">Send new password</button>
-            <Link to="/" className="btn btn-secondary">Cancel</Link>
+            <Button type="submit">Send new password</Button>
+            <Button asChild variant="secondary"><Link to="/">Cancel</Link></Button>
           </div>
         </form>
       </div>

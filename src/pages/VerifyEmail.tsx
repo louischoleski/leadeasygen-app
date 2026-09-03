@@ -2,6 +2,7 @@ import { EnvelopeSimple } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
+import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
@@ -36,14 +37,14 @@ export default function VerifyEmail() {
             className="text-center text-lg tracking-[0.5em]"
           />
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-primary">Verify</button>
-            <button
+            <Button type="submit">Verify</Button>
+            <Button
+              variant="secondary"
               type="button"
-              className="btn btn-secondary"
               onClick={() => toast('Verification code sent', { description: 'Check your inbox.' })}
             >
               Resend code
-            </button>
+            </Button>
           </div>
         </form>
       </div>

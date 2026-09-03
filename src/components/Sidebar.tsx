@@ -1,16 +1,18 @@
 import { CaretDown, Globe, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
+import { ToggleGroup } from './Toggle'
 import { useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
-import { themeModes, useTheme, type ThemeMode } from '../hooks/useTheme'
+import { useTheme } from '../hooks/useTheme'
 
-const themeModeIcons: Record<ThemeMode, typeof Monitor> = {
-  system: Monitor,
-  light: Sun,
-  dark: Moon,
-}
+const themeOptions = [
+  { value: 'system', icon: Monitor, label: 'System' },
+  { value: 'light', icon: Sun, label: 'Light' },
+  { value: 'dark', icon: Moon, label: 'Dark' },
+] as const
 
 const tips = [
   { label: 'Tip', text: 'Use radius + keywords together for tighter lead targeting.' },
@@ -99,14 +101,14 @@ export default function Sidebar({ open, onNavigate }: Props) {
       {/* Rotating onboarding tip; dismissing it hides it on all surfaces */}
       {!tipHidden && (
         <div className="relative mx-2 mt-auto mb-4 rounded-lg border border-hairline bg-surface-2 p-3">
-          <button
-            type="button"
-            onClick={dismissTip}
+          <IconButton
+            icon={X}
+            variant="ghost"
+            size="xs"
             aria-label="Dismiss tip"
-            className="absolute top-2 right-2 cursor-pointer p-1 text-ink-subtle hover:text-ink"
-          >
-            <X size={12} aria-hidden="true" />
-          </button>
+            onClick={dismissTip}
+            className="absolute top-1 right-1"
+          />
           <p className="pr-4 text-xs text-ink-subtle">
             <span className="font-medium text-link">{tip.label}:</span> {tip.text}
           </p>
@@ -145,25 +147,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
           <span className="flex items-center gap-2 text-sm text-ink-muted">
             <Monitor size={16} aria-hidden="true" className="text-ink-subtle" /> Theme
           </span>
-          <div className="flex rounded-full border border-hairline bg-surface-2 p-0.5" role="group" aria-label="Theme">
-            {themeModes.map((m) => {
-              const ModeIcon = themeModeIcons[m]
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  aria-label={m.charAt(0).toUpperCase() + m.slice(1)}
-                  aria-pressed={mode === m}
-                  onClick={() => setThemeMode(m)}
-                  className={`flex h-7 w-7 cursor-pointer items-center justify-center rounded-full transition-colors ${
-                    mode === m ? 'bg-surface-1 text-ink shadow-sm' : 'text-ink-subtle hover:text-ink'
-                  }`}
-                >
-                  <ModeIcon size={14} aria-hidden="true" />
-                </button>
-              )
-            })}
-          </div>
+          <ToggleGroup value={mode} onValueChange={setThemeMode} options={[...themeOptions]} aria-label="Theme" />
         </div>
       </div>
     </aside>

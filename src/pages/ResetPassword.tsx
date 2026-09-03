@@ -2,6 +2,7 @@ import { Key } from '@phosphor-icons/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
+import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
@@ -52,7 +53,7 @@ export default function ResetPassword() {
             containerClassName="mb-4"
           />
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-primary">Reset password</button>
+            <Button type="submit">Reset password</Button>
           </div>
         </form>
       </div>

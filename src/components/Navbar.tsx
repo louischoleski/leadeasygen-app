@@ -2,6 +2,7 @@ import { Globe, List, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-i
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
+import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
 import { SHORTCUTS } from '../constants/shortcuts'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
@@ -53,14 +54,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           v1.4
         </span>
       </Link>
-      <button
-        type="button"
-        aria-label="Toggle navigation"
-        onClick={onToggleNav}
-        className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:text-ink md:ml-2 md:h-9 md:w-9"
-      >
-        <List size={20} aria-hidden="true" />
-      </button>
+      <IconButton icon={List} variant="ghost" aria-label="Toggle navigation" onClick={onToggleNav} className="md:ml-2" />
       <Link to="/" className="ml-1 text-base font-bold tracking-widest text-link uppercase md:hidden">
         Luna
       </Link>
@@ -77,14 +71,13 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         </kbd>
       </form>
 
-      <button
-        type="button"
+      <IconButton
+        icon={MagnifyingGlass}
+        variant="ghost"
         aria-label="Open search"
         onClick={() => setSearchOpen(true)}
-        className="ml-auto flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:text-ink md:hidden"
-      >
-        <MagnifyingGlass size={20} aria-hidden="true" />
-      </button>
+        className="ml-auto md:hidden"
+      />
 
       <div
         className="relative mr-1 ml-auto hidden md:block"
@@ -92,16 +85,15 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           if (!e.currentTarget.contains(e.relatedTarget)) setLocaleOpen(false)
         }}
       >
-        <button
-          type="button"
+        <IconButton
+          icon={Globe}
+          variant="ghost"
+          size="sm"
           aria-label={`Language: ${localeNames[locale]}`}
           aria-haspopup="menu"
           aria-expanded={localeOpen}
           onClick={() => setLocaleOpen((o) => !o)}
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink"
-        >
-          <Globe size={18} aria-hidden="true" />
-        </button>
+        />
         {localeOpen && (
           <LocaleMenu className="top-full right-0 mt-1 w-36" onSelect={() => setLocaleOpen(false)} />
         )}
@@ -112,16 +104,15 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           if (!e.currentTarget.contains(e.relatedTarget)) setThemeOpen(false)
         }}
       >
-        <button
-          type="button"
+        <IconButton
+          icon={ThemeIcon}
+          variant="ghost"
+          size="sm"
           aria-label={`Theme: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`}
           aria-haspopup="menu"
           aria-expanded={themeOpen}
           onClick={() => setThemeOpen((o) => !o)}
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink"
-        >
-          <ThemeIcon size={18} aria-hidden="true" />
-        </button>
+        />
         {themeOpen && (
           <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-28 p-1">
             {themeModes.map((m) => (
@@ -163,14 +154,13 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
               placeholder="Search data for analysis"
               className="h-11 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-subtle"
             />
-            <button
-              type="button"
+            <IconButton
+              icon={X}
+              variant="ghost"
               aria-label="Close search"
               onClick={() => setSearchOpen(false)}
-              className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-subtle transition-colors hover:text-ink"
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
+              className="shrink-0"
+            />
           </div>
         </>
       )}

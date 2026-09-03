@@ -97,21 +97,6 @@ body {
   .card {
     @apply rounded-lg border border-hairline bg-surface-1 shadow-card;
   }
-  .btn {
-    @apply inline-block cursor-pointer rounded-md border border-transparent px-3.5 py-2 text-center text-sm leading-tight font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-focus/50 disabled:cursor-not-allowed disabled:opacity-50;
-  }
-  .btn-primary {
-    @apply bg-primary text-on-primary hover:bg-primary-hover;
-  }
-  .btn-secondary {
-    @apply border-hairline bg-surface-1 text-ink hover:bg-surface-2;
-  }
-  .btn-danger {
-    @apply border-error text-error hover:bg-error/10;
-  }
-  .btn-xs {
-    @apply px-2 py-1 text-xs;
-  }
   .input {
     @apply w-full rounded-md border border-hairline bg-surface-1 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-subtle focus:border-hairline-strong focus:ring-2 focus:ring-primary-focus/50;
   }
