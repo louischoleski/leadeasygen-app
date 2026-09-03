@@ -15,6 +15,7 @@ import {
   type BillingRecord,
   type SubscriptionTier,
 } from '../data/billing'
+import { useJobs } from '../data/jobs'
 import { cn } from '../lib/cn'
 
 const statusBadge: Record<BillingRecord['status'], { label: string; className: string }> = {
@@ -159,7 +160,7 @@ function SubscriptionPlans() {
 
   return (
     <section id="plans" className="scroll-mt-20 space-y-4">
-      <div className="flex justify-center">
+      <div className="flex justify-center pt-4 pb-2">
         <div className="flex items-center gap-2 rounded-lg border border-hairline bg-surface-2 p-1">
           <button
             type="button"
@@ -196,7 +197,7 @@ function SubscriptionPlans() {
           return (
             <Card
               key={tier.id}
-              className={cn('relative p-6', tier.popular && 'border-primary bg-surface-2/50 shadow-sm')}
+              className={cn('relative flex flex-col p-6', tier.popular && 'border-primary bg-surface-2/50 shadow-sm')}
             >
               {tier.popular && (
                 <span className="absolute -top-2 right-4 rounded-md bg-primary px-2.5 py-0.5 text-xs font-semibold text-on-primary shadow">
@@ -219,19 +220,21 @@ function SubscriptionPlans() {
                   </li>
                 ))}
               </ul>
-              {current ? (
-                <Button variant="secondary" fullWidth disabled>
-                  Current Plan
-                </Button>
-              ) : (
-                <Button
-                  variant={tier.id !== 'free' && tier.popular ? 'primary' : 'secondary'}
-                  fullWidth
-                  onClick={() => choose(tier)}
-                >
-                  {tier.id === 'free' ? 'Downgrade' : 'Subscribe'}
-                </Button>
-              )}
+              <div className="mt-auto">
+                {current ? (
+                  <Button variant="secondary" fullWidth disabled>
+                    Current Plan
+                  </Button>
+                ) : (
+                  <Button
+                    variant={tier.id !== 'free' && tier.popular ? 'primary' : 'secondary'}
+                    fullWidth
+                    onClick={() => choose(tier)}
+                  >
+                    {tier.id === 'free' ? 'Downgrade' : 'Subscribe'}
+                  </Button>
+                )}
+              </div>
             </Card>
           )
         })}
@@ -242,6 +245,7 @@ function SubscriptionPlans() {
 
 export default function Billing() {
   const { creditBalance, subscriptionTier, billingCycle, usage } = useBilling()
+  const { activeJobs } = useJobs()
   const [showSubscription, setShowSubscription] = useState(false)
   const [activeTab, setActiveTab] = useState('history')
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
@@ -303,10 +307,8 @@ export default function Billing() {
             billingCycle={billingCycle}
             nextBillingDate="June 1, 2025"
             metrics={[
-              { label: 'Jobs this month', used: usage.jobs, total: activeTier.limits.jobs },
-              { label: 'Team seats', used: usage.teamSeats, total: activeTier.limits.teamSeats },
-              { label: 'API calls', used: usage.apiCalls, total: activeTier.limits.apiCalls },
-              { label: 'Storage', used: usage.storageGB, total: activeTier.limits.storageGB, unit: 'GB' },
+              { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
+              { label: 'Credits this month', used: usage.creditsUsed, total: activeTier.limits.creditsPerMonth },
             ]}
             onCancel={
               activeTier.id !== 'free'

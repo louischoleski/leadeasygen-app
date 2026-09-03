@@ -34,7 +34,7 @@ export function ScrapeForm() {
 
   const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
   const activeJobs = jobs.filter((j) => j.status === 'queued' || j.status === 'running').length
-  const jobLimit = tier?.limits.jobs ?? null
+  const jobLimit = tier?.limits.activeJobs ?? null
   const atJobLimit = jobLimit !== null && activeJobs >= jobLimit
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

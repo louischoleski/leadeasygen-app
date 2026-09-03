@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
-import { addCredits, incrementJobsUsage, spendCredits } from './billing'
+import { refundCredits, spendCredits } from './billing'
 
 export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
 
@@ -130,7 +130,7 @@ function tick() {
     changed = true
 
     if (Math.random() < FAILURE_CHANCE && job.progress < 90) {
-      addCredits(job.creditCost)
+      refundCredits(job.creditCost)
       return { ...job, status: 'failed' as JobStatus, refunded: true }
     }
 
@@ -173,7 +173,6 @@ export type CreateJobResult = { ok: true; job: Job } | { ok: false; error: 'insu
 export function createJob(input: CreateJobInput): CreateJobResult {
   const creditCost = jobCreditCost(input.radiusKm, input.keywords.length)
   if (!spendCredits(creditCost)) return { ok: false, error: 'insufficient-credits' }
-  incrementJobsUsage()
 
   const job: Job = {
     id: `job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
@@ -203,7 +202,7 @@ export function cancelJob(id: string) {
   setJobs(
     jobs.map((job) => {
       if (job.id !== id || (job.status !== 'queued' && job.status !== 'running')) return job
-      addCredits(job.creditCost)
+      refundCredits(job.creditCost)
       return { ...job, status: 'failed' as JobStatus, refunded: true }
     }),
   )

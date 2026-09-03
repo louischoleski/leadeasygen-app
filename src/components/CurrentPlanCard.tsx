@@ -46,7 +46,7 @@ export function CurrentPlanCard({
   onCancel,
 }: CurrentPlanCardProps) {
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h2>
@@ -77,7 +77,7 @@ export function CurrentPlanCard({
       </div>
 
       {onCancel && (
-        <div className="px-6 pb-6">
+        <div className="mt-auto px-6 pb-6">
           <Button variant="secondary" fullWidth onClick={onCancel}>
             Cancel Subscription
           </Button>

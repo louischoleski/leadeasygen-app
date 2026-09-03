@@ -18,10 +18,8 @@ export const tokenPackages: TokenPackage[] = [
 
 // Subscription tiers — recurring
 export interface TierLimits {
-  jobs: number | null // null = unlimited
-  teamSeats: number | null
-  apiCalls: number | null
-  storageGB: number | null
+  activeJobs: number | null // null = unlimited
+  creditsPerMonth: number | null
 }
 
 export interface SubscriptionTier {
@@ -43,7 +41,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     priceAnnual: 0,
     description: 'Get started with limited scraping',
     features: ['50 credits/month', 'Basic support', '1 active job'],
-    limits: { jobs: 1, teamSeats: 1, apiCalls: 1000, storageGB: 1 },
+    limits: { activeJobs: 1, creditsPerMonth: 50 },
   },
   {
     id: 'unlimited',
@@ -52,7 +50,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     priceAnnual: 39,
     description: 'Unlimited leads, no credit limits',
     features: ['Unlimited jobs', 'Unlimited credits', 'Priority support', 'CSV export', 'API access'],
-    limits: { jobs: null, teamSeats: null, apiCalls: null, storageGB: null },
+    limits: { activeJobs: null, creditsPerMonth: null },
     popular: true,
   },
 ]
@@ -79,10 +77,7 @@ export const billingHistory: BillingRecord[] = [
 export type BillingCycle = 'monthly' | 'annual'
 
 export interface UsageState {
-  jobs: number
-  teamSeats: number
-  apiCalls: number
-  storageGB: number
+  creditsUsed: number // credits spent this month; refunds are subtracted back
 }
 
 interface BillingState {
@@ -98,7 +93,7 @@ const defaults: BillingState = {
   creditBalance: 247,
   subscriptionTier: 'free',
   billingCycle: 'monthly',
-  usage: { jobs: 0, teamSeats: 1, apiCalls: 420, storageGB: 0.3 },
+  usage: { creditsUsed: 18 },
 }
 
 function readStored(): BillingState {
@@ -120,10 +115,7 @@ function readStored(): BillingState {
       subscriptionTier: tierValid ? (p.subscriptionTier as string | null) : defaults.subscriptionTier,
       billingCycle: p.billingCycle === 'annual' ? 'annual' : 'monthly',
       usage: {
-        jobs: usageField(storedUsage.jobs, defaults.usage.jobs),
-        teamSeats: usageField(storedUsage.teamSeats, defaults.usage.teamSeats),
-        apiCalls: usageField(storedUsage.apiCalls, defaults.usage.apiCalls),
-        storageGB: usageField(storedUsage.storageGB, defaults.usage.storageGB),
+        creditsUsed: usageField(storedUsage.creditsUsed, defaults.usage.creditsUsed),
       },
     }
   } catch {
@@ -154,12 +146,18 @@ export function addCredits(amount: number) {
 
 export function spendCredits(amount: number): boolean {
   if (state.creditBalance < amount) return false
-  update({ creditBalance: state.creditBalance - amount })
+  update({
+    creditBalance: state.creditBalance - amount,
+    usage: { creditsUsed: state.usage.creditsUsed + amount },
+  })
   return true
 }
 
-export function incrementJobsUsage() {
-  update({ usage: { ...state.usage, jobs: state.usage.jobs + 1 } })
+export function refundCredits(amount: number) {
+  update({
+    creditBalance: state.creditBalance + amount,
+    usage: { creditsUsed: Math.max(0, state.usage.creditsUsed - amount) },
+  })
 }
 
 export function useBilling() {
