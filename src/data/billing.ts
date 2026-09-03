@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
 
-// Token packages — one-time purchase
-export interface TokenPackage {
+// Credit packs — one-time purchase
+export interface CreditPack {
   id: string
   name: string
   credits: number
@@ -10,7 +10,7 @@ export interface TokenPackage {
   popular?: boolean
 }
 
-export const tokenPackages: TokenPackage[] = [
+export const creditPacks: CreditPack[] = [
   { id: 'pack-100', name: 'Pack 100', credits: 100, price: 9 },
   { id: 'pack-300', name: 'Pack 300', credits: 300, price: 19 },
   { id: 'pack-500', name: 'Pack 500', credits: 500, price: 29, popular: true },

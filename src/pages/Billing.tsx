@@ -10,7 +10,7 @@ import { Toggle } from '../components/Toggle'
 import {
   billingHistory,
   subscriptionTiers,
-  tokenPackages,
+  creditPacks,
   useBilling,
   type BillingRecord,
   type SubscriptionTier,
@@ -26,13 +26,13 @@ const statusBadge: Record<BillingRecord['status'], { label: string; className: s
 
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
-function TokenPackages() {
+function CreditPacks() {
   const { addCredits } = useBilling()
 
   return (
     <section id="packages" className="scroll-mt-20 space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
-        {tokenPackages.map((pkg) => (
+        {creditPacks.map((pkg) => (
           <Card key={pkg.id} className={cn('relative p-6', pkg.popular && 'border-primary shadow-sm')}>
             {pkg.popular && (
               <span className="absolute -top-2 right-4 rounded-md bg-primary px-2.5 py-0.5 text-xs font-semibold text-on-primary">
@@ -321,7 +321,7 @@ export default function Billing() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-ink">
-                {showSubscription ? 'Subscription Plans' : 'Token Packages'}
+                {showSubscription ? 'Subscription Plans' : 'Credit Packs'}
               </h2>
               <p className="text-sm text-ink-subtle">
                 {showSubscription ? 'Recurring plans for unlimited scraping' : 'One-time purchases, never expire'}
@@ -335,7 +335,7 @@ export default function Billing() {
               aria-label="Choose billing mode"
             />
           </div>
-          {showSubscription ? <SubscriptionPlans /> : <TokenPackages />}
+          {showSubscription ? <SubscriptionPlans /> : <CreditPacks />}
         </div>
       </div>
 
