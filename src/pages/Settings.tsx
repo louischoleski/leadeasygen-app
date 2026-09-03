@@ -4,10 +4,11 @@ import { toast } from 'sonner'
 import { Envelope, Phone, User } from '@phosphor-icons/react'
 import profile from '../assets/profile.jpg'
 import { Button } from '../components/Button'
+import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { Toggle } from '../components/Toggle'
-import { useBilling } from '../data/billing'
+import { subscriptionTiers, useBilling } from '../data/billing'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
 
@@ -32,7 +33,7 @@ function ProfileCard() {
   const { locale, setLocale } = useLocale()
 
   return (
-    <section id="profile" className="card scroll-mt-20 p-5">
+    <Card as="section" id="profile" className="scroll-mt-20 p-5">
       <div className="flex items-center gap-3">
         <img src={profile} alt="" className="h-16 w-16 rounded-full object-cover" />
         <div className="flex-1">
@@ -97,7 +98,7 @@ function ProfileCard() {
           <Button type="submit">Save profile</Button>
         </div>
       </form>
-    </section>
+    </Card>
   )
 }
 
@@ -106,7 +107,7 @@ function SecurityCard() {
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null)
 
   return (
-    <section id="security" className="card scroll-mt-20 p-5">
+    <Card as="section" id="security" className="scroll-mt-20 p-5">
       <h2 className="text-card-title text-ink">Security</h2>
       <form
         noValidate
@@ -175,26 +176,32 @@ function SecurityCard() {
           </div>
         </div>
       )}
-    </section>
+    </Card>
   )
 }
 
 function CreditsCard() {
-  const { creditBalance } = useBilling()
+  const { creditBalance, subscriptionTier } = useBilling()
+  const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
+  const planLabel = tier ? `the ${tier.name} plan` : 'pay-as-you-go'
+
   return (
-    <section id="credits" className="card scroll-mt-20 flex flex-wrap items-center justify-between gap-3 p-5">
+    <Card as="section" id="credits" className="scroll-mt-20 flex flex-wrap items-center justify-between gap-3 p-5">
       <div>
         <h2 className="text-card-title text-ink">Credits</h2>
-        <p className="mt-1 text-sm text-ink-subtle">Buy credits to run scraping jobs.</p>
+        <p className="mt-1 text-sm text-ink-subtle">
+          You're on {planLabel}. Credits are spent per scraping job.
+        </p>
       </div>
-      <div className="flex items-center gap-6">
-        <div>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="mr-3">
           <span className="text-3xl font-bold text-ink">{creditBalance}</span>
           <span className="ml-1 text-sm text-ink-subtle">remaining</span>
         </div>
         <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>
+        <Button asChild variant="secondary"><Link to="/billing">Manage billing</Link></Button>
       </div>
-    </section>
+    </Card>
   )
 }
 
@@ -202,7 +209,7 @@ function DangerCard() {
   const [deleteArmed, setDeleteArmed] = useState(false)
 
   return (
-    <section id="danger" className="card scroll-mt-20 border-error/40 bg-error/5 p-5">
+    <Card as="section" id="danger" className="scroll-mt-20 border-error/40 bg-error/5 p-5">
       <h2 className="text-card-title text-error">Danger zone</h2>
       <p className="mt-1 text-sm text-ink-subtle">
         Permanently delete your account and all associated data. This cannot be undone.
@@ -222,7 +229,7 @@ function DangerCard() {
           {deleteArmed ? 'Click again to confirm deletion' : 'Delete account'}
         </Button>
       </div>
-    </section>
+    </Card>
   )
 }
 
