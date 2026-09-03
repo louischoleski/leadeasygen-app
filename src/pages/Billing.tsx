@@ -52,7 +52,7 @@ function CreditPacks() {
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
               onClick={() => {
-                addCredits(pkg.credits)
+                addCredits(pkg.credits, `${pkg.name} — ${pkg.credits} credits`)
                 toast.success(`Added ${pkg.credits.toLocaleString()} credits`, {
                   description: 'Demo purchase — payments are not wired up yet.',
                 })

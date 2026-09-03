@@ -130,7 +130,7 @@ function tick() {
     changed = true
 
     if (Math.random() < FAILURE_CHANCE && job.progress < 90) {
-      refundCredits(job.creditCost)
+      refundCredits(job.creditCost, `Refund — failed job (${job.location})`)
       return { ...job, status: 'failed' as JobStatus, refunded: true }
     }
 
@@ -172,7 +172,9 @@ export type CreateJobResult = { ok: true; job: Job } | { ok: false; error: 'insu
 
 export function createJob(input: CreateJobInput): CreateJobResult {
   const creditCost = jobCreditCost(input.radiusKm, input.keywords.length)
-  if (!spendCredits(creditCost)) return { ok: false, error: 'insufficient-credits' }
+  if (!spendCredits(creditCost, `Scrape job — ${input.location.trim()}`)) {
+    return { ok: false, error: 'insufficient-credits' }
+  }
 
   const job: Job = {
     id: `job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
@@ -202,7 +204,7 @@ export function cancelJob(id: string) {
   setJobs(
     jobs.map((job) => {
       if (job.id !== id || (job.status !== 'queued' && job.status !== 'running')) return job
-      refundCredits(job.creditCost)
+      refundCredits(job.creditCost, `Refund — cancelled job (${job.location})`)
       return { ...job, status: 'failed' as JobStatus, refunded: true }
     }),
   )

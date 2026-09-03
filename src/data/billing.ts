@@ -74,6 +74,21 @@ export const billingHistory: BillingRecord[] = [
   { id: 'INV-003', date: 'Mar 1, 2025', type: 'subscription', description: 'Unlimited Plan — Monthly', amount: '$49.00', status: 'paid' },
 ]
 
+// Credit ledger — every credit movement, newest first, so the current
+// balance is always explainable from the entries alone
+export type LedgerEntryType = 'purchase' | 'spend' | 'refund' | 'grant'
+
+export interface LedgerEntry {
+  id: string
+  date: string // ISO
+  type: LedgerEntryType
+  description: string
+  amount: number // signed: + for purchase/refund/grant, - for spend
+  balanceAfter: number
+}
+
+const LEDGER_CAP = 50
+
 export type BillingCycle = 'monthly' | 'annual'
 
 export interface UsageState {
@@ -85,6 +100,7 @@ interface BillingState {
   subscriptionTier: string | null // null = no active sub, 'free' = free tier
   billingCycle: BillingCycle
   usage: UsageState
+  ledger: LedgerEntry[]
 }
 
 const STORAGE_KEY = 'billing'
@@ -94,6 +110,31 @@ const defaults: BillingState = {
   subscriptionTier: 'free',
   billingCycle: 'monthly',
   usage: { creditsUsed: 18 },
+  // Demo window; entries reconcile step-by-step down to the seeded balance
+  ledger: [
+    { id: 'led-005', date: '2025-06-02T09:14:00Z', type: 'spend', description: 'Scrape job — Austin, TX', amount: -18, balanceAfter: 247 },
+    { id: 'led-004', date: '2025-06-01T00:00:00Z', type: 'grant', description: 'Monthly free credits', amount: 50, balanceAfter: 265 },
+    { id: 'led-003', date: '2025-05-25T15:40:00Z', type: 'spend', description: 'Scrape job — Chicago, IL', amount: -28, balanceAfter: 215 },
+    { id: 'led-002', date: '2025-05-22T11:05:00Z', type: 'refund', description: 'Refund — failed job (Brooklyn, NY)', amount: 14, balanceAfter: 243 },
+    { id: 'led-001', date: '2025-05-15T10:30:00Z', type: 'spend', description: 'Scrape job — Brooklyn, NY', amount: -14, balanceAfter: 229 },
+  ],
+}
+
+const ledgerTypes: LedgerEntryType[] = ['purchase', 'spend', 'refund', 'grant']
+
+function isLedgerEntry(value: unknown): value is LedgerEntry {
+  if (typeof value !== 'object' || value === null) return false
+  const e = value as Partial<LedgerEntry>
+  return (
+    typeof e.id === 'string' &&
+    typeof e.date === 'string' &&
+    typeof e.description === 'string' &&
+    ledgerTypes.includes(e.type as LedgerEntryType) &&
+    typeof e.amount === 'number' &&
+    Number.isFinite(e.amount) &&
+    typeof e.balanceAfter === 'number' &&
+    Number.isFinite(e.balanceAfter)
+  )
 }
 
 function readStored(): BillingState {
@@ -117,6 +158,7 @@ function readStored(): BillingState {
       usage: {
         creditsUsed: usageField(storedUsage.creditsUsed, defaults.usage.creditsUsed),
       },
+      ledger: Array.isArray(p.ledger) ? p.ledger.filter(isLedgerEntry).slice(0, LEDGER_CAP) : defaults.ledger,
     }
   } catch {
     return defaults
@@ -138,25 +180,42 @@ function update(next: Partial<BillingState>) {
   store.emit()
 }
 
-// Module-level actions so other stores (e.g. the jobs engine) can write
-// billing state without going through a React hook
-export function addCredits(amount: number) {
-  update({ creditBalance: state.creditBalance + amount })
+function recordEntry(type: LedgerEntryType, description: string, amount: number, balanceAfter: number): LedgerEntry[] {
+  const entry: LedgerEntry = {
+    id: `led-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    date: new Date().toISOString(),
+    type,
+    description,
+    amount,
+    balanceAfter,
+  }
+  return [entry, ...state.ledger].slice(0, LEDGER_CAP)
 }
 
-export function spendCredits(amount: number): boolean {
+// Module-level actions so other stores (e.g. the jobs engine) can write
+// billing state without going through a React hook
+export function addCredits(amount: number, description: string) {
+  const creditBalance = state.creditBalance + amount
+  update({ creditBalance, ledger: recordEntry('purchase', description, amount, creditBalance) })
+}
+
+export function spendCredits(amount: number, description: string): boolean {
   if (state.creditBalance < amount) return false
+  const creditBalance = state.creditBalance - amount
   update({
-    creditBalance: state.creditBalance - amount,
+    creditBalance,
     usage: { creditsUsed: state.usage.creditsUsed + amount },
+    ledger: recordEntry('spend', description, -amount, creditBalance),
   })
   return true
 }
 
-export function refundCredits(amount: number) {
+export function refundCredits(amount: number, description: string) {
+  const creditBalance = state.creditBalance + amount
   update({
-    creditBalance: state.creditBalance + amount,
+    creditBalance,
     usage: { creditsUsed: Math.max(0, state.usage.creditsUsed - amount) },
+    ledger: recordEntry('refund', description, amount, creditBalance),
   })
 }
 
