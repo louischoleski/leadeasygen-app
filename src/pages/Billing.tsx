@@ -1,5 +1,6 @@
 import { Check, Coin, CreditCard, Crown, Download, Plus, Receipt } from '@phosphor-icons/react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
@@ -9,8 +10,9 @@ import { Tabs } from '../components/Tabs'
 import { Toggle } from '../components/Toggle'
 import {
   billingHistory,
-  subscriptionTiers,
+  CHECKOUT_INTENT_KEY,
   creditPacks,
+  subscriptionTiers,
   useBilling,
   type BillingRecord,
   type LedgerEntryType,
@@ -28,7 +30,7 @@ const statusBadge: Record<BillingRecord['status'], { label: string; className: s
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
 function CreditPacks() {
-  const { addCredits } = useBilling()
+  const navigate = useNavigate()
 
   return (
     <section id="packages" className="scroll-mt-20 space-y-4">
@@ -53,10 +55,13 @@ function CreditPacks() {
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
               onClick={() => {
-                addCredits(pkg.credits, `${pkg.name} — ${pkg.credits} credits`)
-                toast.success(`Added ${pkg.credits.toLocaleString()} credits`, {
-                  description: 'Demo purchase — payments are not wired up yet.',
-                })
+                // Stands in for the Stripe redirect: flag the intent, land on success_url
+                try {
+                  sessionStorage.setItem(CHECKOUT_INTENT_KEY, pkg.id)
+                } catch {
+                  // storage unavailable: the success page will show no checkout in progress
+                }
+                navigate(`/billing/success?pack=${pkg.id}`)
               }}
             >
               Buy {pkg.name}

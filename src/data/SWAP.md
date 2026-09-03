@@ -13,11 +13,18 @@ below. The component layer needs zero changes — every consumer observes the st
 - `makeLead` and the name-generator tables die with the simulation.
 
 ## Billing (`src/data/billing.ts`)
-- `addCredits` / `spendCredits` — become server-truth; local state becomes a cache
-  of the server balance.
-- Buy-package and subscribe actions (currently toasts in `pages/Billing.tsx`) —
-  Stripe payment intents behind the same buttons.
-- `billingHistory` demo array — replace with the invoices endpoint.
+- `addCredits` / `spendCredits` / `refundCredits` — become server-truth; local
+  state (balance + ledger) becomes a cache of the server's.
+- Buy-pack flow: the buy button sets `CHECKOUT_INTENT_KEY` in sessionStorage and
+  navigates to `/billing/success?pack=<id>`. Real version: buy button creates a
+  Stripe Checkout Session and redirects; `/billing/success` and
+  `/billing/cancelled` are the `success_url`/`cancel_url`. The success page then
+  verifies the session server-side (`?session_id=...`) instead of consuming the
+  intent/done sessionStorage flags — both flags die with the swap.
+- Subscribe actions (currently toasts in `pages/Billing.tsx`) — Stripe payment
+  intents behind the same buttons.
+- `billingHistory` demo array — replace with the invoices endpoint; the credit
+  ledger seed — replace with the credit-transactions endpoint.
 
 ## Auth (`src/pages/`)
 - Submit handlers in `Login`, `Register`, `ForgotPassword`, `ResetPassword`,

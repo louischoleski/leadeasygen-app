@@ -89,6 +89,11 @@ export interface LedgerEntry {
 
 const LEDGER_CAP = 50
 
+// Demo checkout handshake: the buy button sets the intent, the success page
+// consumes it exactly once. Dies when Stripe verifies sessions server-side.
+export const CHECKOUT_INTENT_KEY = 'checkout-intent'
+export const CHECKOUT_DONE_KEY = 'checkout-done'
+
 export type BillingCycle = 'monthly' | 'annual'
 
 export interface UsageState {
