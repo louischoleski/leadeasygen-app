@@ -81,9 +81,9 @@ export default function Sidebar({ open, onNavigate }: Props) {
         </ul>
       </nav>
 
-      {/* Rotating onboarding tip — desktop only, the drawer is too cramped */}
+      {/* Rotating onboarding tip; dismissing it hides it on all surfaces */}
       {!tipHidden && (
-        <div className="relative mx-2 mt-auto mb-4 hidden rounded-lg border border-hairline bg-surface-2 p-3 md:block">
+        <div className="relative mx-2 mt-auto mb-4 rounded-lg border border-hairline bg-surface-2 p-3">
           <button
             type="button"
             onClick={dismissTip}
