@@ -134,7 +134,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         )}
       </div>
       <Link to="/login" className="flex h-11 items-center gap-2 p-1 text-sm text-ink-subtle hover:text-ink">
-        <span className="hidden lowercase lg:inline">luna@company.io</span>
+        <span className="hidden lowercase lg:inline">user@leadeasygen.com</span>
         <img src={profile} alt="Account" className="h-9 w-9 rounded-full" />
       </Link>
 

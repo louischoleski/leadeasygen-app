@@ -155,11 +155,27 @@ function update(next: Partial<BillingState>) {
   store.emit()
 }
 
+// Module-level actions so other stores (e.g. the jobs engine) can write
+// billing state without going through a React hook
+export function addCredits(amount: number) {
+  update({ creditBalance: state.creditBalance + amount })
+}
+
+export function spendCredits(amount: number): boolean {
+  if (state.creditBalance < amount) return false
+  update({ creditBalance: state.creditBalance - amount })
+  return true
+}
+
+export function incrementJobsUsage() {
+  update({ usage: { ...state.usage, jobs: state.usage.jobs + 1 } })
+}
+
 export function useBilling() {
   const current = useSyncExternalStore(store.subscribe, () => state)
   return {
     ...current,
-    addCredits: (amount: number) => update({ creditBalance: state.creditBalance + amount }),
+    addCredits,
     setSubscription: (tierId: string | null) => update({ subscriptionTier: tierId }),
     setBillingCycle: (cycle: BillingCycle) => update({ billingCycle: cycle }),
   }
