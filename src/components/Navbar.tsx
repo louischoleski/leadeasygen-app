@@ -1,8 +1,10 @@
-import { List } from '@phosphor-icons/react'
+import { List, Moon, Sun } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
+import { useTheme } from '../hooks/useTheme'
 
 export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
+  const { theme, toggleTheme } = useTheme()
   return (
     <nav className="fixed inset-x-0 top-0 z-30 flex h-[60px] items-center bg-white shadow-[0_0_21px_#161616]">
       <Link
@@ -27,9 +29,19 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           className="w-[175px] rounded px-3 py-1.5 text-[0.88rem] text-muted outline-none placeholder:text-[#6f7780]"
         />
       </form>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={theme === 'dark'}
+        aria-label="Toggle theme"
+        onClick={toggleTheme}
+        className="mr-3 ml-auto cursor-pointer text-[#6a727a] hover:text-[#3b3f44]"
+      >
+        {theme === 'dark' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
+      </button>
       <Link
         to="/login"
-        className="mr-4 ml-auto flex items-center gap-2 text-[0.84rem] text-[#6a727a] hover:text-[#3b3f44]"
+        className="mr-4 flex items-center gap-2 text-[0.84rem] text-[#6a727a] hover:text-[#3b3f44]"
       >
         <span className="lowercase">luna@company.io</span>
         <img src={profile} alt="" className="h-9 w-9 rounded-full" />
