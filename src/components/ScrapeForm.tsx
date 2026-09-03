@@ -62,7 +62,7 @@ export function ScrapeForm() {
       <h2 className="text-card-title text-ink">New scrape job</h2>
       <p className="mt-1 mb-4 text-sm text-ink-subtle">Find local businesses on Google Maps</p>
       <form noValidate onSubmit={handleSubmit}>
-        <div className="grid gap-x-4 gap-y-3 md:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_1.5fr]">
+        <div className="grid gap-x-4 gap-y-3 md:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_1.5fr_auto]">
           <Input
             label="Location"
             id="job-location"
@@ -100,30 +100,28 @@ export function ScrapeForm() {
               onChange={(option) => option && setCategory(option.value)}
             />
           </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-ink-subtle">
-            Estimated cost: <span className="font-medium text-ink">{estimatedCost} credits</span>
-            {insufficient && <span className="ml-2 font-medium text-error">Insufficient balance</span>}
-            {atJobLimit && !insufficient && (
-              <span className="ml-2 font-medium text-warning">
-                Your plan allows {jobLimit} active {jobLimit === 1 ? 'job' : 'jobs'}
-              </span>
-            )}
-          </p>
-          <div className="w-full sm:w-auto sm:min-w-48">
+          <div className="md:col-span-2 lg:col-span-1 lg:self-start lg:pt-6">
             {insufficient ? (
-              <Button variant="secondary" fullWidth asChild>
+              <Button variant="secondary" fullWidth className="lg:h-11" asChild>
                 <Link to="/billing#packages">Buy credits</Link>
               </Button>
             ) : (
-              <Button type="submit" fullWidth disabled={atJobLimit}>
+              <Button type="submit" fullWidth className="lg:h-11" disabled={atJobLimit}>
                 Start scrape
               </Button>
             )}
           </div>
         </div>
+
+        <p className="mt-3 text-sm text-ink-subtle">
+          Estimated cost: <span className="font-medium text-ink">{estimatedCost} credits</span>
+          {insufficient && <span className="ml-2 font-medium text-error">Insufficient balance</span>}
+          {atJobLimit && !insufficient && (
+            <span className="ml-2 font-medium text-warning">
+              Your plan allows {jobLimit} active {jobLimit === 1 ? 'job' : 'jobs'}
+            </span>
+          )}
+        </p>
       </form>
     </Card>
   )
