@@ -23,8 +23,8 @@ function ProfileCard() {
   const { locale, setLocale } = useLocale()
 
   return (
-    <section id="profile" className="card scroll-mt-20 p-6">
-      <div className="flex items-center gap-4">
+    <section id="profile" className="card scroll-mt-20 p-5">
+      <div className="flex items-center gap-3">
         <img src={profile} alt="" className="h-16 w-16 rounded-full object-cover" />
         <div className="flex-1">
           <h2 className="font-medium text-ink">Luna Admin</h2>
@@ -45,14 +45,21 @@ function ProfileCard() {
           toast.success('Profile updated')
         }}
       >
-        <div className="mt-6 grid gap-x-8 gap-y-4 lg:grid-cols-2">
+        <div className="mt-4 grid gap-x-8 gap-y-3 lg:grid-cols-2">
           <div>
             <label className={labelClass} htmlFor="name">Full name</label>
             <input type="text" defaultValue="Luna Admin" name="name" id="name" className="input" />
           </div>
           <div>
             <label className={labelClass} htmlFor="email">Email address</label>
-            <input type="email" defaultValue="luna@company.io" name="email" id="email" className="input" />
+            <input
+              type="email"
+              value="luna@company.io"
+              id="email"
+              disabled
+              className="input cursor-not-allowed bg-surface-2"
+            />
+            <p className="mt-1 text-xs text-ink-subtle">Contact support to change your email</p>
           </div>
           <div>
             <label className={labelClass} htmlFor="phone">Phone</label>
@@ -94,7 +101,7 @@ function SecurityCard() {
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null)
 
   return (
-    <section id="security" className="card scroll-mt-20 p-6">
+    <section id="security" className="card scroll-mt-20 p-5">
       <h2 className="text-card-title text-ink">Security</h2>
       <form
         noValidate
@@ -109,7 +116,7 @@ function SecurityCard() {
           e.currentTarget.reset()
         }}
       >
-        <div className="mt-4 grid gap-x-8 gap-y-4 lg:grid-cols-2">
+        <div className="mt-4 grid gap-x-8 gap-y-3 lg:grid-cols-2">
           <div>
             <label className={labelClass} htmlFor="currentPassword">Current password</label>
             <input type="password" required name="currentPassword" id="currentPassword" className="input" />
@@ -127,7 +134,7 @@ function SecurityCard() {
           <button type="submit" className="btn btn-primary">Change password</button>
         </div>
       </form>
-      <hr className="my-6 border-hairline" />
+      <hr className="my-4 border-hairline" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-medium text-ink">Two-factor authentication</h3>
@@ -194,7 +201,7 @@ function SecurityCard() {
 
 function CreditsCard() {
   return (
-    <section id="credits" className="card scroll-mt-20 p-6">
+    <section id="credits" className="card scroll-mt-20 p-5">
       <h2 className="text-card-title text-ink">Credits</h2>
       <p className="mt-1 text-sm text-ink-subtle">Buy credits to run scraping jobs.</p>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -212,7 +219,7 @@ function DangerCard() {
   const [deleteArmed, setDeleteArmed] = useState(false)
 
   return (
-    <section id="danger" className="card scroll-mt-20 border-error/40 bg-error/5 p-6">
+    <section id="danger" className="card scroll-mt-20 border-error/40 bg-error/5 p-5">
       <h2 className="text-card-title text-error">Danger zone</h2>
       <p className="mt-1 text-sm text-ink-subtle">
         Permanently delete your account and all associated data. This cannot be undone.
@@ -269,7 +276,7 @@ export default function Settings() {
             ))}
           </ul>
         </nav>
-        <div className="min-w-0 flex-1 space-y-6">
+        <div className="min-w-0 flex-1 space-y-4">
           <ProfileCard />
           <SecurityCard />
           <CreditsCard />

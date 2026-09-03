@@ -40,7 +40,7 @@ export default function AppLayout() {
       )}
       <Sidebar open={navOpen} onNavigate={closeIfMobile} />
       <main className={`pt-14 transition-[margin] duration-300 ${navOpen ? 'md:ml-[200px]' : ''}`}>
-        <div className="p-[30px]">
+        <div className="p-4 md:p-6">
           <Outlet />
         </div>
       </main>

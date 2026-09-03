@@ -15,9 +15,9 @@ export default function Credits() {
         Credits are spent when running scraping jobs.{' '}
         <Link to="/settings" className="text-link underline">Back to settings</Link>
       </p>
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         {packages.map((p) => (
-          <div key={p.credits} className="card p-6 text-center">
+          <div key={p.credits} className="card p-5 text-center">
             <div className="text-3xl font-bold text-ink">{p.credits}</div>
             <div className="text-xs text-ink-subtle">credits</div>
             <div className="text-card-title mt-2 text-ink">{p.price}</div>
