@@ -103,7 +103,7 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div className="p-6 md:col-span-2">
+          <div className="min-w-0 p-6 md:col-span-2">
             <ActiveUsersChart data={activeUsers} />
             <div className="mt-2 text-center text-xs">All active users from last month.</div>
           </div>
@@ -111,7 +111,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-x-8 md:grid-cols-3">
-        <div className="md:col-span-2">
+        <div className="min-w-0 md:col-span-2">
           <div className="card mb-5 overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -144,7 +144,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <div className="card mb-5 text-center">
             <div className="p-6">
               <h2 className="text-card-title text-ink">+280k downloads</h2>
