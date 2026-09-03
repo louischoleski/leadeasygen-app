@@ -1,4 +1,4 @@
-import { Globe, List, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
+import { Globe, List, MagnifyingGlass, Monitor, Moon, Robot, Sun, X } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
@@ -46,17 +46,17 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       {/* Brand slab: md+ only, 200px to align with the sidebar edge, gone on mobile */}
       <Link
         to="/"
-        className="hidden h-full w-[200px] shrink-0 items-center justify-between bg-primary px-5 transition-colors hover:bg-primary-hover md:flex"
+        className="hidden h-full w-[200px] shrink-0 items-center gap-2 bg-primary px-5 transition-colors hover:bg-primary-hover md:flex"
       >
-        <span className="text-sm font-semibold tracking-[0.3em] text-on-primary uppercase">Luna</span>
-        {/* black-tint pill: the white-tint fails AA contrast under the wordmark */}
-        <span className="rounded-full bg-overlay/25 px-1.5 py-0.5 text-[10px] font-medium text-on-primary">
-          v1.4
-        </span>
+        <Robot size={20} aria-hidden="true" className="shrink-0 text-on-primary" />
+        <span className="text-sm font-semibold tracking-tight text-on-primary">LeadEasyGen</span>
       </Link>
       <IconButton icon={List} variant="ghost" aria-label="Toggle navigation" onClick={onToggleNav} className="md:ml-2" />
-      <Link to="/" className="ml-1 text-base font-bold tracking-widest text-link uppercase md:hidden">
-        Luna
+      <Link to="/" className="ml-1 flex items-center gap-2 md:hidden">
+        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
+          <Robot size={14} aria-hidden="true" className="text-on-primary" />
+        </span>
+        <span className="text-sm font-semibold tracking-tight text-ink">LeadEasyGen</span>
       </Link>
       <form className="relative ml-3 hidden md:block" role="search" onSubmit={(e) => e.preventDefault()}>
         <input
