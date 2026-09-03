@@ -1,4 +1,4 @@
-import { Globe, List, MagnifyingGlass, Monitor, Moon, Robot, Sun, X } from '@phosphor-icons/react'
+import { Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
@@ -48,13 +48,13 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         to="/"
         className="hidden h-full w-[200px] shrink-0 items-center gap-2 bg-primary px-5 transition-colors hover:bg-primary-hover md:flex"
       >
-        <Robot size={20} aria-hidden="true" className="shrink-0 text-on-primary" />
+        <MagnetStraight size={20} aria-hidden="true" className="shrink-0 text-on-primary" />
         <span className="text-sm font-semibold tracking-tight text-on-primary">LeadEasyGen</span>
       </Link>
       <IconButton icon={List} variant="ghost" aria-label="Toggle navigation" onClick={onToggleNav} className="md:ml-2" />
       <Link to="/" className="ml-1 flex items-center gap-2 md:hidden">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
-          <Robot size={14} aria-hidden="true" className="text-on-primary" />
+          <MagnetStraight size={14} aria-hidden="true" className="text-on-primary" />
         </span>
         <span className="text-sm font-semibold tracking-tight text-ink">LeadEasyGen</span>
       </Link>
