@@ -272,7 +272,7 @@ export default function Billing() {
         <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
-              <Coin className="h-7 w-7 text-primary" weight="fill" aria-hidden="true" />
+              <Coin className="h-7 w-7 text-primary" aria-hidden="true" />
             </div>
             <div>
               <p className="text-sm text-ink-subtle">Available Credits</p>
