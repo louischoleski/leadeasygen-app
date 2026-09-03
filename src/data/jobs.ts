@@ -4,13 +4,16 @@ import { refundCredits, spendCredits } from './billing'
 
 export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
 
+// Mirrors the scraper's wire payload (see SWAP.md shared contracts)
 export interface Lead {
-  business: string
-  address: string
+  name: string
+  category: string
+  rating: number | null // null = unrated
+  reviews: number
   phone: string | null
   website: string | null
-  email: string | null
-  source: 'maps' | 'website'
+  emails: string[]
+  address: string
 }
 
 export interface Job {
@@ -51,6 +54,28 @@ const FAILURE_CHANCE = 0.08
 
 const jobStatuses: JobStatus[] = ['queued', 'running', 'completed', 'failed']
 
+// Leads persisted before the schema enrichment (business/email/source) upgrade in place
+function normalizeLead(value: unknown): Lead | null {
+  if (typeof value !== 'object' || value === null) return null
+  const l = value as Record<string, unknown>
+  const name = typeof l.name === 'string' ? l.name : typeof l.business === 'string' ? l.business : null
+  if (name === null || typeof l.address !== 'string') return null
+  return {
+    name,
+    category: typeof l.category === 'string' ? l.category : '',
+    rating: typeof l.rating === 'number' && Number.isFinite(l.rating) ? l.rating : null,
+    reviews: typeof l.reviews === 'number' && Number.isFinite(l.reviews) ? l.reviews : 0,
+    phone: typeof l.phone === 'string' ? l.phone : null,
+    website: typeof l.website === 'string' ? l.website : null,
+    emails: Array.isArray(l.emails)
+      ? l.emails.filter((e): e is string => typeof e === 'string')
+      : typeof l.email === 'string'
+        ? [l.email]
+        : [],
+    address: l.address,
+  }
+}
+
 function readStored(): Job[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
@@ -65,6 +90,12 @@ function readStored(): Job[] {
           typeof (j as Job).id === 'string' &&
           jobStatuses.includes((j as Job).status),
       )
+      .map((j) => ({
+        ...j,
+        results: Array.isArray(j.results)
+          ? j.results.map(normalizeLead).filter((l): l is Lead => l !== null)
+          : [],
+      }))
       .slice(0, MAX_JOBS)
   } catch {
     return []
@@ -105,17 +136,22 @@ const nameSuffixes: Record<string, string[]> = {
 const streets = ['Main St', 'Oak Ave', 'Market St', 'Hill Rd', 'Station Blvd', 'Park Lane']
 
 function makeLead(location: string, category: string): Lead {
-  const business = `${pick(namePrefixes)} ${pick(nameSuffixes[category] ?? nameSuffixes.Retail)}`
-  const slug = business.toLowerCase().replace(/[^a-z]+/g, '')
-  const email = maybe(`contact@${slug}.example.com`, 0.4)
+  const name = `${pick(namePrefixes)} ${pick(nameSuffixes[category] ?? nameSuffixes.Retail)}`
+  const slug = name.toLowerCase().replace(/[^a-z]+/g, '')
+  const rated = Math.random() < 0.9
+  const emails = [
+    maybe(`contact@${slug}.example.com`, 0.4),
+    maybe(`info@${slug}.example.com`, 0.15),
+  ].filter((e): e is string => e !== null)
   return {
-    business,
-    address: `${randomInt(1, 900)} ${pick(streets)}, ${location}`,
+    name,
+    category,
+    rating: rated ? Math.round((3.5 + Math.random() * 1.5) * 10) / 10 : null,
+    reviews: rated ? randomInt(3, 480) : 0,
     phone: maybe(`+1 555 ${randomInt(100, 999)} ${randomInt(1000, 9999)}`, 0.85),
     website: maybe(`https://${slug}.example.com`, 0.7),
-    email,
-    // Emails only surface by visiting the business site, so they mark the source
-    source: email ? 'website' : 'maps',
+    emails,
+    address: `${randomInt(1, 900)} ${pick(streets)}, ${location}`,
   }
 }
 

@@ -6,9 +6,18 @@ const escapeField = (value: string | null) => {
 }
 
 export function downloadJobCsv(job: Job) {
-  const header = 'Business,Address,Phone,Website,Email,Source'
+  const header = 'Business,Category,Rating,Reviews,Phone,Website,Emails,Address'
   const rows = job.results.map((lead) =>
-    [lead.business, lead.address, lead.phone, lead.website, lead.email, lead.source ?? 'maps']
+    [
+      lead.name,
+      lead.category,
+      lead.rating !== null ? String(lead.rating) : '',
+      String(lead.reviews),
+      lead.phone,
+      lead.website,
+      lead.emails.join(';'),
+      lead.address,
+    ]
       .map(escapeField)
       .join(','),
   )
