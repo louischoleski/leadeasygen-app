@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
@@ -7,23 +7,39 @@ import { OtpInput } from '../components/OtpInput'
 
 const CODE_LENGTH = 6
 
+interface VerifyValues {
+  code: string
+}
+
 export default function VerifyEmail() {
   const navigate = useNavigate()
-  const [code, setCode] = useState('')
+
+  const { control, handleSubmit, watch } = useForm<VerifyValues>({ defaultValues: { code: '' } })
+  const code = watch('code')
+
+  const onSubmit = () => {
+    toast.success('Email verified')
+    navigate('/')
+  }
 
   return (
     <AuthCard title="Verify your email" subtitle="We've sent a code to your email. Enter it below.">
-      <form
-        noValidate
-        onSubmit={(e) => {
-          e.preventDefault()
-          toast.success('Email verified')
-          navigate('/')
-        }}
-      >
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-6">
           <p id="otp-label" className="mb-1.5 text-sm font-medium text-ink">Verification code</p>
-          <OtpInput value={code} onChange={setCode} length={CODE_LENGTH} aria-labelledby="otp-label" />
+          <Controller
+            control={control}
+            name="code"
+            rules={{ validate: (value) => value.length === CODE_LENGTH }}
+            render={({ field }) => (
+              <OtpInput
+                value={field.value}
+                onChange={field.onChange}
+                length={CODE_LENGTH}
+                aria-labelledby="otp-label"
+              />
+            )}
+          />
           <p className="mt-1.5 text-center text-xs text-ink-subtle">The code expires after 10 minutes</p>
         </div>
         <Button type="submit" fullWidth disabled={code.length !== CODE_LENGTH}>

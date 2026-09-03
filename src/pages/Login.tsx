@@ -1,4 +1,5 @@
 import { Envelope, GoogleLogo } from '@phosphor-icons/react'
+import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
@@ -6,37 +7,44 @@ import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { login } from '../data/auth'
 
+interface LoginValues {
+  email: string
+  password: string
+}
+
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   // RequireAuth stashes the page the visitor was headed for
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/'
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginValues>()
+
+  const onSubmit = ({ email }: LoginValues) => {
+    const local = email.trim().split('@')[0]
+    login({ name: local.charAt(0).toUpperCase() + local.slice(1), email: email.trim() })
+    navigate(from, { replace: true })
+  }
+
   return (
     <AuthCard title="Login" subtitle="Enter your email below to login to your account">
-      <form
-        noValidate
-        onSubmit={(e) => {
-          e.preventDefault()
-          const email = String(new FormData(e.currentTarget).get('email') ?? '').trim()
-          if (!email.includes('@')) {
-            toast.error('Enter a valid email')
-            return
-          }
-          const local = email.split('@')[0]
-          login({ name: local.charAt(0).toUpperCase() + local.slice(1), email })
-          navigate(from, { replace: true })
-        }}
-      >
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
           label="Email"
           id="email"
-          name="email"
           type="email"
           placeholder="m@example.com"
           iconLeft={Envelope}
-          required
+          error={errors.email?.message}
           containerClassName="mb-4"
+          {...register('email', {
+            required: 'Enter your email',
+            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email' },
+          })}
         />
         <div className="mb-1.5 flex items-center justify-between">
           <label htmlFor="password" className="text-sm font-medium text-ink">Password</label>
@@ -46,11 +54,11 @@ export default function Login() {
         </div>
         <Input
           id="password"
-          name="password"
           type="password"
           placeholder="••••••"
-          required
+          error={errors.password?.message}
           containerClassName="mb-6"
+          {...register('password', { required: 'Enter your password' })}
         />
         <div className="space-y-2">
           <Button type="submit" fullWidth>Login</Button>
