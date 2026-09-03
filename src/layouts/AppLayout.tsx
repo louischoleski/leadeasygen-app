@@ -2,24 +2,29 @@ import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
-
-const isMobile = () => window.matchMedia('(max-width: 767px)').matches
+import { useViewport } from '../hooks/useViewport'
 
 export default function AppLayout() {
-  const [navOpen, setNavOpen] = useState(() => !isMobile())
+  const { isDesktop } = useViewport()
+  const [navOpen, setNavOpen] = useState(isDesktop)
+
+  // Entering mobile: collapse the drawer so it never appears open mid-resize
+  useEffect(() => {
+    if (!isDesktop) setNavOpen(false)
+  }, [isDesktop])
 
   // On mobile the sidebar is a modal drawer: close it on Escape
   useEffect(() => {
-    if (!navOpen) return
+    if (!navOpen || isDesktop) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobile()) setNavOpen(false)
+      if (e.key === 'Escape') setNavOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navOpen])
+  }, [navOpen, isDesktop])
 
   const closeIfMobile = () => {
-    if (isMobile()) setNavOpen(false)
+    if (!isDesktop) setNavOpen(false)
   }
 
   return (

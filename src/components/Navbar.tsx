@@ -1,15 +1,22 @@
 import { CaretDown, Globe, List, MagnifyingGlass, Moon, Sun, X } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
 import { locales, useLocale } from '../hooks/useLocale'
 import { useTheme } from '../hooks/useTheme'
+import { useViewport } from '../hooks/useViewport'
 
 export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale } = useLocale()
+  const { isDesktop } = useViewport()
   const [localeOpen, setLocaleOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+
+  // The overlay is a mobile-only pattern: close it when the viewport enters desktop
+  useEffect(() => {
+    if (isDesktop && searchOpen) setSearchOpen(false)
+  }, [isDesktop, searchOpen])
 
   return (
     <nav className="fixed inset-x-0 top-0 z-30 flex h-14 items-center border-b border-hairline bg-canvas pr-3 pl-1 md:pr-4 md:pl-0">

@@ -5,8 +5,10 @@ import { locales, useLocale } from '../hooks/useLocale'
 import { useTheme } from '../hooks/useTheme'
 
 const categoryClass = 'mt-2.5 px-6 py-2 text-eyebrow text-ink'
-const linkClass = 'block py-2 pl-6 text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink'
-const subLinkClass = 'block py-2 pl-10 text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink'
+const itemClass = 'mx-2 flex h-11 items-center rounded-lg px-4 transition-colors'
+const linkClass = `${itemClass} text-ink-muted hover:bg-surface-2/50 hover:text-ink`
+const activeClass = `${itemClass} bg-surface-2 font-medium text-link`
+const subLinkClass = `${itemClass} pl-8 text-ink-muted hover:bg-surface-2/50 hover:text-ink`
 
 type Props = {
   open: boolean
@@ -30,9 +32,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
               to="/"
               end
               onClick={onNavigate}
-              className={({ isActive }) =>
-                isActive ? `${linkClass} border-l-2 border-primary bg-surface-2 pl-[22px] text-ink` : linkClass
-              }
+              className={({ isActive }) => (isActive ? activeClass : linkClass)}
             >
               Dashboard
             </NavLink>
@@ -43,7 +43,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
               type="button"
               onClick={() => setCommonOpen((o) => !o)}
               aria-expanded={commonOpen}
-              className="flex w-full cursor-pointer items-center justify-between py-2 pr-4 pl-6 text-ink-subtle transition-colors hover:text-ink"
+              className={`${linkClass} w-[calc(100%-1rem)] cursor-pointer justify-between`}
             >
               Common
               <CaretDown
@@ -84,7 +84,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
               type="button"
               aria-pressed={l === locale}
               onClick={() => setLocale(l)}
-              className={`h-9 min-w-11 cursor-pointer rounded-md border px-2 text-xs font-medium transition-colors ${l === locale ? 'border-primary text-primary' : 'border-hairline text-ink-subtle hover:text-ink'}`}
+              className={`h-9 min-w-11 cursor-pointer rounded-md border px-2 text-xs font-medium transition-colors ${l === locale ? 'border-primary text-link' : 'border-hairline text-ink-subtle hover:text-ink'}`}
             >
               {l.toUpperCase()}
             </button>
