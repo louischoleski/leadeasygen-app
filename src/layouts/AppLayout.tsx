@@ -5,14 +5,14 @@ import Sidebar from '../components/Sidebar'
 import { useViewport } from '../hooks/useViewport'
 
 export default function AppLayout() {
-  const { isMobile } = useViewport()
-  const [navOpen, setNavOpen] = useState(!isMobile)
+  const { isMobile, isDesktop } = useViewport()
+  const [navOpen, setNavOpen] = useState(isDesktop)
 
-  // Crossing the breakpoint resets to each side's default state:
-  // mobile never keeps a stranded drawer, desktop always regains its sidebar
+  // Crossing a breakpoint resets to that tier's default: closed on mobile
+  // (modal drawer) and tablet (collapsible rail), open on desktop (>=1024)
   useEffect(() => {
-    setNavOpen(!isMobile)
-  }, [isMobile])
+    setNavOpen(isDesktop)
+  }, [isDesktop, isMobile])
 
   // On mobile the sidebar is a modal drawer: close it on Escape
   useEffect(() => {
