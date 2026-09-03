@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import './index.css'
+import { useTheme } from './hooks/useTheme'
 import AppLayout from './layouts/AppLayout'
 import AuthLayout from './layouts/AuthLayout'
 import ForgotPassword from './pages/ForgotPassword'
@@ -11,6 +12,11 @@ import Register from './pages/Register'
 
 // Lazy so the charting library loads only with the dashboard, not the auth pages
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+
+function AppToaster() {
+  const { theme } = useTheme()
+  return <Toaster position="top-right" theme={theme} />
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -31,7 +37,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/forgotPassword.html" element={<Navigate to="/forgot-password" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <Toaster position="top-right" theme="dark" />
+      <AppToaster />
     </BrowserRouter>
   </StrictMode>,
 )
