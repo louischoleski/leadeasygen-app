@@ -5,9 +5,11 @@ import { Envelope, Phone, User } from '@phosphor-icons/react'
 import profile from '../assets/profile.jpg'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { Toggle } from '../components/Toggle'
+import { useAuth } from '../data/auth'
 import { subscriptionTiers, useBilling } from '../data/billing'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
@@ -31,14 +33,15 @@ const labelClass = 'mb-1 block text-sm font-medium text-ink'
 
 function ProfileCard() {
   const { locale, setLocale } = useLocale()
+  const { user } = useAuth()
 
   return (
     <Card as="section" id="profile" className="scroll-mt-20 p-5">
       <div className="flex items-center gap-3">
         <img src={profile} alt="" className="h-16 w-16 rounded-full object-cover" />
         <div className="flex-1">
-          <h2 className="font-medium text-ink">Luna Admin</h2>
-          <p className="text-sm text-ink-subtle">luna@company.io</p>
+          <h2 className="font-medium text-ink">{user?.name}</h2>
+          <p className="text-sm text-ink-subtle">{user?.email}</p>
         </div>
         <Button variant="secondary" size="xs" onClick={() => toast('Avatar upload is not wired up yet')}>
           Change avatar
@@ -52,12 +55,12 @@ function ProfileCard() {
         }}
       >
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
-          <Input label="Full name" name="name" id="name" defaultValue="Luna Admin" iconLeft={User} />
+          <Input label="Full name" name="name" id="name" defaultValue={user?.name ?? ''} iconLeft={User} />
           <Input
             label="Email address"
             type="email"
             id="email"
-            value="luna@company.io"
+            value={user?.email ?? ''}
             disabled
             iconLeft={Envelope}
             helperText="Contact support to change your email"
@@ -206,7 +209,7 @@ function CreditsCard() {
 }
 
 function DangerCard() {
-  const [deleteArmed, setDeleteArmed] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   return (
     <Card as="section" id="danger" className="scroll-mt-20 border-error/40 bg-error/5 p-5">
@@ -215,20 +218,22 @@ function DangerCard() {
         Permanently delete your account and all associated data. This cannot be undone.
       </p>
       <div className="mt-4">
-        <Button
-          variant="danger"
-          onClick={() => {
-            if (!deleteArmed) {
-              setDeleteArmed(true)
-              return
-            }
-            setDeleteArmed(false)
-            toast.error('Account deletion is not wired up yet')
-          }}
-        >
-          {deleteArmed ? 'Click again to confirm deletion' : 'Delete account'}
+        <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+          Delete account
         </Button>
       </div>
+      <ConfirmDialog
+        open={confirmingDelete}
+        title="Delete account?"
+        description="All jobs, results, and remaining credits are permanently removed. This cannot be undone."
+        confirmLabel="Delete account"
+        danger
+        onConfirm={() => {
+          setConfirmingDelete(false)
+          toast.error('Account deletion is not wired up yet')
+        }}
+        onClose={() => setConfirmingDelete(false)}
+      />
     </Card>
   )
 }

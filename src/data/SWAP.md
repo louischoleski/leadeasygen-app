@@ -26,10 +26,14 @@ below. The component layer needs zero changes — every consumer observes the st
 - `billingHistory` demo array — replace with the invoices endpoint; the credit
   ledger seed — replace with the credit-transactions endpoint.
 
-## Auth (`src/pages/`)
+## Auth (`src/pages/`, `src/data/auth.ts`)
+- `src/data/auth.ts` — the session store. Demo `login()` trusts the form input;
+  the real version sets the user from Fonderie's session response and `logout()`
+  calls the sign-out endpoint. Guards (`RouteGuards.tsx`) and consumers (navbar
+  account menu, settings prefill) need no changes.
 - Submit handlers in `Login`, `Register`, `ForgotPassword`, `ResetPassword`,
-  `VerifyEmail` — currently `preventDefault` + toast/navigate; each becomes one
-  API call. The MFA challenge step slots into the login handler's response branch.
+  `VerifyEmail` — each becomes one API call that resolves into `login()`. The
+  MFA challenge step slots into the login handler's response branch.
 - Google OAuth buttons — redirect to `GET /auth/google`; callback route needs a
   spinner-only handler.
 - Settings profile/password/MFA handlers (`pages/Settings.tsx`) — `PUT /users/*`.

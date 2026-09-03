@@ -1,12 +1,16 @@
 import { Envelope, GoogleLogo } from '@phosphor-icons/react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { login } from '../data/auth'
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
+  // RequireAuth stashes the page the visitor was headed for
+  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/'
 
   return (
     <AuthCard title="Login" subtitle="Enter your email below to login to your account">
@@ -14,7 +18,14 @@ export default function Login() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault()
-          navigate('/')
+          const email = String(new FormData(e.currentTarget).get('email') ?? '').trim()
+          if (!email.includes('@')) {
+            toast.error('Enter a valid email')
+            return
+          }
+          const local = email.split('@')[0]
+          login({ name: local.charAt(0).toUpperCase() + local.slice(1), email })
+          navigate(from, { replace: true })
         }}
       >
         <Input

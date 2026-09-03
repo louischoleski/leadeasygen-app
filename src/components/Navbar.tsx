@@ -2,6 +2,7 @@ import { Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun, X } f
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
+import { useAuth } from '../data/auth'
 import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
 import { SHORTCUTS } from '../constants/shortcuts'
@@ -16,9 +17,11 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { locale } = useLocale()
   const { isMobile } = useViewport()
   const os = useOS()
+  const { user, logout } = useAuth()
   const [localeOpen, setLocaleOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
 
   const ThemeIcon = mode === 'system' ? Monitor : theme === 'dark' ? Moon : Sun
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -133,10 +136,48 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           </div>
         )}
       </div>
-      <Link to="/login" className="flex h-11 items-center gap-2 p-1 text-sm text-ink-subtle hover:text-ink">
-        <span className="hidden lowercase lg:inline">user@leadeasygen.com</span>
-        <img src={profile} alt="Account" className="h-9 w-9 rounded-full" />
-      </Link>
+      <div
+        className="relative"
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setAccountOpen(false)
+        }}
+      >
+        <button
+          type="button"
+          aria-label={`Account: ${user?.email ?? ''}`}
+          aria-haspopup="menu"
+          aria-expanded={accountOpen}
+          onClick={() => setAccountOpen((o) => !o)}
+          className="flex h-11 cursor-pointer items-center gap-2 p-1 text-sm text-ink-subtle hover:text-ink"
+        >
+          <span className="hidden lowercase lg:inline">{user?.email}</span>
+          <img src={profile} alt="" className="h-9 w-9 rounded-full" />
+        </button>
+        {accountOpen && (
+          <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-52 p-1">
+            <div className="border-b border-hairline px-2 pt-1.5 pb-2">
+              <p className="truncate text-sm font-medium text-ink">{user?.name}</p>
+              <p className="truncate text-xs text-ink-subtle">{user?.email}</p>
+            </div>
+            <Link
+              role="menuitem"
+              to="/settings"
+              onClick={() => setAccountOpen(false)}
+              className="mt-1 block w-full rounded-sm px-2 py-1.5 text-left text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            >
+              Settings
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={logout}
+              className="block w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            >
+              Log out
+            </button>
+          </div>
+        )}
+      </div>
 
       {searchOpen && (
         <>

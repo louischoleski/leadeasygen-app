@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import './index.css'
+import { GuestOnly, RequireAuth } from './components/RouteGuards'
 import { useTheme } from './hooks/useTheme'
 import AppLayout from './layouts/AppLayout'
 import AuthLayout from './layouts/AuthLayout'
@@ -32,7 +33,8 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route element={<AppLayout />}>
+        <Route element={<RequireAuth />}>
+          <Route element={<AppLayout />}>
           <Route index element={<Suspense fallback={null}><Dashboard /></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={null}><Settings /></Suspense>} />
           <Route path="/billing" element={<Billing />} />
@@ -41,13 +43,16 @@ createRoot(document.getElementById('root')!).render(
           {/* Legacy paths from earlier iterations */}
           <Route path="/credits" element={<Navigate to="/billing" replace />} />
           <Route path="/subscription" element={<Navigate to="/billing" replace />} />
+          </Route>
         </Route>
-        <Route element={<AuthLayout />}>
+        <Route element={<GuestOnly />}>
+          <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify" element={<VerifyEmail />} />
+            <Route path="/verify" element={<VerifyEmail />} />
+          </Route>
         </Route>
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />

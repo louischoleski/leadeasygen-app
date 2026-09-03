@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { login } from '../data/auth'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -21,6 +22,12 @@ export default function Register() {
       toast.error('Please accept the Terms of Service and Privacy Policy')
       return
     }
+    const email = String(data.get('email') ?? '').trim()
+    if (!email.includes('@')) {
+      toast.error('Enter a valid email')
+      return
+    }
+    login({ name: String(data.get('name') ?? '').trim() || email.split('@')[0], email })
     navigate('/')
   }
 
