@@ -75,8 +75,10 @@ export const billingHistory: BillingRecord[] = [
 ]
 
 // Credit ledger — every credit movement, newest first, so the current
-// balance is always explainable from the entries alone
-export type LedgerEntryType = 'purchase' | 'spend' | 'refund' | 'grant'
+// balance is always explainable from the entries alone.
+// Type ids follow the credits-service wire vocabulary (see SWAP.md);
+// display labels are frontend copy.
+export type LedgerEntryType = 'purchase' | 'usage' | 'refund' | 'bonus'
 
 export interface LedgerEntry {
   id: string
@@ -117,15 +119,27 @@ const defaults: BillingState = {
   usage: { creditsUsed: 18 },
   // Demo window; entries reconcile step-by-step down to the seeded balance
   ledger: [
-    { id: 'led-005', date: '2025-06-02T09:14:00Z', type: 'spend', description: 'Scrape job — Austin, TX', amount: -18, balanceAfter: 247 },
-    { id: 'led-004', date: '2025-06-01T00:00:00Z', type: 'grant', description: 'Monthly free credits', amount: 50, balanceAfter: 265 },
-    { id: 'led-003', date: '2025-05-25T15:40:00Z', type: 'spend', description: 'Scrape job — Chicago, IL', amount: -28, balanceAfter: 215 },
+    { id: 'led-005', date: '2025-06-02T09:14:00Z', type: 'usage', description: 'Scrape job — Austin, TX', amount: -18, balanceAfter: 247 },
+    { id: 'led-004', date: '2025-06-01T00:00:00Z', type: 'bonus', description: 'Monthly free credits', amount: 50, balanceAfter: 265 },
+    { id: 'led-003', date: '2025-05-25T15:40:00Z', type: 'usage', description: 'Scrape job — Chicago, IL', amount: -28, balanceAfter: 215 },
     { id: 'led-002', date: '2025-05-22T11:05:00Z', type: 'refund', description: 'Refund — failed job (Brooklyn, NY)', amount: 14, balanceAfter: 243 },
-    { id: 'led-001', date: '2025-05-15T10:30:00Z', type: 'spend', description: 'Scrape job — Brooklyn, NY', amount: -14, balanceAfter: 229 },
+    { id: 'led-001', date: '2025-05-15T10:30:00Z', type: 'usage', description: 'Scrape job — Brooklyn, NY', amount: -14, balanceAfter: 229 },
   ],
 }
 
-const ledgerTypes: LedgerEntryType[] = ['purchase', 'spend', 'refund', 'grant']
+const ledgerTypes: LedgerEntryType[] = ['purchase', 'usage', 'refund', 'bonus']
+
+// Entries persisted before the wire-vocabulary alignment keep their history
+const legacyLedgerTypes: Record<string, LedgerEntryType> = { spend: 'usage', grant: 'bonus' }
+
+function normalizeLedgerEntry(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value
+  const e = value as { type?: unknown }
+  if (typeof e.type === 'string' && e.type in legacyLedgerTypes) {
+    return { ...e, type: legacyLedgerTypes[e.type] }
+  }
+  return value
+}
 
 function isLedgerEntry(value: unknown): value is LedgerEntry {
   if (typeof value !== 'object' || value === null) return false
@@ -163,7 +177,9 @@ function readStored(): BillingState {
       usage: {
         creditsUsed: usageField(storedUsage.creditsUsed, defaults.usage.creditsUsed),
       },
-      ledger: Array.isArray(p.ledger) ? p.ledger.filter(isLedgerEntry).slice(0, LEDGER_CAP) : defaults.ledger,
+      ledger: Array.isArray(p.ledger)
+        ? p.ledger.map(normalizeLedgerEntry).filter(isLedgerEntry).slice(0, LEDGER_CAP)
+        : defaults.ledger,
     }
   } catch {
     return defaults
@@ -210,7 +226,7 @@ export function spendCredits(amount: number, description: string): boolean {
   update({
     creditBalance,
     usage: { creditsUsed: state.usage.creditsUsed + amount },
-    ledger: recordEntry('spend', description, -amount, creditBalance),
+    ledger: recordEntry('usage', description, -amount, creditBalance),
   })
   return true
 }

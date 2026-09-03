@@ -155,11 +155,12 @@ function BillingHistoryTable() {
   )
 }
 
+// Keys are the credits-service wire types; labels stay our copy
 const ledgerBadge: Record<LedgerEntryType, { label: string; className: string }> = {
   purchase: { label: 'Purchase', className: 'bg-primary/10 text-link' },
-  spend: { label: 'Spend', className: 'bg-surface-2 text-ink-subtle' },
+  usage: { label: 'Spend', className: 'bg-surface-2 text-ink-subtle' },
   refund: { label: 'Refund', className: 'bg-success/10 text-success' },
-  grant: { label: 'Grant', className: 'bg-success/10 text-success' },
+  bonus: { label: 'Grant', className: 'bg-success/10 text-success' },
 }
 
 const ledgerDate = (iso: string) =>
