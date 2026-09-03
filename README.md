@@ -3,6 +3,15 @@
 React port of the Luna admin landing pages (dashboard, login, register, forgot password),
 built with Vite, Tailwind CSS, Phosphor Icons, and Recharts.
 
+## Theming
+
+Design tokens live in the `@theme` block of `src/index.css` — the single source of truth
+for colors, radii, and type. Light values are the `:root` base; the `.dark` block overrides
+color tokens only. The app defaults to dark, honors `prefers-color-scheme` on first visit,
+and persists an explicit choice under the `theme` localStorage key. A pre-paint script in
+`index.html` applies the class before first render; `src/hooks/useTheme.ts` manages it at
+runtime. Charts read colors via CSS custom properties, so they re-theme automatically.
+
 ## Development
 
 ```sh
