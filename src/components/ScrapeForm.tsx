@@ -75,7 +75,7 @@ export function ScrapeForm() {
           <Input
             label="Keywords"
             id="job-keywords"
-            placeholder="lawyers, child care, restaurants"
+            placeholder="lawyers, child care, ..."
             iconLeft={Tag}
             required
             value={keywords}
