@@ -2,6 +2,7 @@ import { EnvelopeSimple } from '@phosphor-icons/react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
+import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
 export default function VerifyEmail() {
@@ -22,20 +23,18 @@ export default function VerifyEmail() {
             navigate('/')
           }}
         >
-          <div className="mb-4">
-            <label className="mb-1 block font-medium text-ink" htmlFor="code">Verification code</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              required
-              name="code"
-              id="code"
-              className="input text-center text-lg tracking-[0.5em]"
-            />
-            <span className="text-xs text-ink-subtle">The code expires after 10 minutes</span>
-          </div>
+          <Input
+            label="Verification code"
+            id="code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            required
+            helperText="The code expires after 10 minutes"
+            containerClassName="mb-4"
+            className="text-center text-lg tracking-[0.5em]"
+          />
           <div className="flex items-center gap-2">
             <button type="submit" className="btn btn-primary">Verify</button>
             <button

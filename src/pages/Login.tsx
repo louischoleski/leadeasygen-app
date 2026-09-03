@@ -1,6 +1,7 @@
 import { LockOpen } from '@phosphor-icons/react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
+import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
 export default function Login() {
@@ -20,16 +21,25 @@ export default function Login() {
             navigate('/')
           }}
         >
-          <div className="mb-4">
-            <label className="mb-1 block font-medium text-ink" htmlFor="username">Username</label>
-            <input type="text" placeholder="example@gmail.com" required name="username" id="username" className="input" />
-            <span className="text-xs text-ink-subtle">Your unique username to app</span>
-          </div>
-          <div className="mb-4">
-            <label className="mb-1 block font-medium text-ink" htmlFor="password">Password</label>
-            <input type="password" placeholder="******" required name="password" id="password" className="input" />
-            <span className="text-xs text-ink-subtle">Your strong password</span>
-          </div>
+          <Input
+            label="Username"
+            id="username"
+            name="username"
+            placeholder="example@gmail.com"
+            required
+            helperText="Your unique username to app"
+            containerClassName="mb-4"
+          />
+          <Input
+            label="Password"
+            id="password"
+            name="password"
+            type="password"
+            placeholder="******"
+            required
+            helperText="Your strong password"
+            containerClassName="mb-4"
+          />
           <div className="flex items-center gap-2">
             <button type="submit" className="btn btn-primary">Login</button>
             <Link to="/register" className="btn btn-secondary">Register</Link>

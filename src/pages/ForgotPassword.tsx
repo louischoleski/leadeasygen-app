@@ -1,6 +1,7 @@
 import { IdentificationCard } from '@phosphor-icons/react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
+import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
 export default function ForgotPassword() {
@@ -20,11 +21,16 @@ export default function ForgotPassword() {
             navigate('/')
           }}
         >
-          <div className="mb-4">
-            <label className="mb-1 block font-medium text-ink" htmlFor="email">Email address</label>
-            <input type="email" placeholder="example@gmail.com" required name="email" id="email" className="input" />
-            <span className="text-xs text-ink-subtle">Your email address to send the new password</span>
-          </div>
+          <Input
+            label="Email address"
+            id="email"
+            name="email"
+            type="email"
+            placeholder="example@gmail.com"
+            required
+            helperText="Your email address to send the new password"
+            containerClassName="mb-4"
+          />
           <div className="flex items-center gap-2">
             <button type="submit" className="btn btn-primary">Send new password</button>
             <Link to="/" className="btn btn-secondary">Cancel</Link>

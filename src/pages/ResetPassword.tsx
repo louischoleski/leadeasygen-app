@@ -2,6 +2,7 @@ import { Key } from '@phosphor-icons/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
+import { Input } from '../components/Input'
 import ViewHeader from '../components/ViewHeader'
 
 export default function ResetPassword() {
@@ -32,16 +33,24 @@ export default function ResetPassword() {
           </p>
         )}
         <form className="grid grid-cols-1" noValidate onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="mb-1 block font-medium text-ink" htmlFor="password">New password</label>
-            <input type="password" required name="password" id="password" className="input" />
-            <span className="text-xs text-ink-subtle">Your hard to guess password</span>
-          </div>
-          <div className="mb-4">
-            <label className="mb-1 block font-medium text-ink" htmlFor="repeatPassword">Repeat new password</label>
-            <input type="password" required name="repeatPassword" id="repeatPassword" className="input" />
-            <span className="text-xs text-ink-subtle">Please repeat your password</span>
-          </div>
+          <Input
+            label="New password"
+            id="password"
+            name="password"
+            type="password"
+            required
+            helperText="Your hard to guess password"
+            containerClassName="mb-4"
+          />
+          <Input
+            label="Repeat new password"
+            id="repeatPassword"
+            name="repeatPassword"
+            type="password"
+            required
+            helperText="Please repeat your password"
+            containerClassName="mb-4"
+          />
           <div className="flex items-center gap-2">
             <button type="submit" className="btn btn-primary">Reset password</button>
           </div>
