@@ -8,9 +8,10 @@ export default function AppLayout() {
   const { isMobile } = useViewport()
   const [navOpen, setNavOpen] = useState(!isMobile)
 
-  // Entering mobile: collapse the drawer so it never appears open mid-resize
+  // Crossing the breakpoint resets to each side's default state:
+  // mobile never keeps a stranded drawer, desktop always regains its sidebar
   useEffect(() => {
-    if (isMobile) setNavOpen(false)
+    setNavOpen(!isMobile)
   }, [isMobile])
 
   // On mobile the sidebar is a modal drawer: close it on Escape
