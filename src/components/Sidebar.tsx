@@ -1,7 +1,8 @@
-import { CaretDown, X } from '@phosphor-icons/react'
+import { CaretDown, Globe, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { locales, useLocale } from '../hooks/useLocale'
+import LocaleMenu from './LocaleMenu'
+import { localeNames, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
 import { themeModes, useTheme } from '../hooks/useTheme'
 
@@ -26,7 +27,8 @@ type Props = {
 export default function Sidebar({ open, onNavigate }: Props) {
   const [commonOpen, setCommonOpen] = useState(false)
   const { mode, setThemeMode } = useTheme()
-  const { locale, setLocale } = useLocale()
+  const { locale } = useLocale()
+  const [localeOpen, setLocaleOpen] = useState(false)
   const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
   const [tipHidden, setTipHidden] = useLocalStorage('hideSidebarTip', false)
 
@@ -99,18 +101,29 @@ export default function Sidebar({ open, onNavigate }: Props) {
       {/* Locale and theme live in the navbar on md+; the drawer hosts them on mobile */}
       <div className="border-t border-hairline px-6 py-4 md:hidden">
         <div className="text-eyebrow mb-2 text-ink">Settings</div>
-        <div className="flex items-center gap-1.5" role="group" aria-label="Language">
-          {locales.map((l) => (
-            <button
-              key={l}
-              type="button"
-              aria-pressed={l === locale}
-              onClick={() => setLocale(l)}
-              className={`h-9 min-w-11 cursor-pointer rounded-md border px-2 text-xs font-medium transition-colors ${l === locale ? 'border-primary text-link' : 'border-hairline text-ink-subtle hover:text-ink'}`}
-            >
-              {l.toUpperCase()}
-            </button>
-          ))}
+        <div
+          className="relative"
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) setLocaleOpen(false)
+          }}
+        >
+          <button
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={localeOpen}
+            onClick={() => setLocaleOpen((o) => !o)}
+            className="flex h-11 w-full cursor-pointer items-center justify-between rounded-lg border border-hairline bg-surface-2 px-3 text-sm text-ink transition-colors hover:bg-surface-3"
+          >
+            <span className="flex items-center gap-2">
+              <Globe size={16} aria-hidden="true" className="text-ink-subtle" /> {localeNames[locale]}
+            </span>
+            <CaretDown size={12} aria-hidden="true" className="text-ink-subtle" />
+          </button>
+          {/* Opens upward: the trigger sits at the drawer bottom, and a downward
+              menu would be clipped by the drawer's own scroll container */}
+          {localeOpen && (
+            <LocaleMenu className="bottom-full left-0 mb-1 w-full" onSelect={() => setLocaleOpen(false)} />
+          )}
         </div>
         <div className="mt-3 flex items-center justify-between px-1">
           <span className="text-sm text-ink-muted">Theme</span>

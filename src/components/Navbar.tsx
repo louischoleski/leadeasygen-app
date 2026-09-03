@@ -2,16 +2,17 @@ import { CaretDown, Globe, List, MagnifyingGlass, Monitor, Moon, Sun, X } from '
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
+import LocaleMenu from './LocaleMenu'
 import { SHORTCUTS } from '../constants/shortcuts'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
-import { locales, useLocale } from '../hooks/useLocale'
+import { useLocale } from '../hooks/useLocale'
 import { useOS } from '../hooks/useOS'
 import { themeModes, useTheme } from '../hooks/useTheme'
 import { useViewport } from '../hooks/useViewport'
 
 export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { theme, mode, setThemeMode } = useTheme()
-  const { locale, setLocale } = useLocale()
+  const { locale } = useLocale()
   const { isMobile } = useViewport()
   const os = useOS()
   const [localeOpen, setLocaleOpen] = useState(false)
@@ -105,23 +106,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           <CaretDown size={10} aria-hidden="true" />
         </button>
         {localeOpen && (
-          <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-24 p-1">
-            {locales.map((l) => (
-              <button
-                key={l}
-                type="button"
-                role="menuitemradio"
-                aria-checked={l === locale}
-                onClick={() => {
-                  setLocale(l)
-                  setLocaleOpen(false)
-                }}
-                className={`block w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-2 ${l === locale ? 'font-medium text-ink' : 'text-ink-muted'}`}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          <LocaleMenu className="top-full right-0 mt-1 w-36" onSelect={() => setLocaleOpen(false)} />
         )}
       </div>
       <div
