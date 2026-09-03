@@ -1,22 +1,37 @@
 import { CaretDown, Globe, List, MagnifyingGlass, Moon, Sun, X } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
+import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
 import { locales, useLocale } from '../hooks/useLocale'
+import { useOS } from '../hooks/useOS'
 import { useTheme } from '../hooks/useTheme'
 import { useViewport } from '../hooks/useViewport'
 
 export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale } = useLocale()
-  const { isDesktop } = useViewport()
+  const { isMobile } = useViewport()
+  const os = useOS()
   const [localeOpen, setLocaleOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // The overlay is a mobile-only pattern: close it when the viewport enters desktop
+  // The overlay is a mobile-only pattern: close it when the viewport leaves mobile
   useEffect(() => {
-    if (isDesktop && searchOpen) setSearchOpen(false)
-  }, [isDesktop, searchOpen])
+    if (!isMobile && searchOpen) setSearchOpen(false)
+  }, [isMobile, searchOpen])
+
+  // On mobile the shortcut is meaningless (no hardware keyboard assumption) and
+  // the overlay would be closed by the guard above, so focus the inline input.
+  useKeyboardShortcut(
+    'k',
+    () => {
+      if (!isMobile) searchInputRef.current?.focus()
+    },
+    { meta: os === 'mac', ctrl: os !== 'mac' },
+  )
+  useKeyboardShortcut('Escape', () => setSearchOpen(false), { preventDefault: false })
 
   return (
     <nav className="fixed inset-x-0 top-0 z-30 flex h-14 items-center border-b border-hairline bg-canvas pr-3 pl-1 md:pr-4 md:pl-0">
@@ -44,13 +59,17 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       <Link to="/" className="ml-1 text-base font-bold tracking-widest text-primary uppercase md:hidden">
         Luna
       </Link>
-      <form className="ml-3 hidden md:block" role="search" onSubmit={(e) => e.preventDefault()}>
+      <form className="relative ml-3 hidden md:block" role="search" onSubmit={(e) => e.preventDefault()}>
         <input
+          ref={searchInputRef}
           type="search"
           aria-label="Search"
           placeholder="Search data for analysis"
-          className="w-[200px] rounded-md border border-hairline bg-surface-2 px-3 py-1.5 text-sm text-ink outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-primary-focus/50"
+          className="w-[220px] rounded-md border border-hairline bg-surface-2 py-1.5 pr-12 pl-3 text-sm text-ink outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-primary-focus/50"
         />
+        <kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-hairline bg-surface-1 px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle">
+          {os === 'mac' ? '⌘K' : 'Ctrl K'}
+        </kbd>
       </form>
 
       <button
@@ -128,9 +147,6 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
               type="search"
               aria-label="Search"
               placeholder="Search data for analysis"
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') setSearchOpen(false)
-              }}
               className="h-11 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-subtle"
             />
             <button

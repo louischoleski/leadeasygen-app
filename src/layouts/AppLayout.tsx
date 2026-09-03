@@ -5,26 +5,26 @@ import Sidebar from '../components/Sidebar'
 import { useViewport } from '../hooks/useViewport'
 
 export default function AppLayout() {
-  const { isDesktop } = useViewport()
-  const [navOpen, setNavOpen] = useState(isDesktop)
+  const { isMobile } = useViewport()
+  const [navOpen, setNavOpen] = useState(!isMobile)
 
   // Entering mobile: collapse the drawer so it never appears open mid-resize
   useEffect(() => {
-    if (!isDesktop) setNavOpen(false)
-  }, [isDesktop])
+    if (isMobile) setNavOpen(false)
+  }, [isMobile])
 
   // On mobile the sidebar is a modal drawer: close it on Escape
   useEffect(() => {
-    if (!navOpen || isDesktop) return
+    if (!navOpen || !isMobile) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setNavOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navOpen, isDesktop])
+  }, [navOpen, isMobile])
 
   const closeIfMobile = () => {
-    if (!isDesktop) setNavOpen(false)
+    if (isMobile) setNavOpen(false)
   }
 
   return (
