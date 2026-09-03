@@ -1,9 +1,6 @@
 import { useCallback, useState } from 'react'
 
-function useLocalStorage<T>(
-  key: string,
-  initialValue: T,
-): [T, (v: T | ((prev: T) => T)) => void, () => void] {
+function useLocalStorage<T>(key: string, initialValue: T): [T, (v: T | ((prev: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key)
@@ -27,16 +24,7 @@ function useLocalStorage<T>(
     [key, storedValue],
   )
 
-  const remove = useCallback(() => {
-    try {
-      window.localStorage.removeItem(key)
-      setStoredValue(initialValue)
-    } catch (error) {
-      console.error(`useLocalStorage remove error for key "${key}":`, error)
-    }
-  }, [key, initialValue])
-
-  return [storedValue, setValue, remove]
+  return [storedValue, setValue]
 }
 
 export default useLocalStorage
