@@ -1,4 +1,5 @@
 import { Envelope, GoogleLogo, User } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
@@ -7,12 +8,17 @@ import { Input } from '../components/Input'
 
 export default function Register() {
   const navigate = useNavigate()
+  const [accepted, setAccepted] = useState(false)
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const data = new FormData(e.currentTarget)
     if (data.get('password') !== data.get('confirmPassword')) {
       toast.error('Passwords do not match')
+      return
+    }
+    if (!accepted) {
+      toast.error('Please accept the Terms of Service and Privacy Policy')
       return
     }
     navigate('/')
@@ -53,8 +59,27 @@ export default function Register() {
           name="confirmPassword"
           type="password"
           required
-          containerClassName="mb-6"
+          containerClassName="mb-4"
         />
+        <div className="mb-6 flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="accept-terms"
+            checked={accepted}
+            onChange={(e) => setAccepted(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+          />
+          <label htmlFor="accept-terms" className="text-sm text-ink-subtle">
+            I agree to the{' '}
+            <Link to="/terms" className="text-link underline">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="text-link underline">
+              Privacy Policy
+            </Link>
+          </label>
+        </div>
         <div className="space-y-2">
           <Button type="submit" fullWidth>Sign up</Button>
           <Button

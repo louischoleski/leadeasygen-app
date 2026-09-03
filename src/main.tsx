@@ -11,7 +11,9 @@ import CheckoutCancelled from './pages/CheckoutCancelled'
 import CheckoutSuccess from './pages/CheckoutSuccess'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
+import Privacy from './pages/Privacy'
 import Register from './pages/Register'
+import Terms from './pages/Terms'
 import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
 
@@ -47,6 +49,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify" element={<VerifyEmail />} />
         </Route>
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         {/* Redirects for URLs of the former static site */}
         <Route path="/index.html" element={<Navigate to="/" replace />} />
         <Route path="/login.html" element={<Navigate to="/login" replace />} />
