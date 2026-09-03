@@ -254,7 +254,8 @@ export default function Billing() {
   const [showSubscription, setShowSubscription] = useState(false)
   const [activeTab, setActiveTab] = useState('history')
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
-  const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier)
+  // Card is always shown; a null subscription displays under the free tier's limits
+  const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier) ?? subscriptionTiers[0]
 
   const showPackages = () => {
     setShowSubscription(false)
@@ -304,21 +305,6 @@ export default function Billing() {
         )}
       </Card>
 
-      {activeTier && activeTier.id !== 'free' && (
-        <CurrentPlanCard
-          planName={activeTier.name}
-          billingCycle={billingCycle}
-          nextBillingDate="June 1, 2025"
-          metrics={[
-            { label: 'Jobs this month', used: usage.jobs, total: activeTier.limits.jobs },
-            { label: 'Team seats', used: usage.teamSeats, total: activeTier.limits.teamSeats },
-            { label: 'API calls', used: usage.apiCalls, total: activeTier.limits.apiCalls },
-            { label: 'Storage', used: usage.storageGB, total: activeTier.limits.storageGB, unit: 'GB' },
-          ]}
-          onCancel={() => toast('Cancel subscription — Demo mode, no action taken')}
-        />
-      )}
-
       <div className="flex justify-center">
         <Toggle
           pressed={showSubscription}
@@ -329,7 +315,25 @@ export default function Billing() {
         />
       </div>
 
-      {showSubscription ? <SubscriptionPlans /> : <TokenPackages />}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <CurrentPlanCard
+            planName={activeTier.name}
+            billingCycle={billingCycle}
+            nextBillingDate="June 1, 2025"
+            metrics={[
+              { label: 'Jobs this month', used: usage.jobs, total: activeTier.limits.jobs },
+              { label: 'Team seats', used: usage.teamSeats, total: activeTier.limits.teamSeats },
+              { label: 'API calls', used: usage.apiCalls, total: activeTier.limits.apiCalls },
+              { label: 'Storage', used: usage.storageGB, total: activeTier.limits.storageGB, unit: 'GB' },
+            ]}
+            onCancel={() => toast('Cancel subscription — Demo mode, no action taken')}
+          />
+        </div>
+        <div className="min-w-0 lg:col-span-2">
+          {showSubscription ? <SubscriptionPlans /> : <TokenPackages />}
+        </div>
+      </div>
 
       <div>
         <Tabs
