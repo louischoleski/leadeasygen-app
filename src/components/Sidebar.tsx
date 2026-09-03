@@ -1,9 +1,9 @@
-import { CaretDown, Moon, Sun, X } from '@phosphor-icons/react'
+import { CaretDown, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
-import { useTheme } from '../hooks/useTheme'
+import { themeModes, useTheme } from '../hooks/useTheme'
 
 const tips = [
   { label: 'Tip', text: 'Use radius + keywords together for tighter lead targeting.' },
@@ -25,7 +25,7 @@ type Props = {
 
 export default function Sidebar({ open, onNavigate }: Props) {
   const [commonOpen, setCommonOpen] = useState(false)
-  const { theme, toggleTheme } = useTheme()
+  const { mode, setThemeMode } = useTheme()
   const { locale, setLocale } = useLocale()
   const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
   const [tipHidden, setTipHidden] = useLocalStorage('hideSidebarTip', false)
@@ -112,16 +112,24 @@ export default function Sidebar({ open, onNavigate }: Props) {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={theme === 'dark'}
-          onClick={toggleTheme}
-          className="mt-3 flex h-11 w-full cursor-pointer items-center gap-2 rounded-md border border-hairline px-3 text-sm text-ink-subtle transition-colors hover:text-ink"
-        >
-          {theme === 'dark' ? <Moon size={16} aria-hidden="true" /> : <Sun size={16} aria-hidden="true" />}
-          {theme === 'dark' ? 'Dark mode' : 'Light mode'}
-        </button>
+        <div className="mt-3 flex items-center justify-between px-1">
+          <span className="text-sm text-ink-muted">Theme</span>
+          <div className="flex rounded-full border border-hairline bg-surface-2 p-0.5" role="group" aria-label="Theme">
+            {themeModes.map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={mode === m}
+                onClick={() => setThemeMode(m)}
+                className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  mode === m ? 'bg-surface-1 text-ink shadow-sm' : 'text-ink-subtle hover:text-ink'
+                }`}
+              >
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </aside>
   )
