@@ -11,9 +11,9 @@ export interface TokenPackage {
 }
 
 export const tokenPackages: TokenPackage[] = [
-  { id: 'starter', name: 'Starter', credits: 100, price: 9 },
-  { id: 'growth', name: 'Growth', credits: 500, price: 29, popular: true },
-  { id: 'scale', name: 'Scale', credits: 2000, price: 99 },
+  { id: 'pack-100', name: 'Pack 100', credits: 100, price: 9 },
+  { id: 'pack-300', name: 'Pack 300', credits: 300, price: 19 },
+  { id: 'pack-500', name: 'Pack 500', credits: 500, price: 29, popular: true },
 ]
 
 // Subscription tiers — recurring
@@ -46,23 +46,14 @@ export const subscriptionTiers: SubscriptionTier[] = [
     limits: { jobs: 1, teamSeats: 1, apiCalls: 1000, storageGB: 1 },
   },
   {
-    id: 'pro',
-    name: 'Pro',
+    id: 'unlimited',
+    name: 'Unlimited',
     priceMonthly: 49,
     priceAnnual: 39,
-    description: 'Unlimited leads for growing teams',
-    features: ['Unlimited jobs', 'Priority support', 'CSV export', 'API access', '10 team seats'],
-    limits: { jobs: null, teamSeats: 10, apiCalls: 100000, storageGB: 5 },
-    popular: true,
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    priceMonthly: 199,
-    priceAnnual: 159,
-    description: 'Custom solutions at scale',
-    features: ['Everything in Pro', 'Unlimited seats', 'White-label', 'Dedicated manager', 'Custom integrations'],
+    description: 'Unlimited leads, no credit limits',
+    features: ['Unlimited jobs', 'Unlimited credits', 'Priority support', 'CSV export', 'API access'],
     limits: { jobs: null, teamSeats: null, apiCalls: null, storageGB: null },
+    popular: true,
   },
 ]
 
@@ -78,11 +69,11 @@ export interface BillingRecord {
 }
 
 export const billingHistory: BillingRecord[] = [
-  { id: 'INV-001', date: 'May 1, 2025', type: 'subscription', description: 'Pro Plan — Monthly', amount: '$49.99', status: 'paid' },
-  { id: 'CR-042', date: 'Apr 28, 2025', type: 'credits', description: 'Growth Package — 500 credits', amount: '$29.00', status: 'paid' },
-  { id: 'INV-002', date: 'Apr 1, 2025', type: 'subscription', description: 'Pro Plan — Monthly', amount: '$49.99', status: 'paid' },
-  { id: 'CR-038', date: 'Mar 15, 2025', type: 'credits', description: 'Starter Package — 100 credits', amount: '$9.00', status: 'paid' },
-  { id: 'INV-003', date: 'Mar 1, 2025', type: 'subscription', description: 'Pro Plan — Monthly', amount: '$49.99', status: 'paid' },
+  { id: 'INV-001', date: 'May 1, 2025', type: 'subscription', description: 'Unlimited Plan — Monthly', amount: '$49.00', status: 'paid' },
+  { id: 'CR-042', date: 'Apr 28, 2025', type: 'credits', description: 'Pack 500 — 500 credits', amount: '$29.00', status: 'paid' },
+  { id: 'INV-002', date: 'Apr 1, 2025', type: 'subscription', description: 'Unlimited Plan — Monthly', amount: '$49.00', status: 'paid' },
+  { id: 'CR-038', date: 'Mar 15, 2025', type: 'credits', description: 'Pack 100 — 100 credits', amount: '$9.00', status: 'paid' },
+  { id: 'INV-003', date: 'Mar 1, 2025', type: 'subscription', description: 'Unlimited Plan — Monthly', amount: '$49.00', status: 'paid' },
 ]
 
 export type BillingCycle = 'monthly' | 'annual'

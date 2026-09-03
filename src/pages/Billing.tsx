@@ -198,7 +198,7 @@ function SubscriptionPlans() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {subscriptionTiers.map((tier) => {
           const price = billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual
           const current = tier.id === subscriptionTier
