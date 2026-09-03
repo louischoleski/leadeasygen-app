@@ -3,14 +3,16 @@ import { cn } from '../lib/cn'
 interface ProgressProps {
   value: number
   max?: number
+  'aria-label': string
   className?: string
 }
 
-export function Progress({ value, max = 100, className }: ProgressProps) {
+export function Progress({ value, max = 100, 'aria-label': ariaLabel, className }: ProgressProps) {
   const pct = Math.min(100, Math.max(0, (value / max) * 100))
   return (
     <div
       role="progressbar"
+      aria-label={ariaLabel}
       aria-valuenow={value}
       aria-valuemin={0}
       aria-valuemax={max}

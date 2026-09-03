@@ -17,6 +17,13 @@ export const tokenPackages: TokenPackage[] = [
 ]
 
 // Subscription tiers — recurring
+export interface TierLimits {
+  jobs: number | null // null = unlimited
+  teamSeats: number | null
+  apiCalls: number | null
+  storageGB: number | null
+}
+
 export interface SubscriptionTier {
   id: string
   name: string
@@ -24,6 +31,7 @@ export interface SubscriptionTier {
   priceAnnual: number
   description: string
   features: string[]
+  limits: TierLimits
   popular?: boolean
 }
 
@@ -35,6 +43,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     priceAnnual: 0,
     description: 'Get started with limited scraping',
     features: ['50 credits/month', 'Basic support', '1 active job'],
+    limits: { jobs: 1, teamSeats: 1, apiCalls: 1000, storageGB: 1 },
   },
   {
     id: 'pro',
@@ -43,6 +52,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     priceAnnual: 39,
     description: 'Unlimited leads for growing teams',
     features: ['Unlimited jobs', 'Priority support', 'CSV export', 'API access', '10 team seats'],
+    limits: { jobs: null, teamSeats: 10, apiCalls: 100000, storageGB: 5 },
     popular: true,
   },
   {
@@ -52,6 +62,7 @@ export const subscriptionTiers: SubscriptionTier[] = [
     priceAnnual: 159,
     description: 'Custom solutions at scale',
     features: ['Everything in Pro', 'Unlimited seats', 'White-label', 'Dedicated manager', 'Custom integrations'],
+    limits: { jobs: null, teamSeats: null, apiCalls: null, storageGB: null },
   },
 ]
 
@@ -76,10 +87,18 @@ export const billingHistory: BillingRecord[] = [
 
 export type BillingCycle = 'monthly' | 'annual'
 
+export interface UsageState {
+  jobs: number
+  teamSeats: number
+  apiCalls: number
+  storageGB: number
+}
+
 interface BillingState {
   creditBalance: number
   subscriptionTier: string | null // null = no active sub, 'free' = free tier
   billingCycle: BillingCycle
+  usage: UsageState
 }
 
 const STORAGE_KEY = 'billing'
@@ -88,6 +107,7 @@ const defaults: BillingState = {
   creditBalance: 247,
   subscriptionTier: 'free',
   billingCycle: 'monthly',
+  usage: { jobs: 12, teamSeats: 3, apiCalls: 7500, storageGB: 2.5 },
 }
 
 function readStored(): BillingState {
@@ -100,11 +120,20 @@ function readStored(): BillingState {
     const tierValid =
       p.subscriptionTier === null ||
       (typeof p.subscriptionTier === 'string' && subscriptionTiers.some((t) => t.id === p.subscriptionTier))
+    const storedUsage: Partial<UsageState> = typeof p.usage === 'object' && p.usage !== null ? p.usage : {}
+    const usageField = (value: unknown, fallback: number) =>
+      typeof value === 'number' && value >= 0 ? value : fallback
     return {
       creditBalance:
         typeof p.creditBalance === 'number' && p.creditBalance >= 0 ? p.creditBalance : defaults.creditBalance,
       subscriptionTier: tierValid ? (p.subscriptionTier as string | null) : defaults.subscriptionTier,
       billingCycle: p.billingCycle === 'annual' ? 'annual' : 'monthly',
+      usage: {
+        jobs: usageField(storedUsage.jobs, defaults.usage.jobs),
+        teamSeats: usageField(storedUsage.teamSeats, defaults.usage.teamSeats),
+        apiCalls: usageField(storedUsage.apiCalls, defaults.usage.apiCalls),
+        storageGB: usageField(storedUsage.storageGB, defaults.usage.storageGB),
+      },
     }
   } catch {
     return defaults

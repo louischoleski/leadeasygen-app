@@ -3,10 +3,10 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
 import { Tabs } from '../components/Tabs'
 import { Toggle } from '../components/Toggle'
-import { UsageBar } from '../components/UsageBar'
 import {
   billingHistory,
   subscriptionTiers,
@@ -250,11 +250,11 @@ function SubscriptionPlans() {
 }
 
 export default function Billing() {
-  const { creditBalance, subscriptionTier } = useBilling()
+  const { creditBalance, subscriptionTier, billingCycle, usage } = useBilling()
   const [showSubscription, setShowSubscription] = useState(false)
   const [activeTab, setActiveTab] = useState('history')
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
-  const paidTier = !payAsYouGo
+  const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier)
 
   const showPackages = () => {
     setShowSubscription(false)
@@ -304,6 +304,21 @@ export default function Billing() {
         )}
       </Card>
 
+      {activeTier && activeTier.id !== 'free' && (
+        <CurrentPlanCard
+          planName={activeTier.name}
+          billingCycle={billingCycle}
+          nextBillingDate="June 1, 2025"
+          metrics={[
+            { label: 'Jobs this month', used: usage.jobs, total: activeTier.limits.jobs },
+            { label: 'Team seats', used: usage.teamSeats, total: activeTier.limits.teamSeats },
+            { label: 'API calls', used: usage.apiCalls, total: activeTier.limits.apiCalls },
+            { label: 'Storage', used: usage.storageGB, total: activeTier.limits.storageGB, unit: 'GB' },
+          ]}
+          onCancel={() => toast('Cancel subscription — Demo mode, no action taken')}
+        />
+      )}
+
       <div className="flex justify-center">
         <Toggle
           pressed={showSubscription}
@@ -315,20 +330,6 @@ export default function Billing() {
       </div>
 
       {showSubscription ? <SubscriptionPlans /> : <TokenPackages />}
-
-      {paidTier && (
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-ink">Plan Usage</h3>
-            <p className="mb-4 text-sm text-ink-subtle">Your current billing period</p>
-            <div className="space-y-4">
-              <UsageBar label="Jobs this month" used={12} total={Infinity} valueText="Unlimited" />
-              <UsageBar label="Team seats" used={3} total={10} />
-              <UsageBar label="API calls" used={7500} total={100000} />
-            </div>
-          </div>
-        </Card>
-      )}
 
       <div>
         <Tabs

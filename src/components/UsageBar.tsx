@@ -33,7 +33,7 @@ export function UsageBar({
           {valueText ?? `${used} / ${total}${suffix ? ` ${suffix}` : ''}`}
         </p>
       </div>
-      <Progress value={unlimited ? 100 : used} max={unlimited ? 100 : total} />
+      <Progress aria-label={label} value={unlimited ? 100 : used} max={unlimited ? 100 : total} />
     </div>
   )
 }
