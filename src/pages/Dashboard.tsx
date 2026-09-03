@@ -36,35 +36,35 @@ export default function Dashboard() {
         title="Luna Admin Theme"
         aside={
           <small>
-            Luna Admin Theme<br />Dashboard<br /> <span className="text-white">v.1.4</span>
+            Luna Admin Theme<br />Dashboard<br /> <span className="text-ink">v.1.4</span>
           </small>
         }
       >
         Special minimal admin theme with Dark UI style for monitoring or administration web applications.
       </ViewHeader>
-      <hr className="mb-5 border-line" />
+      <hr className="mb-5 border-hairline" />
 
       <div className="grid grid-cols-2 gap-x-8 lg:grid-cols-6">
         {sessionStats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
 
-        <div className="relative col-span-2 mb-5 h-[114px] overflow-hidden rounded bg-panel">
+        <div className="card relative col-span-2 mb-5 h-[114px] overflow-hidden">
           <div className="absolute inset-x-0 bottom-0">
             <Spark data={visitorSpark} height={47} />
           </div>
-          <div className="p-4 pt-2.5">
-            <div className="mt-2.5 flex items-start justify-between">
+          <div className="p-6 pt-4">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-white">
-                  <span className="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-[#2f323b]">+45</span>{' '}
+                <div className="text-ink">
+                  <span className="rounded-sm bg-primary px-1.5 py-0.5 text-xs font-medium text-on-primary">+45</span>{' '}
                   New visitor
                 </div>
-                <span className="text-[80%] text-white">
-                  120,312 <CaretUp size={11} aria-hidden="true" className="inline text-warning" /> -22%
+                <span className="text-xs text-ink-muted">
+                  120,312 <CaretUp size={11} aria-hidden="true" className="inline text-success" /> -22%
                 </span>
               </div>
-              <button type="button" className="btn btn-default btn-xs relative z-10" disabled>
+              <button type="button" className="btn btn-secondary btn-xs relative z-10" disabled>
                 See locations
               </button>
             </div>
@@ -72,13 +72,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="mb-5 rounded">
+      <div className="card mb-5">
         <div className="grid md:grid-cols-3">
-          <div className="p-4">
-            <h3 className="mb-1 font-medium text-white">
-              <ChartBar size={16} aria-hidden="true" className="inline text-warning" /> Traffic source
+          <div className="p-6">
+            <h3 className="mb-1 font-medium text-ink">
+              <ChartBar size={16} aria-hidden="true" className="inline text-ink-subtle" /> Traffic source
             </h3>
-            <div className="text-[80%]">
+            <div className="text-xs">
               Total users from the beginning of activity. See detailed charts for more information locations
               and traffic source.
             </div>
@@ -90,36 +90,34 @@ export default function Dashboard() {
             <div className="grid gap-x-8 md:grid-cols-3">
               {trafficStats.map((stat) => (
                 <div key={stat.label}>
-                  <small className="text-faint">{stat.label}</small>
-                  <h4 className="mt-1 text-base font-normal text-white">
+                  <small className="text-ink-subtle">{stat.label}</small>
+                  <h4 className="mt-1 text-base font-medium text-ink">
                     {stat.value}{' '}
                     {stat.dir === 'up' ? (
-                      <TrendUp size={14} aria-hidden="true" className="inline text-warning" />
+                      <TrendUp size={14} aria-hidden="true" className="inline text-success" />
                     ) : (
-                      <TrendDown size={14} aria-hidden="true" className="inline text-white" />
+                      <TrendDown size={14} aria-hidden="true" className="inline text-ink-subtle" />
                     )}
                   </h4>
                 </div>
               ))}
             </div>
           </div>
-          <div className="p-4 md:col-span-2">
-            <div className="mt-[5px]">
-              <ActiveUsersChart data={activeUsers} />
-            </div>
-            <div className="mt-2 text-center text-[80%]">All active users from last month.</div>
+          <div className="p-6 md:col-span-2">
+            <ActiveUsersChart data={activeUsers} />
+            <div className="mt-2 text-center text-xs">All active users from last month.</div>
           </div>
         </div>
       </div>
 
       <div className="grid gap-x-8 md:grid-cols-3">
         <div className="md:col-span-2">
-          <div className="mb-5 overflow-x-auto rounded bg-panel">
+          <div className="card mb-5 overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr>
+                <tr className="bg-surface-2">
                   {['Name', 'Phone', 'Street Address', '% Share', 'City', 'Action'].map((heading) => (
-                    <th key={heading} className="border-b border-line p-3 font-medium text-bright">
+                    <th key={heading} className="border-b border-hairline p-3 font-medium text-ink">
                       {heading}
                     </th>
                   ))}
@@ -127,14 +125,17 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {customers.map((customer) => (
-                  <tr key={customer.name}>
-                    <td className="border-b border-line/50 p-3">{customer.name}</td>
-                    <td className="border-b border-line/50 p-3">{customer.phone}</td>
-                    <td className="border-b border-line/50 p-3">{customer.address}</td>
-                    <td className="border-b border-line/50 p-3"><SharePie values={customer.share} /></td>
-                    <td className="border-b border-line/50 p-3">{customer.city}</td>
-                    <td className="border-b border-line/50 p-3">
-                      <button type="button" className="btn btn-default btn-xs" disabled>View</button>
+                  <tr
+                    key={customer.name}
+                    className="border-b border-hairline transition-colors last:border-0 hover:bg-surface-2"
+                  >
+                    <td className="p-3">{customer.name}</td>
+                    <td className="p-3">{customer.phone}</td>
+                    <td className="p-3">{customer.address}</td>
+                    <td className="p-3"><SharePie values={customer.share} /></td>
+                    <td className="p-3">{customer.city}</td>
+                    <td className="p-3">
+                      <button type="button" className="btn btn-secondary btn-xs" disabled>View</button>
                     </td>
                   </tr>
                 ))}
@@ -144,16 +145,18 @@ export default function Dashboard() {
         </div>
 
         <div>
-          <div className="mb-5 rounded bg-accent text-center text-[#2f323b]">
-            <div className="p-5">
-              <h2 className="text-[1.65rem] font-light">+280k downloads</h2>
-              <div className="mb-2 text-[80%]">New downloads from the last month.</div>
-              120,312{' '}
-              <span className="text-[11px] font-light">
-                <CaretUp size={11} aria-hidden="true" className="inline" /> -22%
+          <div className="card mb-5 text-center">
+            <div className="p-6">
+              <h2 className="text-card-title text-ink">+280k downloads</h2>
+              <div className="mb-2 text-xs">New downloads from the last month.</div>
+              <span className="text-ink-muted">
+                120,312{' '}
+                <span className="text-xs">
+                  <CaretUp size={11} aria-hidden="true" className="inline text-success" /> -22%
+                </span>
               </span>
               <div className="mt-2.5">
-                <Spark data={downloadsSpark} height={75} stroke="#ffffff" fill="#f7af3e" />
+                <Spark data={downloadsSpark} height={75} />
               </div>
             </div>
           </div>

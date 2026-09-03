@@ -2,16 +2,15 @@ export type SessionStat = {
   value: string
   delta: string
   dir: 'up' | 'down'
-  tone: 'warning' | 'white'
   label: string
   updated: string
 }
 
 export const sessionStats: SessionStat[] = [
-  { value: '206', delta: '+20%', dir: 'up', tone: 'warning', label: '% New Sessions', updated: '10:22pm' },
-  { value: '140', delta: '5%', dir: 'down', tone: 'white', label: 'Total visitors', updated: '9:10am' },
-  { value: '262', delta: '+56%', dir: 'up', tone: 'warning', label: 'Total users', updated: '05:42pm' },
-  { value: '62%', delta: '+18%', dir: 'up', tone: 'warning', label: 'Bounce Rate', updated: '04:00am' },
+  { value: '206', delta: '+20%', dir: 'up', label: '% New Sessions', updated: '10:22pm' },
+  { value: '140', delta: '5%', dir: 'down', label: 'Total visitors', updated: '9:10am' },
+  { value: '262', delta: '+56%', dir: 'up', label: 'Total users', updated: '05:42pm' },
+  { value: '62%', delta: '+18%', dir: 'up', label: 'Bounce Rate', updated: '04:00am' },
 ]
 
 export const visitorSpark = [20, 34, 43, 43, 35, 44, 32, 44, 52, 45]

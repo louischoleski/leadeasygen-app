@@ -18,7 +18,7 @@ export default function Register() {
       <ViewHeader icon={UserPlus} title="Register">
         Please enter your data to register.
       </ViewHeader>
-      <div className="rounded bg-panel p-4 pt-2.5">
+      <div className="card p-6">
         <form
           className="grid grid-cols-1"
           noValidate
@@ -30,15 +30,15 @@ export default function Register() {
           <div className="grid gap-x-8 lg:grid-cols-2">
             {fields.map((field) => (
               <div key={field.id} className="mb-4">
-                <label className="mb-1 block" htmlFor={field.id}>{field.label}</label>
+                <label className="mb-1 block font-medium text-ink" htmlFor={field.id}>{field.label}</label>
                 <input type={field.type} required name={field.id} id={field.id} className="input" />
-                <span className="text-xs text-faint">{field.hint}</span>
+                <span className="text-xs text-ink-subtle">{field.hint}</span>
               </div>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-accent">Register</button>
-            <Link to="/login" className="btn btn-default">Login</Link>
+            <button type="submit" className="btn btn-primary">Register</button>
+            <Link to="/login" className="btn btn-secondary">Login</Link>
           </div>
         </form>
       </div>

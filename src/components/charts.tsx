@@ -1,13 +1,16 @@
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 
+/*
+ * All chart colors are CSS custom properties so the charts re-theme with the
+ * .dark class — no theme props need to be threaded through.
+ */
+
 type SparkProps = {
   data: number[]
   height: number
-  stroke?: string
-  fill?: string
 }
 
-export function Spark({ data, height, stroke = '#ffffff', fill = '#43454d' }: SparkProps) {
+export function Spark({ data, height }: SparkProps) {
   const points = data.map((y, x) => ({ x, y }))
   return (
     <ResponsiveContainer width="100%" height={height}>
@@ -15,10 +18,9 @@ export function Spark({ data, height, stroke = '#ffffff', fill = '#43454d' }: Sp
         <Area
           type="monotone"
           dataKey="y"
-          stroke={stroke}
-          strokeWidth={3}
-          fill={fill}
-          fillOpacity={1}
+          stroke="var(--color-chart-1)"
+          strokeWidth={2}
+          fill="var(--color-chart-1-fill)"
           isAnimationActive={false}
         />
       </AreaChart>
@@ -27,7 +29,7 @@ export function Spark({ data, height, stroke = '#ffffff', fill = '#43454d' }: Sp
 }
 
 export function SharePie({ values }: { values: [number, number] }) {
-  const colors = ['#f7af3e', '#404652']
+  const colors = ['var(--color-chart-1)', 'var(--color-hairline-strong)']
   const data = values.map((v) => ({ v }))
   return (
     <PieChart width={24} height={24}>
@@ -46,23 +48,21 @@ export function ActiveUsersChart({ data }: { data: ActiveUsersPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={160}>
       <AreaChart data={data} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
-        <CartesianGrid stroke="#404652" vertical={false} />
+        <CartesianGrid stroke="var(--color-chart-grid)" vertical={false} />
         <Area
           type="monotone"
           dataKey="current"
-          stroke="#f7af3e"
-          strokeWidth={1}
-          fill="#f7af3e"
-          fillOpacity={0.9}
+          stroke="var(--color-chart-1)"
+          strokeWidth={1.5}
+          fill="var(--color-chart-1-fill)"
           isAnimationActive={false}
         />
         <Area
           type="monotone"
           dataKey="previous"
-          stroke="#de9536"
-          strokeWidth={1}
-          fill="#de9536"
-          fillOpacity={0.9}
+          stroke="var(--color-chart-2)"
+          strokeWidth={1.5}
+          fill="var(--color-chart-2-fill)"
           isAnimationActive={false}
         />
       </AreaChart>

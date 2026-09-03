@@ -11,7 +11,7 @@ export default function Login() {
       <ViewHeader icon={LockOpen} title="Login">
         Please enter your credentials to login.
       </ViewHeader>
-      <div className="rounded bg-panel p-4 pt-2.5">
+      <div className="card p-6">
         <form
           className="grid grid-cols-1"
           noValidate
@@ -21,19 +21,19 @@ export default function Login() {
           }}
         >
           <div className="mb-4">
-            <label className="mb-1 block" htmlFor="username">Username</label>
+            <label className="mb-1 block font-medium text-ink" htmlFor="username">Username</label>
             <input type="text" placeholder="example@gmail.com" required name="username" id="username" className="input" />
-            <span className="text-xs text-faint">Your unique username to app</span>
+            <span className="text-xs text-ink-subtle">Your unique username to app</span>
           </div>
           <div className="mb-4">
-            <label className="mb-1 block" htmlFor="password">Password</label>
+            <label className="mb-1 block font-medium text-ink" htmlFor="password">Password</label>
             <input type="password" placeholder="******" required name="password" id="password" className="input" />
-            <span className="text-xs text-faint">Your strong password</span>
+            <span className="text-xs text-ink-subtle">Your strong password</span>
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-accent">Login</button>
-            <Link to="/register" className="btn btn-default">Register</Link>
-            <Link to="/forgot-password" className="text-xs text-accent hover:text-warning">Forgot password?</Link>
+            <button type="submit" className="btn btn-primary">Login</button>
+            <Link to="/register" className="btn btn-secondary">Register</Link>
+            <Link to="/forgot-password" className="text-xs text-link hover:underline">Forgot password?</Link>
           </div>
         </form>
       </div>

@@ -10,7 +10,7 @@ export default function AppLayout() {
     <div>
       <Navbar onToggleNav={() => setNavOpen((open) => !open)} />
       <Sidebar open={navOpen} />
-      <main className={`pt-[60px] transition-[margin] duration-300 ${navOpen ? 'md:ml-[200px]' : ''}`}>
+      <main className={`pt-14 transition-[margin] duration-300 ${navOpen ? 'md:ml-[200px]' : ''}`}>
         <div className="p-[30px]">
           <Outlet />
         </div>

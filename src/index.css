@@ -2,7 +2,8 @@
 
 /*
  * Linear design tokens. Light values are the :root base; .dark overrides below.
- * Light values marked "derived" are extrapolated — the source spec documents dark only.
+ * Light hierarchy comes from white surfaces + hairline borders + faint shadows;
+ * dark hierarchy comes from the surface ladder + borders (shadow token collapses).
  */
 @theme {
   --font-sans: 'Inter', 'SF Pro Display', system-ui, sans-serif;
@@ -28,39 +29,31 @@
   --text-eyebrow--font-weight: 500;
 
   --color-canvas: #ffffff;
-  --color-surface-1: #f5f6f6;
-  --color-surface-2: #ececee; /* derived */
-  --color-surface-3: #e8e9eb; /* derived */
-  --color-hairline: #e3e4e8; /* derived */
-  --color-hairline-strong: #d5d7db; /* derived */
-  --color-ink: #08090a; /* derived */
-  --color-ink-muted: #4a505a; /* derived */
-  --color-ink-subtle: #6b707a; /* derived */
-  --color-ink-tertiary: #878c94; /* derived; disabled text only — below AA by design */
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f5f6f6;
+  --color-surface-3: #ececee;
+  --color-sidebar: #ffffff;
+  --color-hairline: #e3e4e8;
+  --color-hairline-strong: #d5d7db;
+  --color-ink: #08090a;
+  --color-ink-muted: #4a505a;
+  --color-ink-subtle: #6b707a;
+  --color-ink-tertiary: #878c94; /* disabled text only — below AA by design */
   --color-primary: #5e6ad2;
   --color-on-primary: #ffffff;
-  --color-primary-hover: #4f5ac2; /* derived; dark uses the spec's lighter hover */
+  --color-primary-hover: #4f5ac2;
   --color-primary-focus: #5e69d1;
-  --color-success: #1a7a31; /* spec green darkened to pass AA as text on light */
+  --color-link: #5e6ad2;
+  --color-success: #1a7a31;
   --color-error: #dc2626;
-  --color-chart-1: var(--color-primary);
+  --color-chart-1: #5e6ad2;
+  --color-chart-1-fill: rgb(94 106 210 / 0.12);
   --color-chart-2: #7a7fad;
+  --color-chart-2-fill: rgb(122 127 173 / 0.12);
   --color-chart-grid: var(--color-hairline);
   --color-overlay: #000000;
 
-  /* Legacy aliases — removed in phase 3 once component utilities are renamed */
-  --color-body: var(--color-canvas);
-  --color-surface: var(--color-surface-3);
-  --color-panel: var(--color-surface-1);
-  --color-line: var(--color-hairline);
-  --color-accent: var(--color-primary);
-  --color-warning: var(--color-success);
-  --color-muted: var(--color-ink-muted);
-  --color-dim: var(--color-ink-subtle);
-  --color-faint: var(--color-ink-subtle);
-  --color-bright: var(--color-ink);
-  --color-input: var(--color-surface-1);
-  --color-input-focus: var(--color-surface-2);
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.04);
 }
 
 .dark {
@@ -68,6 +61,7 @@
   --color-surface-1: #0f1011;
   --color-surface-2: #141516;
   --color-surface-3: #18191a;
+  --color-sidebar: #0f1011;
   --color-hairline: #23252a;
   --color-hairline-strong: #34343a;
   --color-ink: #f7f8f8;
@@ -75,8 +69,12 @@
   --color-ink-subtle: #8a8f98;
   --color-ink-tertiary: #62666d;
   --color-primary-hover: #828fff;
+  --color-link: #828fff;
   --color-success: #27a644;
   --color-error: #ef4444;
+  --color-chart-1-fill: rgb(94 106 210 / 0.35);
+  --color-chart-2-fill: rgb(122 127 173 / 0.35);
+  --shadow-card: 0 0 #0000;
 }
 
 :root {
@@ -94,13 +92,16 @@ body {
 }
 
 @layer components {
+  .card {
+    @apply rounded-lg border border-hairline bg-surface-1 shadow-card;
+  }
   .btn {
     @apply inline-block cursor-pointer rounded-md border border-transparent px-3.5 py-2 text-center text-sm leading-tight font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary-focus/50 disabled:cursor-not-allowed disabled:opacity-50;
   }
-  .btn-accent {
+  .btn-primary {
     @apply bg-primary text-on-primary hover:bg-primary-hover;
   }
-  .btn-default {
+  .btn-secondary {
     @apply border-hairline bg-surface-1 text-ink hover:bg-surface-2;
   }
   .btn-xs {

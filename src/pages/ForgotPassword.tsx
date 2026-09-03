@@ -11,7 +11,7 @@ export default function ForgotPassword() {
       <ViewHeader icon={IdentificationCard} title="Reset password">
         Please enter your email to reset your password.
       </ViewHeader>
-      <div className="rounded bg-panel p-4 pt-2.5">
+      <div className="card p-6">
         <form
           className="grid grid-cols-1"
           noValidate
@@ -21,13 +21,13 @@ export default function ForgotPassword() {
           }}
         >
           <div className="mb-4">
-            <label className="mb-1 block" htmlFor="email">Email address</label>
+            <label className="mb-1 block font-medium text-ink" htmlFor="email">Email address</label>
             <input type="email" placeholder="example@gmail.com" required name="email" id="email" className="input" />
-            <span className="text-xs text-faint">Your email address to send the new password</span>
+            <span className="text-xs text-ink-subtle">Your email address to send the new password</span>
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" className="btn btn-accent">Send new password</button>
-            <Link to="/" className="btn btn-default">Cancel</Link>
+            <button type="submit" className="btn btn-primary">Send new password</button>
+            <Link to="/" className="btn btn-secondary">Cancel</Link>
           </div>
         </form>
       </div>
