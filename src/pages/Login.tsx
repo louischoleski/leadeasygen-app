@@ -1,53 +1,63 @@
-import { LockOpen } from '@phosphor-icons/react'
+import { Envelope, GoogleLogo } from '@phosphor-icons/react'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
-import ViewHeader from '../components/ViewHeader'
 
 export default function Login() {
   const navigate = useNavigate()
 
   return (
-    <AuthCard>
-      <ViewHeader icon={LockOpen} title="Login">
-        Please enter your credentials to login.
-      </ViewHeader>
-      <div className="card p-6">
-        <form
-          className="grid grid-cols-1"
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault()
-            navigate('/')
-          }}
-        >
-          <Input
-            label="Username"
-            id="username"
-            name="username"
-            placeholder="example@gmail.com"
-            required
-            helperText="Your unique username to app"
-            containerClassName="mb-4"
-          />
-          <Input
-            label="Password"
-            id="password"
-            name="password"
-            type="password"
-            placeholder="******"
-            required
-            helperText="Your strong password"
-            containerClassName="mb-4"
-          />
-          <div className="flex items-center gap-2">
-            <Button type="submit">Login</Button>
-            <Button asChild variant="secondary"><Link to="/register">Register</Link></Button>
-            <Link to="/forgot-password" className="text-xs text-link hover:underline">Forgot password?</Link>
-          </div>
-        </form>
-      </div>
+    <AuthCard title="Login" subtitle="Enter your email below to login to your account">
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+          navigate('/')
+        }}
+      >
+        <Input
+          label="Email"
+          id="email"
+          name="email"
+          type="email"
+          placeholder="m@example.com"
+          iconLeft={Envelope}
+          required
+          containerClassName="mb-4"
+        />
+        <div className="mb-1.5 flex items-center justify-between">
+          <label htmlFor="password" className="text-sm font-medium text-ink">Password</label>
+          <Link to="/forgot-password" className="text-sm text-link underline">
+            Forgot your password?
+          </Link>
+        </div>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="••••••"
+          required
+          containerClassName="mb-6"
+        />
+        <div className="space-y-2">
+          <Button type="submit" fullWidth>Login</Button>
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            iconLeft={GoogleLogo}
+            onClick={() => toast('Google sign-in is not wired up yet')}
+          >
+            Login with Google
+          </Button>
+        </div>
+        <p className="mt-4 text-center text-sm text-ink-subtle">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-link underline">Sign up</Link>
+        </p>
+      </form>
     </AuthCard>
   )
 }

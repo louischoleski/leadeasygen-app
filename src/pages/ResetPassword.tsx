@@ -1,10 +1,8 @@
-import { Key } from '@phosphor-icons/react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
-import ViewHeader from '../components/ViewHeader'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -14,7 +12,7 @@ export default function ResetPassword() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const data = new FormData(e.currentTarget)
-    if (data.get('password') !== data.get('repeatPassword')) {
+    if (data.get('password') !== data.get('confirmPassword')) {
       toast.error('Passwords do not match')
       return
     }
@@ -23,40 +21,34 @@ export default function ResetPassword() {
   }
 
   return (
-    <AuthCard>
-      <ViewHeader icon={Key} title="Choose a new password">
-        Enter and confirm your new password to finish resetting it.
-      </ViewHeader>
-      <div className="card p-6">
+    <AuthCard title="Reset password" subtitle="Enter your new password below">
+      <form noValidate onSubmit={handleSubmit}>
         {!token && (
           <p className="mb-4 text-xs text-error">
             This link is missing its reset token. Request a new one from the forgot password page.
           </p>
         )}
-        <form className="grid grid-cols-1" noValidate onSubmit={handleSubmit}>
-          <Input
-            label="New password"
-            id="password"
-            name="password"
-            type="password"
-            required
-            helperText="Your hard to guess password"
-            containerClassName="mb-4"
-          />
-          <Input
-            label="Repeat new password"
-            id="repeatPassword"
-            name="repeatPassword"
-            type="password"
-            required
-            helperText="Please repeat your password"
-            containerClassName="mb-4"
-          />
-          <div className="flex items-center gap-2">
-            <Button type="submit">Reset password</Button>
-          </div>
-        </form>
-      </div>
+        <Input
+          label="New password"
+          id="password"
+          name="password"
+          type="password"
+          required
+          containerClassName="mb-4"
+        />
+        <Input
+          label="Confirm new password"
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          required
+          containerClassName="mb-6"
+        />
+        <Button type="submit" fullWidth>Reset password</Button>
+        <p className="mt-4 text-center text-sm text-ink-subtle">
+          <Link to="/login" className="text-link underline">Back to login</Link>
+        </p>
+      </form>
     </AuthCard>
   )
 }
