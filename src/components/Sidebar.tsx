@@ -1,4 +1,4 @@
-import { CaretDown, Moon, Shield, Sun } from '@phosphor-icons/react'
+import { CaretDown, Moon, Sun, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { locales, useLocale } from '../hooks/useLocale'
@@ -27,6 +27,12 @@ export default function Sidebar({ open, onNavigate }: Props) {
   const { theme, toggleTheme } = useTheme()
   const { locale, setLocale } = useLocale()
   const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
+  const [tipVisible, setTipVisible] = useState(() => localStorage.getItem('hideSidebarTip') !== 'true')
+
+  const dismissTip = () => {
+    localStorage.setItem('hideSidebarTip', 'true')
+    setTipVisible(false)
+  }
 
   return (
     <aside
@@ -72,22 +78,25 @@ export default function Sidebar({ open, onNavigate }: Props) {
               </ul>
             )}
           </li>
-          <li className="mt-12 px-6 py-5 text-xs text-ink-subtle">
-            <Shield size={34} aria-hidden="true" className="text-primary" />
-            <div className="mt-1">
-              <span className="text-ink">LUNA</span> admin theme with Dark UI style for monitoring and
-              administration web applications.
-            </div>
-          </li>
         </ul>
       </nav>
 
       {/* Rotating onboarding tip — desktop only, the drawer is too cramped */}
-      <div className="mx-2 mt-auto mb-4 hidden rounded-lg border border-hairline bg-surface-2 p-3 md:block">
-        <p className="text-xs text-ink-subtle">
-          <span className="font-medium text-link">{tip.label}:</span> {tip.text}
-        </p>
-      </div>
+      {tipVisible && (
+        <div className="relative mx-2 mt-auto mb-4 hidden rounded-lg border border-hairline bg-surface-2 p-3 md:block">
+          <button
+            type="button"
+            onClick={dismissTip}
+            aria-label="Dismiss tip"
+            className="absolute top-2 right-2 cursor-pointer p-1 text-ink-subtle hover:text-ink"
+          >
+            <X size={12} aria-hidden="true" />
+          </button>
+          <p className="pr-4 text-xs text-ink-subtle">
+            <span className="font-medium text-link">{tip.label}:</span> {tip.text}
+          </p>
+        </div>
+      )}
 
       {/* Locale and theme live in the navbar on md+; the drawer hosts them on mobile */}
       <div className="border-t border-hairline px-6 py-4 md:hidden">
