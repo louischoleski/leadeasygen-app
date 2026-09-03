@@ -7,10 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>LUNA | Responsive Admin Theme</title>
     <script>
-      // Apply the theme class before first paint to avoid a flash of the wrong theme
-      const stored = localStorage.getItem('theme')
-      const dark = stored ? stored === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches
-      document.documentElement.classList.add(dark ? 'dark' : 'light')
+      // Apply the theme class before first paint to avoid a flash of the wrong theme.
+      // The stored value may be JSON ("dark") or a legacy raw string (dark).
+      try {
+        const stored = (localStorage.getItem('theme') || '').replace(/"/g, '')
+        const dark = stored ? stored === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches
+        document.documentElement.classList.add(dark ? 'dark' : 'light')
+      } catch {
+        document.documentElement.classList.add('dark')
+      }
     </script>
   </head>
   <body>
