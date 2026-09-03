@@ -57,7 +57,7 @@ export default function Dashboard() {
             <div className="mt-2.5 flex items-start justify-between">
               <div>
                 <div className="text-white">
-                  <span className="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-white">+45</span>{' '}
+                  <span className="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-[#2f323b]">+45</span>{' '}
                   New visitor
                 </div>
                 <span className="text-[80%] text-white">
@@ -75,9 +75,9 @@ export default function Dashboard() {
       <div className="mb-5 rounded">
         <div className="grid md:grid-cols-3">
           <div className="p-4">
-            <h4 className="mb-1 font-medium text-white">
+            <h3 className="mb-1 font-medium text-white">
               <ChartBar size={16} aria-hidden="true" className="inline text-warning" /> Traffic source
-            </h4>
+            </h3>
             <div className="text-[80%]">
               Total users from the beginning of activity. See detailed charts for more information locations
               and traffic source.
@@ -144,7 +144,7 @@ export default function Dashboard() {
         </div>
 
         <div>
-          <div className="mb-5 rounded bg-accent text-center text-white">
+          <div className="mb-5 rounded bg-accent text-center text-[#2f323b]">
             <div className="p-5">
               <h2 className="text-[1.65rem] font-light">+280k downloads</h2>
               <div className="mb-2 text-[80%]">New downloads from the last month.</div>

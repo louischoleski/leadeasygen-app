@@ -7,9 +7,9 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
     <nav className="fixed inset-x-0 top-0 z-30 flex h-[60px] items-center bg-white shadow-[0_0_21px_#161616]">
       <Link
         to="/"
-        className="flex h-full w-[200px] shrink-0 items-center bg-accent px-6 text-[1.12rem] tracking-[10px] text-white hover:bg-[#f5a212]"
+        className="flex h-full w-[200px] shrink-0 items-center bg-accent px-6 text-[1.12rem] tracking-[10px] text-[#2f323b] hover:bg-[#f5a212]"
       >
-        LUNA<span className="ml-1 text-xs tracking-normal text-[#fce2b4]">v.1.4</span>
+        LUNA<span className="ml-1 text-xs tracking-normal text-[#2f323b]">v.1.4</span>
       </Link>
       <button
         type="button"

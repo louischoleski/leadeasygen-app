@@ -11,9 +11,10 @@
   --color-accent: #f6a821;
   --color-accent-deep: #c37e08;
   --color-warning: #f7af3e;
-  --color-muted: #949ba2;
-  --color-dim: #848c94;
-  --color-faint: #6d757d;
+  /* Grays lightened from the legacy values to meet WCAG AA 4.5:1 on panel and input backgrounds */
+  --color-muted: #bcc2ca;
+  --color-dim: #8d959d;
+  --color-faint: #a8aeb6;
   --color-bright: #c0c4c8;
   --color-input: #494b54;
   --color-input-focus: #52555f;
