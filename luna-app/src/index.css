@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+
+/* Design tokens ported from the legacy Luna theme (styles/style.css) */
+@theme {
+  --font-sans: 'Roboto', sans-serif;
+
+  --color-body: #2f323b;
+  --color-surface: #24262d;
+  --color-panel: rgb(68 70 79 / 0.5);
+  --color-line: #3d404c;
+  --color-accent: #f6a821;
+  --color-accent-deep: #c37e08;
+  --color-warning: #f7af3e;
+  --color-muted: #949ba2;
+  --color-dim: #848c94;
+  --color-faint: #6d757d;
+  --color-bright: #c0c4c8;
+  --color-input: #494b54;
+  --color-input-focus: #52555f;
+}
+
+body {
+  @apply bg-body font-sans text-[0.88rem] leading-[1.4] text-muted;
+}
+
+@layer components {
+  .btn {
+    @apply inline-block cursor-pointer rounded border bg-transparent px-3 py-1.5 text-center text-[0.88rem] text-muted transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-accent {
+    @apply border-accent hover:bg-accent/10 hover:text-white;
+  }
+  .btn-default {
+    @apply border-[#616779] hover:bg-[#616779]/10 hover:text-white;
+  }
+  .btn-xs {
+    @apply px-2 py-0.5 text-xs;
+  }
+  .input {
+    @apply w-full rounded bg-input px-3 py-2 text-[0.88rem] text-muted outline-none placeholder:text-faint focus:bg-input-focus;
+  }
+}
