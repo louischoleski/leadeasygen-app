@@ -1,4 +1,4 @@
-import { CaretDown, Globe, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
+import { CaretDown, Coin, GearSix, Globe, Monitor, Moon, SquaresFour, Sun, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { IconButton } from './IconButton'
@@ -13,6 +13,12 @@ const themeOptions = [
   { value: 'light', icon: Sun, label: 'Light' },
   { value: 'dark', icon: Moon, label: 'Dark' },
 ] as const
+
+const mainLinks = [
+  { to: '/', label: 'Dashboard', icon: SquaresFour, end: true },
+  { to: '/billing', label: 'Billing', icon: Coin },
+  { to: '/settings', label: 'Settings', icon: GearSix },
+]
 
 const tips = [
   { label: 'Tip', text: 'Use radius + keywords together for tighter lead targeting.' },
@@ -49,25 +55,19 @@ export default function Sidebar({ open, onNavigate }: Props) {
       <nav className="flex-1">
         <ul>
           <li className={categoryClass}>Main</li>
-          <li>
-            <NavLink
-              to="/"
-              end
-              onClick={onNavigate}
-              className={({ isActive }) => (isActive ? activeClass : linkClass)}
-            >
-              Dashboard
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/settings"
-              onClick={onNavigate}
-              className={({ isActive }) => (isActive ? activeClass : linkClass)}
-            >
-              Settings
-            </NavLink>
-          </li>
+          {mainLinks.map((link) => (
+            <li key={link.to}>
+              <NavLink
+                to={link.to}
+                end={link.end}
+                onClick={onNavigate}
+                className={({ isActive }) => `${isActive ? activeClass : linkClass} gap-2.5`}
+              >
+                <link.icon size={16} aria-hidden="true" className="shrink-0" />
+                {link.label}
+              </NavLink>
+            </li>
+          ))}
           <li className={categoryClass}>App Pages</li>
           <li>
             <button

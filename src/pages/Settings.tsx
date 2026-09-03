@@ -7,6 +7,7 @@ import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { Toggle } from '../components/Toggle'
+import { useBilling } from '../data/billing'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
 
@@ -179,6 +180,7 @@ function SecurityCard() {
 }
 
 function CreditsCard() {
+  const { creditBalance } = useBilling()
   return (
     <section id="credits" className="card scroll-mt-20 flex flex-wrap items-center justify-between gap-3 p-5">
       <div>
@@ -187,10 +189,10 @@ function CreditsCard() {
       </div>
       <div className="flex items-center gap-6">
         <div>
-          <span className="text-3xl font-bold text-ink">247</span>
+          <span className="text-3xl font-bold text-ink">{creditBalance}</span>
           <span className="ml-1 text-sm text-ink-subtle">remaining</span>
         </div>
-        <Button asChild><Link to="/credits">Buy credits</Link></Button>
+        <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>
       </div>
     </section>
   )

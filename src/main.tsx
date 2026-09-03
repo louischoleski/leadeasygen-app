@@ -6,7 +6,7 @@ import './index.css'
 import { useTheme } from './hooks/useTheme'
 import AppLayout from './layouts/AppLayout'
 import AuthLayout from './layouts/AuthLayout'
-import Credits from './pages/Credits'
+import Billing from './pages/Billing'
 import ForgotPassword from './pages/ForgotPassword'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -31,7 +31,10 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<AppLayout />}>
           <Route index element={<Suspense fallback={null}><Dashboard /></Suspense>} />
           <Route path="/settings" element={<Suspense fallback={null}><Settings /></Suspense>} />
-          <Route path="/credits" element={<Credits />} />
+          <Route path="/billing" element={<Billing />} />
+          {/* Legacy paths from earlier iterations */}
+          <Route path="/credits" element={<Navigate to="/billing" replace />} />
+          <Route path="/subscription" element={<Navigate to="/billing" replace />} />
         </Route>
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
