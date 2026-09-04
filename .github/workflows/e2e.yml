@@ -1,4 +1,4 @@
-name: e2e
+name: ci
 
 on:
   push:
@@ -7,6 +7,19 @@ on:
     branches: [main]
 
 jobs:
+  lint-typecheck:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+
   app-e2e:
     name: App e2e (auth UI)
     # Pinned to 22.04: Playwright 1.40.0's `install --with-deps` predates Ubuntu
