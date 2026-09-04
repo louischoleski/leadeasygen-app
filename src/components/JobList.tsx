@@ -1,33 +1,29 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { cancelJob, retryJob, useJobs } from '../data/jobs'
-import { ConfirmDialog } from './ConfirmDialog'
+import { retryJob, useJobs } from '../data/jobs'
 import { JobCard } from './JobCard'
 import { Tabs } from './Tabs'
 
 export function JobList() {
   const { activeJobs, completedJobs } = useJobs()
   const [activeTab, setActiveTab] = useState('active')
-  const [cancellingJobId, setCancellingJobId] = useState<string | null>(null)
 
   const displayJobs = activeTab === 'active' ? activeJobs : completedJobs
-  const cancellingJob = activeJobs.find((job) => job.id === cancellingJobId)
 
-  const handleCancelConfirm = () => {
-    if (!cancellingJob) return
-    cancelJob(cancellingJob.id)
-    toast('Job cancelled', { description: `${cancellingJob.creditCost} credits refunded.` })
-    setCancellingJobId(null)
-  }
-
-  const handleRetry = (id: string) => {
-    const result = retryJob(id)
+  const handleRetry = async (id: string) => {
+    const result = await retryJob(id)
     if (result === null) return
     if (!result.ok) {
-      toast.error('Not enough credits to retry this job')
+      toast.error(
+        result.error === 'insufficient-credits'
+          ? 'Not enough credits to retry this job'
+          : 'Could not reach the scraper — try again shortly',
+      )
       return
     }
-    toast.success('Scrape job restarted', { description: `${result.job.creditCost} credits deducted.` })
+    toast.success('Scrape job restarted', {
+      description: `${result.creditCost} ${result.creditCost === 1 ? 'credit' : 'credits'} charged on completion.`,
+    })
   }
 
   return (
@@ -48,25 +44,10 @@ export function JobList() {
       ) : (
         <div className="space-y-3">
           {displayJobs.map((job) => (
-            <JobCard key={job.id} job={job} onRetry={handleRetry} onCancel={setCancellingJobId} />
+            <JobCard key={job.id} job={job} onRetry={handleRetry} />
           ))}
         </div>
       )}
-
-      <ConfirmDialog
-        open={cancellingJob !== undefined}
-        title="Cancel this job?"
-        description={
-          cancellingJob
-            ? `Scraping ${cancellingJob.location} stops and ${cancellingJob.creditCost} credits are refunded.`
-            : ''
-        }
-        confirmLabel="Cancel job"
-        cancelLabel="Keep running"
-        danger
-        onConfirm={handleCancelConfirm}
-        onClose={() => setCancellingJobId(null)}
-      />
     </div>
   )
 }

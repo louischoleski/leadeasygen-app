@@ -43,9 +43,9 @@ export function ScrapeForm() {
     mode: 'all',
   })
 
-  const [radiusKm, keywords] = useWatch({ control, name: ['radiusKm', 'keywords'] })
+  const keywords = useWatch({ control, name: 'keywords' })
   const keywordList = parseKeywords(keywords)
-  const estimatedCost = jobCreditCost(radiusKm, keywordList.length || 1)
+  const estimatedCost = jobCreditCost(keywordList.length)
   const insufficient = creditBalance < estimatedCost
 
   const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
@@ -53,18 +53,24 @@ export function ScrapeForm() {
   const jobLimit = tier?.limits.activeJobs ?? null
   const atJobLimit = jobLimit !== null && activeJobs >= jobLimit
 
-  const onSubmit = (data: ScrapeFormValues) => {
-    const result = createJob({
+  const onSubmit = async (data: ScrapeFormValues) => {
+    const result = await createJob({
       location: data.location.trim(),
       radiusKm: data.radiusKm,
       keywords: parseKeywords(data.keywords),
       category: data.category ?? undefined,
     })
     if (!result.ok) {
-      toast.error('Not enough credits for this job')
+      toast.error(
+        result.error === 'insufficient-credits'
+          ? 'Not enough credits for this job'
+          : 'Could not reach the scraper — try again shortly',
+      )
       return
     }
-    toast.success('Scrape job started', { description: `${result.job.creditCost} credits deducted.` })
+    toast.success('Scrape job started', {
+      description: `${result.creditCost} ${result.creditCost === 1 ? 'credit' : 'credits'} charged on completion.`,
+    })
     resetField('location')
     resetField('keywords')
   }

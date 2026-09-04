@@ -1,10 +1,27 @@
 import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
-import { refundCredits, spendCredits } from './billing'
+import {
+  apiErrorStatus,
+  createTask,
+  getTask,
+  listTasks,
+  retryTask,
+  type ApiLead,
+  type ApiTask,
+} from '../lib/api'
+import { refreshBalance } from './billing'
+
+/**
+ * API-backed jobs store. A "job" is what the form submits — one task per
+ * keyword on the server, grouped back together client-side via the groupId
+ * stamped into each task's params. The list is polled while any task is
+ * still pending/scraping; results for completed tasks are fetched once and
+ * cached for the session.
+ */
 
 export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
 
-// Mirrors the scraper's wire payload (see SWAP.md shared contracts)
+// Mirrors the scraper's wire payload (see api/src/scraper/engine.ts)
 export interface Lead {
   name: string
   category: string
@@ -17,19 +34,18 @@ export interface Lead {
 }
 
 export interface Job {
-  id: string
+  id: string // groupId, or the task id for ungrouped/legacy tasks
   location: string
-  radiusKm: number
+  radiusKm: number | null
   keywords: string[]
   category?: string
   status: JobStatus
-  progress: number // 0-100
+  progress: number // share of the group's tasks that reached a terminal state
   leadsFound: number
-  creditCost: number
+  creditCost: number // one credit per keyword task, charged on completion only
   createdAt: number
   results: Lead[]
-  refunded?: boolean
-  error?: string // set when status is 'failed'; maps to the API's errorMessage
+  error?: string
 }
 
 export const jobCategories = [
@@ -44,227 +60,219 @@ export const jobCategories = [
 // Keep the billing page's "~N jobs at avg. cost" copy on the same math
 export const AVG_JOB_COST = 20
 
-export function jobCreditCost(radiusKm: number, keywordCount: number): number {
-  return 10 + 2 * keywordCount + Math.ceil(radiusKm / 5)
+// The server charges exactly one credit per task (= per keyword), and only
+// when the scrape completes — failures cost nothing.
+export function jobCreditCost(keywordCount: number): number {
+  return Math.max(1, keywordCount)
 }
 
-const STORAGE_KEY = 'jobs'
-const MAX_JOBS = 20
-const TICK_MS = 700
-const FAILURE_CHANCE = 0.08
+const POLL_MS = 3000
+const RESULT_FETCHES_PER_POLL = 25
 
-const jobStatuses: JobStatus[] = ['queued', 'running', 'completed', 'failed']
-
-// Leads persisted before the schema enrichment (business/email/source) upgrade in place
-function normalizeLead(value: unknown): Lead | null {
-  if (typeof value !== 'object' || value === null) return null
-  const l = value as Record<string, unknown>
-  const name = typeof l.name === 'string' ? l.name : typeof l.business === 'string' ? l.business : null
-  if (name === null || typeof l.address !== 'string') return null
-  return {
-    name,
-    category: typeof l.category === 'string' ? l.category : '',
-    rating: typeof l.rating === 'number' && Number.isFinite(l.rating) ? l.rating : null,
-    reviews: typeof l.reviews === 'number' && Number.isFinite(l.reviews) ? l.reviews : 0,
-    phone: typeof l.phone === 'string' ? l.phone : null,
-    website: typeof l.website === 'string' ? l.website : null,
-    emails: Array.isArray(l.emails)
-      ? l.emails.filter((e): e is string => typeof e === 'string')
-      : typeof l.email === 'string'
-        ? [l.email]
-        : [],
-    address: l.address,
-  }
+const taskStatusToJob: Record<ApiTask['status'], JobStatus> = {
+  pending: 'queued',
+  scraping: 'running',
+  complete: 'completed',
+  error: 'failed',
 }
 
-function readStored(): Job[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .filter(
-        (j): j is Job =>
-          typeof j === 'object' &&
-          j !== null &&
-          typeof (j as Job).id === 'string' &&
-          jobStatuses.includes((j as Job).status),
-      )
-      .map((j) => ({
-        ...j,
-        results: Array.isArray(j.results)
-          ? j.results.map(normalizeLead).filter((l): l is Lead => l !== null)
-          : [],
-      }))
-      .slice(0, MAX_JOBS)
-  } catch {
-    return []
-  }
-}
-
-let jobs: Job[] = readStored()
+let tasks: ApiTask[] = []
+let jobs: Job[] = []
+const resultsCache = new Map<string, Lead[]>()
 const store = createSubscribable()
-let engine: ReturnType<typeof setInterval> | null = null
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let inFlight = false
+let lastRefresh = 0
+let hadActive = false
 
-function persist() {
+const toLead = (l: ApiLead): Lead => ({
+  name: l.name ?? '',
+  category: l.category ?? '',
+  rating: typeof l.rating === 'number' && l.rating > 0 ? l.rating : null,
+  reviews: typeof l.reviews === 'number' ? l.reviews : 0,
+  phone: l.phone || null,
+  website: l.website || null,
+  emails: Array.isArray(l.emails) ? l.emails : [],
+  address: l.address ?? '',
+})
+
+const groupKey = (t: ApiTask) => t.params?.groupId ?? t.id
+
+function buildJobs(): Job[] {
+  const groups = new Map<string, ApiTask[]>()
+  for (const task of tasks) {
+    const key = groupKey(task)
+    const group = groups.get(key)
+    if (group) group.push(task)
+    else groups.set(key, [task])
+  }
+
+  const built: Job[] = []
+  for (const [id, group] of groups) {
+    const params = group.find((t) => t.params)?.params ?? null
+    const statuses = group.map((t) => taskStatusToJob[t.status] ?? 'queued')
+    const terminal = statuses.filter((s) => s === 'completed' || s === 'failed').length
+
+    let status: JobStatus
+    if (statuses.some((s) => s === 'running')) status = 'running'
+    else if (statuses.some((s) => s === 'queued')) status = terminal > 0 ? 'running' : 'queued'
+    else status = statuses.some((s) => s === 'failed') ? 'failed' : 'completed'
+
+    const results = group.flatMap((t) => resultsCache.get(t.id) ?? [])
+    const keywords = group.map((t) => t.params?.keyword ?? '').filter(Boolean)
+
+    built.push({
+      id,
+      location: params?.location ?? group[0].url,
+      radiusKm: params?.radiusKm ?? null,
+      keywords: keywords.length > 0 ? keywords : ['scrape'],
+      category: params?.category ?? undefined,
+      status,
+      progress: Math.round((terminal / group.length) * 100),
+      leadsFound: results.length,
+      creditCost: group.length,
+      createdAt: Math.min(...group.map((t) => Date.parse(t.createdAt))),
+      results,
+      error: group.map((t) => t.errorMessage).find(Boolean) ?? undefined,
+    })
+  }
+  return built.sort((a, b) => b.createdAt - a.createdAt)
+}
+
+async function refresh(): Promise<void> {
+  if (inFlight) return
+  inFlight = true
+  lastRefresh = Date.now()
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs))
+    tasks = await listTasks()
   } catch {
-    // storage unavailable: keep the in-memory list for this session
+    // Unauthenticated or api unreachable — keep the last known state and
+    // let the next poll (or user action) try again.
+    inFlight = false
+    return
   }
-}
 
-function setJobs(next: Job[]) {
-  jobs = next.slice(0, MAX_JOBS)
-  persist()
+  // Results land once per completed task, then live in the session cache.
+  const missing = tasks
+    .filter((t) => t.status === 'complete' && !resultsCache.has(t.id))
+    .slice(0, RESULT_FETCHES_PER_POLL)
+  await Promise.all(
+    missing.map(async (t) => {
+      try {
+        const detail = await getTask(t.id)
+        resultsCache.set(t.id, (detail.results ?? []).map(toLead))
+      } catch {
+        // fetched again on the next poll
+      }
+    }),
+  )
+
+  jobs = buildJobs()
+  inFlight = false
   store.emit()
+
+  const active = tasks.some((t) => t.status === 'pending' || t.status === 'scraping')
+  if (active) startPolling()
+  else stopPolling()
+  // Completion is the moment the server charges credits, so re-read the
+  // balance when the last active task settles.
+  if (hadActive && !active) void refreshBalance()
+  hadActive = active
 }
 
-const randomInt = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1))
-const pick = <T>(items: T[]) => items[randomInt(0, items.length - 1)]
-const maybe = <T>(value: T, chance: number): T | null => (Math.random() < chance ? value : null)
-
-const namePrefixes = ['Atlas', 'Nova', 'Prime', 'Golden', 'Urban', 'Harbor', 'Cedar', 'Summit', 'Bluebird', 'Vertex']
-const nameSuffixes: Record<string, string[]> = {
-  'Local Business': ['Market', 'Shop', 'House', 'Services', 'Co.'],
-  'Professional Services': ['Consulting', 'Legal', 'Accounting', 'Studio', 'Agency'],
-  Healthcare: ['Dental', 'Clinic', 'Physio', 'Wellness', 'Optics'],
-  Retail: ['Boutique', 'Supply Co.', 'Outfitters', 'Market', 'Emporium'],
-  'Food & Dining': ['Bistro', 'Grill', 'Kitchen', 'Café', 'Trattoria'],
-  'Home Services': ['Plumbing', 'Electric', 'Roofing', 'Carpentry', 'HVAC'],
+function startPolling() {
+  if (pollTimer === null) pollTimer = setInterval(() => void refresh(), POLL_MS)
 }
-const streets = ['Main St', 'Oak Ave', 'Market St', 'Hill Rd', 'Station Blvd', 'Park Lane']
 
-const failureReasons = [
-  'Source page layout changed mid-scrape',
-  'Rate limited by the source — try again shortly',
-  'Timed out while loading results',
-]
-
-function makeLead(location: string, category: string): Lead {
-  const name = `${pick(namePrefixes)} ${pick(nameSuffixes[category] ?? nameSuffixes.Retail)}`
-  const slug = name.toLowerCase().replace(/[^a-z]+/g, '')
-  const rated = Math.random() < 0.9
-  const emails = [
-    maybe(`contact@${slug}.example.com`, 0.4),
-    maybe(`info@${slug}.example.com`, 0.15),
-  ].filter((e): e is string => e !== null)
-  return {
-    name,
-    category,
-    rating: rated ? Math.round((3.5 + Math.random() * 1.5) * 10) / 10 : null,
-    reviews: rated ? randomInt(3, 480) : 0,
-    phone: maybe(`+1 555 ${randomInt(100, 999)} ${randomInt(1000, 9999)}`, 0.85),
-    website: maybe(`https://${slug}.example.com`, 0.7),
-    emails,
-    address: `${randomInt(1, 900)} ${pick(streets)}, ${location}`,
+function stopPolling() {
+  if (pollTimer !== null) {
+    clearInterval(pollTimer)
+    pollTimer = null
   }
 }
 
-function tick() {
-  let changed = false
-  const next = jobs.map((job) => {
-    if (job.status === 'queued') {
-      changed = true
-      return { ...job, status: 'running' as JobStatus }
-    }
-    if (job.status !== 'running') return job
-    changed = true
-
-    if (Math.random() < FAILURE_CHANCE && job.progress < 90) {
-      refundCredits(job.creditCost, `Refund — failed job (${job.location})`)
-      return { ...job, status: 'failed' as JobStatus, refunded: true, error: pick(failureReasons) }
-    }
-
-    const progress = Math.min(100, job.progress + randomInt(7, 15))
-    const leadsFound = job.leadsFound + randomInt(5, 15)
-    if (progress >= 100) {
-      const results = Array.from({ length: leadsFound }, () => makeLead(job.location, job.category ?? ''))
-      return { ...job, status: 'completed' as JobStatus, progress: 100, leadsFound, results }
-    }
-    return { ...job, progress, leadsFound }
-  })
-
-  if (changed) setJobs(next)
-  if (!next.some((job) => job.status === 'queued' || job.status === 'running')) stopEngine()
-}
-
-function startEngine() {
-  if (engine === null) engine = setInterval(tick, TICK_MS)
-}
-
-function stopEngine() {
-  if (engine !== null) {
-    clearInterval(engine)
-    engine = null
+function subscribe(onChange: () => void) {
+  // Re-sync on (re)mount — covers first load and a different user logging
+  // in — but not on every subscriber of the same render pass.
+  if (Date.now() - lastRefresh > 2000) {
+    void refresh()
+    void refreshBalance()
   }
+  return store.subscribe(onChange)
 }
 
-// Jobs left mid-run by a previous session resume on load
-if (jobs.some((job) => job.status === 'queued' || job.status === 'running')) startEngine()
-
-export type CreateJobInput = {
+export interface CreateJobInput {
   location: string
   radiusKm: number
   keywords: string[]
   category?: string
 }
 
-export type CreateJobResult = { ok: true; job: Job } | { ok: false; error: 'insufficient-credits' }
+export type CreateJobResult =
+  | { ok: true; creditCost: number }
+  | { ok: false; error: 'insufficient-credits' | 'request-failed' }
 
-export function createJob(input: CreateJobInput): CreateJobResult {
-  const creditCost = jobCreditCost(input.radiusKm, input.keywords.length)
-  if (!spendCredits(creditCost, `Scrape job — ${input.location.trim()}`)) {
-    return { ok: false, error: 'insufficient-credits' }
-  }
+const failureFrom = (err: unknown): CreateJobResult => ({
+  ok: false,
+  error: apiErrorStatus(err) === 403 ? 'insufficient-credits' : 'request-failed',
+})
 
-  const job: Job = {
-    id: `job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-    location: input.location,
-    radiusKm: input.radiusKm,
-    keywords: input.keywords,
-    category: input.category,
-    status: 'queued',
-    progress: 0,
-    leadsFound: 0,
-    creditCost,
-    createdAt: Date.now(),
-    results: [],
+// The engine has no geo filter (it crawls a text search), so the radius knob
+// maps to the per-task lead cap: a wider radius asks for more results.
+const RADIUS_LEAD_LIMIT: Record<number, number> = { 5: 10, 10: 25, 25: 50, 50: 100 }
+
+export async function createJob(input: CreateJobInput): Promise<CreateJobResult> {
+  const groupId = crypto.randomUUID()
+  let created = 0
+  for (const keyword of input.keywords) {
+    try {
+      await createTask({
+        location: input.location,
+        keyword,
+        radiusKm: input.radiusKm,
+        category: input.category,
+        groupId,
+        limit: RADIUS_LEAD_LIMIT[input.radiusKm] ?? 25,
+      })
+      created++
+    } catch (err) {
+      if (created === 0) return failureFrom(err)
+      break // partial group: what was enqueued keeps running and shows in the list
+    }
   }
-  setJobs([job, ...jobs])
-  startEngine()
-  return { ok: true, job }
+  void refresh()
+  return { ok: true, creditCost: created }
 }
 
-export function retryJob(id: string): CreateJobResult | null {
+export async function retryJob(id: string): Promise<CreateJobResult | null> {
   const job = jobs.find((j) => j.id === id)
   if (!job || job.status !== 'failed') return null
-  const result = createJob({ location: job.location, radiusKm: job.radiusKm, keywords: job.keywords, category: job.category })
-  // The new job supersedes the failed attempt; keep the failed card only
-  // when the retry could not start (e.g. insufficient credits).
-  if (result.ok) setJobs(jobs.filter((j) => j.id !== id))
-  return result
-}
 
-export function cancelJob(id: string) {
-  setJobs(
-    jobs.map((job) => {
-      if (job.id !== id || (job.status !== 'queued' && job.status !== 'running')) return job
-      refundCredits(job.creditCost, `Refund — cancelled job (${job.location})`)
-      return { ...job, status: 'failed' as JobStatus, refunded: true, error: 'Cancelled by user' }
-    }),
-  )
+  // Retry only the failed tasks; the server marks each one superseded so the
+  // stale failures drop out of every listing. Completed siblings keep their
+  // results and are never re-charged.
+  const failedTasks = tasks.filter((t) => groupKey(t) === id && t.status === 'error')
+  let retried = 0
+  for (const task of failedTasks) {
+    try {
+      await retryTask(task.id)
+      retried++
+    } catch (err) {
+      if (retried === 0) return failureFrom(err)
+      break
+    }
+  }
+  void refresh()
+  return { ok: true, creditCost: retried }
 }
 
 export function useJobs() {
-  const current = useSyncExternalStore(store.subscribe, () => jobs)
+  const current = useSyncExternalStore(subscribe, () => jobs)
   return {
     jobs: current,
     activeJobs: current.filter((job) => job.status === 'queued' || job.status === 'running'),
     completedJobs: current.filter((job) => job.status === 'completed' || job.status === 'failed'),
     createJob,
-    cancelJob,
     retryJob,
   }
 }

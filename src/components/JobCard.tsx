@@ -25,10 +25,9 @@ const formatDate = (timestamp: number) =>
 interface JobCardProps {
   job: Job
   onRetry: (jobId: string) => void
-  onCancel: (jobId: string) => void
 }
 
-export function JobCard({ job, onRetry, onCancel }: JobCardProps) {
+export function JobCard({ job, onRetry }: JobCardProps) {
   const status = statusConfig[job.status]
 
   return (
@@ -39,7 +38,7 @@ export function JobCard({ job, onRetry, onCancel }: JobCardProps) {
             {job.location} — {job.keywords.join(', ')}
           </h3>
           <p className="text-xs text-ink-subtle">
-            {job.radiusKm} km · {job.category ? `${job.category} · ` : ''}{formatDate(job.createdAt)} · {job.creditCost} credits
+            {job.radiusKm ? `${job.radiusKm} km · ` : ''}{job.category ? `${job.category} · ` : ''}{formatDate(job.createdAt)} · {job.creditCost} {job.creditCost === 1 ? 'credit' : 'credits'}
           </p>
         </div>
         <span
@@ -56,16 +55,18 @@ export function JobCard({ job, onRetry, onCancel }: JobCardProps) {
         <div className="mt-4">
           <div className="mb-1 flex justify-between text-xs text-ink-subtle">
             <span>Scraping…</span>
-            <span>{job.leadsFound} leads found</span>
+            {job.keywords.length > 1 && (
+              <span>{job.keywords.length - Math.round((job.progress / 100) * job.keywords.length)} of {job.keywords.length} keywords left</span>
+            )}
           </div>
-          <Progress value={job.progress} aria-label="Job progress" />
+          <Progress value={job.progress} indeterminate={job.progress === 0} aria-label="Job progress" />
         </div>
       )}
 
       {job.status === 'failed' && (
         <p className="mt-4 text-sm text-error">
           {job.error ?? 'Job did not complete.'}
-          {job.refunded && <span className="ml-1 text-ink-subtle">· {job.creditCost} credits refunded</span>}
+          <span className="ml-1 text-ink-subtle">· no credits charged</span>
         </p>
       )}
 
@@ -83,11 +84,6 @@ export function JobCard({ job, onRetry, onCancel }: JobCardProps) {
         {job.status === 'failed' && (
           <Button size="sm" variant="secondary" onClick={() => onRetry(job.id)}>
             Retry
-          </Button>
-        )}
-        {(job.status === 'queued' || job.status === 'running') && (
-          <Button size="sm" variant="ghost" onClick={() => onCancel(job.id)}>
-            Cancel
           </Button>
         )}
       </div>

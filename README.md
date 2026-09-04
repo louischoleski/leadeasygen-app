@@ -19,6 +19,12 @@ npm install
 npm run dev
 ```
 
+Scrape jobs run against the real backend: the `api` sibling service must be up
+(`npm run dev` on :3000) along with its Postgres and a scrape worker
+(`npm run worker` in `api/`). Credits live in the api's ledger and are charged
+one per keyword, on completion only. Without the api, the dashboard lists no
+jobs and the credit balance falls back to the demo value.
+
 ### Google Places autocomplete (optional)
 
 The "New scrape job" location field suggests places as you type when a Google
