@@ -13,8 +13,8 @@ import AuthLayout from './layouts/AuthLayout'
 import Billing from './pages/Billing'
 import CheckoutCancelled from './pages/CheckoutCancelled'
 import CheckoutSuccess from './pages/CheckoutSuccess'
-import Faq from './pages/Faq'
 import ForgotPassword from './pages/ForgotPassword'
+import HelpCenter from './pages/HelpCenter'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import Privacy from './pages/Privacy'
@@ -49,8 +49,9 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/billing" element={<Billing />} />
           <Route path="/billing/success" element={<CheckoutSuccess />} />
           <Route path="/billing/cancelled" element={<CheckoutCancelled />} />
-          <Route path="/faq" element={<Faq />} />
+          <Route path="/help" element={<HelpCenter />} />
           {/* Legacy paths from earlier iterations */}
+          <Route path="/faq" element={<Navigate to="/help" replace />} />
           <Route path="/credits" element={<Navigate to="/billing" replace />} />
           <Route path="/subscription" element={<Navigate to="/billing" replace />} />
           </Route>
