@@ -1,4 +1,4 @@
-import { CaretDown, Coin, GearSix, Globe, Monitor, Moon, Question, SquaresFour, Sun, X } from '@phosphor-icons/react'
+import { CaretDown, Coin, GearSix, Globe, Lifebuoy, Monitor, Moon, SquaresFour, Sun, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { IconButton } from './IconButton'
@@ -18,7 +18,7 @@ const mainLinks = [
   { to: '/', label: 'Dashboard', icon: SquaresFour, end: true },
   { to: '/billing', label: 'Billing', icon: Coin },
   { to: '/settings', label: 'Settings', icon: GearSix },
-  { to: '/faq', label: 'FAQ', icon: Question },
+  { to: '/help', label: 'Help Center', icon: Lifebuoy },
 ]
 
 const tips = [
