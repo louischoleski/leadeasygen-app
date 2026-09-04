@@ -14,6 +14,7 @@ import Billing from './pages/Billing'
 import CheckoutCancelled from './pages/CheckoutCancelled'
 import CheckoutSuccess from './pages/CheckoutSuccess'
 import ForgotPassword from './pages/ForgotPassword'
+import HelpArticle from './pages/HelpArticle'
 import HelpCenter from './pages/HelpCenter'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/billing/success" element={<CheckoutSuccess />} />
           <Route path="/billing/cancelled" element={<CheckoutCancelled />} />
           <Route path="/help" element={<HelpCenter />} />
+          <Route path="/help/:slug" element={<HelpArticle />} />
           {/* Legacy paths from earlier iterations */}
           <Route path="/faq" element={<Navigate to="/help" replace />} />
           <Route path="/credits" element={<Navigate to="/billing" replace />} />

@@ -2,12 +2,10 @@ import {
   ArrowRight,
   ArrowSquareOut,
   BookOpen,
-  Briefcase,
   CaretRight,
   ChatCircleDots,
   CheckCircle,
   Clock,
-  Coin,
   DownloadSimple,
   EnvelopeSimple,
   FileText,
@@ -16,53 +14,19 @@ import {
   Lightning,
   MagnifyingGlass,
   Play,
-  ShieldCheck,
-  UserCircle,
   VideoCamera,
   WarningCircle,
 } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Accordion } from '../components/Accordion'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { categoryLabel, helpArticles, helpCategories } from '../data/helpCenter'
 import { cn } from '../lib/cn'
 
 const SUPPORT_EMAIL = 'support@leadeasygen.com'
-
-interface Category {
-  id: string
-  label: string
-  icon: Icon
-}
-
-const categories: Category[] = [
-  { id: 'all', label: 'All Topics', icon: BookOpen },
-  { id: 'getting-started', label: 'Getting Started', icon: FileText },
-  { id: 'scraping', label: 'Lead Scraping', icon: MagnifyingGlass },
-  { id: 'jobs', label: 'Jobs & Estimates', icon: Briefcase },
-  { id: 'billing', label: 'Billing & Credits', icon: Coin },
-  { id: 'account', label: 'Account', icon: UserCircle },
-  { id: 'security', label: 'Security', icon: ShieldCheck },
-]
-
-const categoryLabel = (id: string) => categories.find((c) => c.id === id)?.label ?? id
-
-interface Article {
-  id: string
-  title: string
-  category: string
-  meta: string
-}
-
-const articles: Article[] = [
-  { id: 'a1', title: 'Getting started with LeadEasyGen', category: 'getting-started', meta: 'Updated 2 days ago' },
-  { id: 'a2', title: 'Running your first lead scrape', category: 'scraping', meta: 'Updated 1 week ago' },
-  { id: 'a3', title: 'Understanding credit costs', category: 'billing', meta: 'Updated 3 days ago' },
-  { id: 'a4', title: 'Exporting leads to CSV', category: 'scraping', meta: 'Updated 5 days ago' },
-  { id: 'a5', title: 'Turning leads into jobs & estimates', category: 'jobs', meta: 'Updated 1 day ago' },
-  { id: 'a6', title: 'Managing your subscription plan', category: 'account', meta: 'Updated 4 days ago' },
-]
 
 const faqs = [
   {
@@ -136,7 +100,7 @@ export default function HelpCenter() {
 
   const filteredArticles = useMemo(
     () =>
-      articles.filter(
+      helpArticles.filter(
         (a) =>
           (activeCategory === 'all' || a.category === activeCategory) &&
           (q === '' || a.title.toLowerCase().includes(q)),
@@ -198,7 +162,7 @@ export default function HelpCenter() {
 
       {/* Category chips */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-        {categories.map((cat) => {
+        {helpCategories.map((cat) => {
           const active = cat.id === activeCategory
           const CatIcon = cat.icon
           return (
@@ -243,11 +207,10 @@ export default function HelpCenter() {
                 <p className="pb-2 text-sm text-ink-subtle">No articles match your search.</p>
               ) : (
                 filteredArticles.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => soon(a.title)}
-                    className="flex w-full cursor-pointer items-start justify-between gap-3 rounded-lg border border-hairline p-4 text-left transition-colors hover:bg-surface-2/50"
+                  <Link
+                    key={a.slug}
+                    to={`/help/${a.slug}`}
+                    className="flex w-full items-start justify-between gap-3 rounded-lg border border-hairline p-4 text-left transition-colors hover:bg-surface-2/50"
                   >
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -256,10 +219,10 @@ export default function HelpCenter() {
                           {categoryLabel(a.category)}
                         </span>
                       </div>
-                      <p className="text-xs text-ink-tertiary">{a.meta}</p>
+                      <p className="text-xs text-ink-tertiary">{a.updated}</p>
                     </div>
                     <CaretRight size={16} aria-hidden="true" className="mt-1 shrink-0 text-ink-subtle" />
-                  </button>
+                  </Link>
                 ))
               )}
             </div>
