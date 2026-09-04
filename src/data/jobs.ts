@@ -240,7 +240,11 @@ export function createJob(input: CreateJobInput): CreateJobResult {
 export function retryJob(id: string): CreateJobResult | null {
   const job = jobs.find((j) => j.id === id)
   if (!job || job.status !== 'failed') return null
-  return createJob({ location: job.location, radiusKm: job.radiusKm, keywords: job.keywords, category: job.category })
+  const result = createJob({ location: job.location, radiusKm: job.radiusKm, keywords: job.keywords, category: job.category })
+  // The new job supersedes the failed attempt; keep the failed card only
+  // when the retry could not start (e.g. insufficient credits).
+  if (result.ok) setJobs(jobs.filter((j) => j.id !== id))
+  return result
 }
 
 export function cancelJob(id: string) {
