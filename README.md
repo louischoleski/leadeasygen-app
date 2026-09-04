@@ -19,6 +19,13 @@ npm install
 npm run dev
 ```
 
+### Google Places autocomplete (optional)
+
+The "New scrape job" location field suggests places as you type when a Google
+Maps API key is configured. Copy `.env.example` to `.env.local` and set
+`VITE_GOOGLE_MAPS_API_KEY` to a key with the **Places API (New)** enabled.
+Without a key the field works as a plain text input.
+
 ## Production build
 
 ```sh

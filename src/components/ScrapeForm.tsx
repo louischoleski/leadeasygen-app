@@ -1,4 +1,4 @@
-import { MapPin, Tag } from '@phosphor-icons/react'
+import { Tag } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -7,6 +7,7 @@ import { createJob, jobCategories, jobCreditCost, useJobs } from '../data/jobs'
 import { Button } from './Button'
 import { Card } from './Card'
 import { Input } from './Input'
+import { LocationSearch } from './LocationSearch'
 import { Select } from './Select'
 
 const radiusOptions = [5, 10, 25, 50].map((km) => ({ value: km, label: `${km} km` }))
@@ -63,14 +64,13 @@ export function ScrapeForm() {
       <p className="mt-1 mb-4 text-sm text-ink-subtle">Find local businesses on Google Maps</p>
       <form noValidate onSubmit={handleSubmit}>
         <div className="grid gap-x-4 gap-y-3 md:grid-cols-2 lg:grid-cols-[2fr_2fr_1fr_1.5fr_auto]">
-          <Input
+          <LocationSearch
             label="Location"
             id="job-location"
             placeholder="New York, NY"
-            iconLeft={MapPin}
             required
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={setLocation}
           />
           <Input
             label="Keywords"
