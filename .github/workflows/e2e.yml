@@ -1,0 +1,98 @@
+name: e2e
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  app-e2e:
+    name: App e2e (auth UI)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: leadeasygen
+          POSTGRES_PASSWORD: leadeasygen
+          POSTGRES_DB: leadeasygen_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U leadeasygen -d leadeasygen_dev"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # --- backend the app talks to ---
+      DATABASE_URL: postgresql://leadeasygen:leadeasygen@localhost:5432/leadeasygen_dev
+      JWT_SECRET: ci-e2e-jwt-secret-please-change-in-prod-0001
+      VITE_API_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:5173
+      # --- test inbox (Ethereal) from repo secrets; unset => email specs skip ---
+      # The same login is used to send (API SMTP) and to read (test IMAP).
+      SMTP_HOST: ${{ secrets.E2E_MAIL_USER != '' && 'smtp.ethereal.email' || '' }}
+      SMTP_PORT: '587'
+      SMTP_SECURE: 'false'
+      SMTP_USER: ${{ secrets.E2E_MAIL_USER }}
+      SMTP_PASS: ${{ secrets.E2E_MAIL_PASS }}
+      SMTP_FROM: LeadEasyGen <${{ secrets.E2E_MAIL_USER }}>
+      E2E_IMAP_HOST: imap.ethereal.email
+      E2E_IMAP_PORT: '993'
+      E2E_IMAP_USER: ${{ secrets.E2E_MAIL_USER }}
+      E2E_IMAP_PASS: ${{ secrets.E2E_MAIL_PASS }}
+
+    steps:
+      - name: Checkout app
+        uses: actions/checkout@v4
+
+      # The app e2e drives a real backend; pull the API (public repo) alongside.
+      - name: Checkout API
+        uses: actions/checkout@v4
+        with:
+          repository: louischoleski/leadeasygen-api
+          ref: main
+          path: _api
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            _api/package-lock.json
+
+      - name: Install API deps
+        working-directory: _api
+        run: npm ci
+
+      - name: Install app deps
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start API, wait for health, run app e2e
+        run: |
+          ( cd _api && npm run dev > "$GITHUB_WORKSPACE/api.log" 2>&1 & )
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/health && break; sleep 2; done
+          curl -sf http://localhost:3000/health || { echo "API failed to start"; cat api.log; exit 1; }
+          # Playwright starts the app dev server (webServer) itself, reading VITE_API_URL.
+          npm run test:e2e
+
+      - name: API log on failure
+        if: failure()
+        run: cat api.log || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
