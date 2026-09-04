@@ -59,7 +59,7 @@ export default function JobDetail() {
               {job.location} — {job.keywords.join(', ')}
             </h1>
             <p className="text-xs text-ink-subtle">
-              {job.radiusKm} km · {job.category} · {formatDate(job.createdAt)} · {job.creditCost} credits
+              {job.radiusKm ? `${job.radiusKm} km · ` : ''}{job.category ? `${job.category} · ` : ''}{formatDate(job.createdAt)} · {job.creditCost} {job.creditCost === 1 ? 'credit' : 'credits'}
             </p>
           </div>
           <span
@@ -76,16 +76,15 @@ export default function JobDetail() {
           <div className="mt-4">
             <div className="mb-1 flex justify-between text-xs text-ink-subtle">
               <span>Scraping… results appear here when the job completes.</span>
-              <span>{job.leadsFound} leads found</span>
             </div>
-            <Progress value={job.progress} aria-label="Job progress" />
+            <Progress value={job.progress} indeterminate={job.progress === 0} aria-label="Job progress" />
           </div>
         )}
 
         {job.status === 'failed' && (
           <p className="mt-4 text-sm text-error">
             {job.error ?? 'Job did not complete.'}
-            {job.refunded && <span className="ml-1 text-ink-subtle">· {job.creditCost} credits refunded</span>}
+            <span className="ml-1 text-ink-subtle">· no credits charged</span>
           </p>
         )}
 

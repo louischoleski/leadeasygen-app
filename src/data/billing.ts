@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
+import { getCreditBalance } from '../lib/api'
 
 // Credit packs — one-time purchase
 export interface CreditPack {
@@ -229,6 +230,27 @@ export function spendCredits(amount: number, description: string): boolean {
     ledger: recordEntry('usage', description, -amount, creditBalance),
   })
   return true
+}
+
+// The real balance lives in the api's credit ledger. Once a read succeeds it
+// replaces the demo balance in the store (persisting like any other change);
+// while the api is unreachable or the user is logged out, the demo value
+// stands so the rest of the mock billing page keeps working.
+let balanceInFlight = false
+
+export async function refreshBalance(): Promise<void> {
+  if (balanceInFlight) return
+  balanceInFlight = true
+  try {
+    const res = await getCreditBalance()
+    if (typeof res?.credits === 'number' && res.credits !== state.creditBalance) {
+      update({ creditBalance: res.credits })
+    }
+  } catch {
+    // unauthenticated or api down — keep the current value
+  } finally {
+    balanceInFlight = false
+  }
 }
 
 export function refundCredits(amount: number, description: string) {
