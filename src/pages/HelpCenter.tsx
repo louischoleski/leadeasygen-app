@@ -68,18 +68,21 @@ const tutorials = [
   { id: 't4', title: 'CSV export & integrations', duration: '10:15' },
 ]
 
+const DOCS_BASE = 'https://leadeasygen.com/docs'
+
 interface Resource {
   id: string
   title: string
   description: string
+  href: string
   icon: Icon
 }
 
 const resources: Resource[] = [
-  { id: 'r1', title: 'API documentation', description: 'Complete API reference and guides', icon: FileText },
-  { id: 'r2', title: 'Scraping guides', description: 'Downloadable lead-sourcing playbooks', icon: DownloadSimple },
-  { id: 'r3', title: 'Field-ops templates', description: 'Estimate and invoice templates', icon: Lightning },
-  { id: 'r4', title: 'Security best practices', description: 'Guidelines for keeping data safe', icon: WarningCircle },
+  { id: 'r1', title: 'API documentation', description: 'Complete API reference and guides', href: `${DOCS_BASE}/api`, icon: FileText },
+  { id: 'r2', title: 'Scraping guides', description: 'Downloadable lead-sourcing playbooks', href: `${DOCS_BASE}/scraping`, icon: DownloadSimple },
+  { id: 'r3', title: 'Field-ops templates', description: 'Estimate and invoice templates', href: `${DOCS_BASE}/templates`, icon: Lightning },
+  { id: 'r4', title: 'Security best practices', description: 'Guidelines for keeping data safe', href: `${DOCS_BASE}/security`, icon: WarningCircle },
 ]
 
 const supportTeam = [
@@ -378,11 +381,12 @@ export default function HelpCenter() {
               {resources.map((r) => {
                 const ResIcon = r.icon
                 return (
-                  <button
+                  <a
                     key={r.id}
-                    type="button"
-                    onClick={() => soon(r.title)}
-                    className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-hairline p-4 text-left transition-colors hover:bg-surface-2/50"
+                    href={r.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-between gap-3 rounded-lg border border-hairline p-4 text-left transition-colors hover:bg-surface-2/50"
                   >
                     <span className="flex items-center gap-3">
                       <ResIcon size={20} aria-hidden="true" className="shrink-0 text-primary" />
@@ -392,7 +396,7 @@ export default function HelpCenter() {
                       </span>
                     </span>
                     <ArrowSquareOut size={16} aria-hidden="true" className="shrink-0 text-ink-subtle" />
-                  </button>
+                  </a>
                 )
               })}
             </div>
