@@ -77,7 +77,7 @@ export function LocationSearch({ value, onChange, onSelect, ...inputProps }: Loc
           id={listId}
           role="listbox"
           aria-label="Location suggestions"
-          className="absolute inset-x-0 z-50 mt-1 overflow-hidden rounded-lg border border-hairline bg-surface-1 py-1 shadow-card"
+          className="absolute left-0 z-50 mt-1 w-max min-w-full max-w-[min(36rem,calc(100vw-3rem))] overflow-hidden rounded-lg border border-hairline bg-surface-1 py-1 shadow-card"
           // Keep focus in the input so onBlur doesn't close the list before a click lands
           onMouseDown={(e) => e.preventDefault()}
         >
@@ -98,7 +98,7 @@ export function LocationSearch({ value, onChange, onSelect, ...inputProps }: Loc
                 onClick={() => select(suggestion)}
                 onMouseEnter={() => setHighlighted(i)}
               >
-                <span className="text-sm font-medium text-ink">{suggestion.mainText}</span>
+                <span className="shrink-0 text-sm font-medium whitespace-nowrap text-ink">{suggestion.mainText}</span>
                 {suggestion.secondaryText && (
                   <span className="truncate text-xs text-ink-subtle">{suggestion.secondaryText}</span>
                 )}
