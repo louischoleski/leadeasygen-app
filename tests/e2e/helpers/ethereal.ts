@@ -80,13 +80,25 @@ export interface PinResult {
   raw: string
 }
 
+export interface WaitForPinOptions {
+  retries?: number
+  delayMs?: number
+  /**
+   * Only accept a message whose Subject header contains this string. Lets a
+   * test target the reset email over an earlier verification email in the same
+   * inbox (both go to the same address).
+   */
+  subjectIncludes?: string
+}
+
 /**
- * Poll the inbox until the newest message is addressed to `recipient` and
- * carries a 6-digit code, then return that code. Throws if none arrives.
+ * Poll the inbox until the newest message is addressed to `recipient` (and, if
+ * given, matches `subjectIncludes`) and carries a 6-digit code, then return it.
+ * Throws if none arrives.
  */
 export async function waitForVerificationPin(
   recipient: string,
-  { retries = 10, delayMs = 2000 }: { retries?: number; delayMs?: number } = {},
+  { retries = 10, delayMs = 2000, subjectIncludes }: WaitForPinOptions = {},
 ): Promise<PinResult> {
   const creds = inboxCreds()
   if (!creds) throw new Error('E2E_IMAP_USER / E2E_IMAP_PASS not set')
@@ -95,12 +107,15 @@ export async function waitForVerificationPin(
     const raw = await fetchNewestRaw(creds)
     if (raw) {
       const to = (raw.match(/^To:\s*(.+)$/im) ?? [])[1] ?? ''
+      const subject = (raw.match(/^Subject:\s*(.+)$/im) ?? [])[1] ?? ''
       const codes = raw.match(/\b\d{6}\b/g) ?? []
-      if (to.includes(recipient) && codes.length > 0) {
+      const subjectOk = !subjectIncludes || subject.includes(subjectIncludes)
+      if (to.includes(recipient) && subjectOk && codes.length > 0) {
         return { code: codes[codes.length - 1], raw }
       }
     }
     await new Promise((res) => setTimeout(res, delayMs))
   }
-  throw new Error(`No verification email for ${recipient} after ${retries} attempts`)
+  const want = subjectIncludes ? ` (subject ~ "${subjectIncludes}")` : ''
+  throw new Error(`No matching email for ${recipient}${want} after ${retries} attempts`)
 }
