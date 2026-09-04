@@ -61,8 +61,12 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify" element={<VerifyEmail />} />
           </Route>
+        </Route>
+        {/* Reachable both logged-in (post-register) and out — the API itself
+            requires a session to verify, and the screen surfaces that */}
+        <Route element={<AuthLayout />}>
+          <Route path="/verify" element={<VerifyEmail />} />
         </Route>
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
