@@ -9,7 +9,9 @@ on:
 jobs:
   app-e2e:
     name: App e2e (auth UI)
-    runs-on: ubuntu-latest
+    # Pinned to 22.04: Playwright 1.40.0's `install --with-deps` predates Ubuntu
+    # 24.04's libasound2 -> libasound2t64 rename and fails on ubuntu-latest.
+    runs-on: ubuntu-22.04
 
     services:
       postgres:
