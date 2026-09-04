@@ -21,7 +21,7 @@ export interface Job {
   location: string
   radiusKm: number
   keywords: string[]
-  category: string
+  category?: string
   status: JobStatus
   progress: number // 0-100
   leadsFound: number
@@ -180,7 +180,7 @@ function tick() {
     const progress = Math.min(100, job.progress + randomInt(7, 15))
     const leadsFound = job.leadsFound + randomInt(5, 15)
     if (progress >= 100) {
-      const results = Array.from({ length: leadsFound }, () => makeLead(job.location, job.category))
+      const results = Array.from({ length: leadsFound }, () => makeLead(job.location, job.category ?? ''))
       return { ...job, status: 'completed' as JobStatus, progress: 100, leadsFound, results }
     }
     return { ...job, progress, leadsFound }
@@ -208,7 +208,7 @@ export type CreateJobInput = {
   location: string
   radiusKm: number
   keywords: string[]
-  category: string
+  category?: string
 }
 
 export type CreateJobResult = { ok: true; job: Job } | { ok: false; error: 'insufficient-credits' }

@@ -39,7 +39,7 @@ export function JobCard({ job, onRetry, onCancel }: JobCardProps) {
             {job.location} — {job.keywords.join(', ')}
           </h3>
           <p className="text-xs text-ink-subtle">
-            {job.radiusKm} km · {job.category} · {formatDate(job.createdAt)} · {job.creditCost} credits
+            {job.radiusKm} km · {job.category ? `${job.category} · ` : ''}{formatDate(job.createdAt)} · {job.creditCost} credits
           </p>
         </div>
         <span

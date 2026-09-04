@@ -16,7 +16,7 @@ export interface LocationSearchProps
  * Location input backed by Google Places autocomplete. Behaves as a plain
  * text input until suggestions arrive (or when no Maps API key is set).
  */
-export function LocationSearch({ value, onChange, onSelect, ...inputProps }: LocationSearchProps) {
+export function LocationSearch({ value, onChange, onSelect, onBlur, ...inputProps }: LocationSearchProps) {
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(-1)
   const listId = useId()
@@ -70,7 +70,10 @@ export function LocationSearch({ value, onChange, onSelect, ...inputProps }: Loc
           setHighlighted(-1)
         }}
         onKeyDown={handleKeyDown}
-        onBlur={close}
+        onBlur={(e) => {
+          close()
+          onBlur?.(e)
+        }}
       />
       {expanded && (
         <ul
