@@ -4,8 +4,8 @@ import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { CancelPlanDialog } from '../components/CancelPlanDialog'
 import { CheckoutResultDialog, type CheckoutResult } from '../components/CheckoutResultDialog'
-import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
 import { Tabs } from '../components/Tabs'
@@ -480,12 +480,12 @@ export default function Billing() {
             ]}
             onCancel={activeTier.id !== 'free' ? () => setConfirmingCancel(true) : undefined}
           />
-          <ConfirmDialog
+          <CancelPlanDialog
             open={confirmingCancel}
-            title="Cancel subscription?"
-            description={`Your ${activeTier.name} plan stays active until the end of the billing period, then you move to the Free tier.`}
-            confirmLabel="Cancel subscription"
-            danger
+            planName={activeTier.name}
+            periodEnd="June 1, 2025"
+            lostFeatures={activeTier.features.filter((f) => !subscriptionTiers[0].features.includes(f))}
+            fallbackNote={`Afterwards you move to the Free plan: ${subscriptionTiers[0].features.join(' · ').toLowerCase()}.`}
             onConfirm={() => {
               setConfirmingCancel(false)
               toast('Cancel subscription — Demo mode, no action taken')

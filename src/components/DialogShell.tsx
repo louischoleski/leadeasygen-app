@@ -7,6 +7,8 @@ interface DialogShellProps {
   open: boolean
   labelledBy: string
   onClose: () => void
+  /** Wider panel for content-heavy dialogs (defaults to max-w-sm). */
+  wide?: boolean
   children: ReactNode
 }
 
@@ -19,7 +21,7 @@ interface DialogShellProps {
  * transforms from capturing the dialog. Click-outside closes via the
  * overlay itself; Escape closes; focus returns to the opener on close.
  */
-export function DialogShell({ open, labelledBy, onClose, children }: DialogShellProps) {
+export function DialogShell({ open, labelledBy, onClose, wide, children }: DialogShellProps) {
   const restoreRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export function DialogShell({ open, labelledBy, onClose, children }: DialogShell
         onKeyDown={(e) => {
           if (e.key === 'Escape') onClose()
         }}
-        className="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-sm -translate-y-1/2 motion-reduce:animate-none animate-dialog-in"
+        className={`fixed inset-x-4 top-1/2 z-50 mx-auto -translate-y-1/2 motion-reduce:animate-none animate-dialog-in ${wide ? 'max-w-md' : 'max-w-sm'}`}
       >
         <div className="relative">
           {children}
