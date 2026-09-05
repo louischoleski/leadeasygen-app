@@ -14,7 +14,11 @@
      animation can never fight the layout (the panel keeps translateY(-50%)). */
   --animate-overlay-in: overlay-in 150ms ease-out;
   --animate-dialog-in: dialog-in 220ms cubic-bezier(0.22, 1.1, 0.36, 1);
-  --animate-icon-pop: icon-pop 350ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  /* SVG stroke draw-on (StatusIcon): each element sets --draw-length to its
+     own path length; `both` keeps it hidden through its delay. The resting
+     stroke-dashoffset is 0, so motion-reduce:animate-none shows the icon
+     fully drawn instead of hiding it. */
+  --animate-draw: draw 400ms ease-out both;
 
   @keyframes overlay-in {
     from {
@@ -27,17 +31,12 @@
       transform: translateY(calc(-50% + 12px)) scale(0.96);
     }
   }
-  @keyframes icon-pop {
-    0% {
-      opacity: 0;
-      transform: scale(0.4);
+  @keyframes draw {
+    from {
+      stroke-dashoffset: var(--draw-length, 100);
     }
-    70% {
-      transform: scale(1.12);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
+    to {
+      stroke-dashoffset: 0;
     }
   }
 

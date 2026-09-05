@@ -1,7 +1,7 @@
-import { CheckCircle, XCircle } from '@phosphor-icons/react'
 import { Button } from './Button'
 import { Card } from './Card'
 import { DialogShell } from './DialogShell'
+import { StatusIcon } from './StatusIcon'
 
 export type CheckoutResult = { status: 'success'; credits: number } | { status: 'cancelled' }
 
@@ -19,15 +19,9 @@ export function CheckoutResultDialog({ result, balance, onClose }: CheckoutResul
     <DialogShell open={result !== null} labelledBy="checkout-result-title" onClose={onClose}>
       <Card className="p-6 text-center">
         {success ? (
-          <CheckCircle
-            className="mx-auto mb-3 h-10 w-10 text-success motion-reduce:animate-none animate-icon-pop"
-            aria-hidden="true"
-          />
+          <StatusIcon status="success" className="mb-3" />
         ) : (
-          <XCircle
-            className="mx-auto mb-3 h-10 w-10 text-ink-subtle motion-reduce:animate-none animate-icon-pop"
-            aria-hidden="true"
-          />
+          <StatusIcon status="error" className="mb-3 text-ink-subtle" />
         )}
         <h2 id="checkout-result-title" className="text-card-title text-ink">
           {success ? 'Payment successful' : 'Payment cancelled'}
