@@ -1,7 +1,7 @@
 import { FonderieProvider } from '@fonderie/react'
 import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import './index.css'
 import { fonderie } from './lib/fonderie'
@@ -11,8 +11,6 @@ import { useTheme } from './hooks/useTheme'
 import AppLayout from './layouts/AppLayout'
 import AuthLayout from './layouts/AuthLayout'
 import Billing from './pages/Billing'
-import CheckoutCancelled from './pages/CheckoutCancelled'
-import CheckoutSuccess from './pages/CheckoutSuccess'
 import ForgotPassword from './pages/ForgotPassword'
 import HelpArticle from './pages/HelpArticle'
 import HelpCenter from './pages/HelpCenter'
@@ -36,6 +34,15 @@ function AppToaster() {
   return <Toaster position="top-right" theme={theme} />
 }
 
+// Checkout results render as a dialog over /billing; these legacy paths (and
+// any future Stripe success/cancel redirect pointed at them) forward there
+// with the pack preserved in the query.
+function CheckoutRedirect({ status }: { status: 'success' | 'cancelled' }) {
+  const [params] = useSearchParams()
+  const pack = params.get('pack')
+  return <Navigate to={`/billing?checkout=${status}${pack ? `&pack=${pack}` : ''}`} replace />
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <FonderieProvider client={fonderie}>
@@ -48,8 +55,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/settings" element={<Suspense fallback={null}><Settings /></Suspense>} />
           <Route path="/jobs/:id" element={<Suspense fallback={null}><JobDetail /></Suspense>} />
           <Route path="/billing" element={<Billing />} />
-          <Route path="/billing/success" element={<CheckoutSuccess />} />
-          <Route path="/billing/cancelled" element={<CheckoutCancelled />} />
+          <Route path="/billing/success" element={<CheckoutRedirect status="success" />} />
+          <Route path="/billing/cancelled" element={<CheckoutRedirect status="cancelled" />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/help/:slug" element={<HelpArticle />} />
           {/* Legacy paths from earlier iterations */}

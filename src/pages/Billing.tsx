@@ -1,16 +1,19 @@
 import { Check, Coin, CreditCard, Crown, Download, Plus, Receipt } from '@phosphor-icons/react'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
-import { ConfirmDialog } from '../components/ConfirmDialog'
+import { CancelPlanDialog } from '../components/CancelPlanDialog'
+import { CheckoutResultDialog, type CheckoutResult } from '../components/CheckoutResultDialog'
 import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
 import { Tabs } from '../components/Tabs'
 import { Toggle } from '../components/Toggle'
 import {
+  addCredits,
   billingHistory,
+  CHECKOUT_DONE_KEY,
   CHECKOUT_INTENT_KEY,
   creditPacks,
   subscriptionTiers,
@@ -31,10 +34,21 @@ const statusBadge: Record<BillingRecord['status'], { label: string; className: s
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
 function CreditPacks() {
-  const navigate = useNavigate()
+  const [, setSearchParams] = useSearchParams()
+  const { subscriptionTier } = useBilling()
+  const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
+  // A paid plan includes unlimited credits — selling packs on top of it
+  // would charge for something the subscription already covers.
+  const hasPaidPlan = !!tier && tier.priceMonthly > 0
 
   return (
     <section id="packages" className="scroll-mt-20 space-y-4">
+      {hasPaidPlan && (
+        <p className="rounded-lg border border-hairline bg-surface-2/50 px-4 py-3 text-sm text-ink-subtle">
+          Your {tier.name} plan already includes unlimited credits, so credit packs are unavailable
+          while it's active.
+        </p>
+      )}
       <div className="grid gap-4 md:grid-cols-3">
         {creditPacks.map((pkg) => (
           <Card key={pkg.id} className={cn('relative p-6', pkg.popular && 'border-primary shadow-sm')}>
@@ -55,14 +69,16 @@ function CreditPacks() {
             <Button
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
+              disabled={hasPaidPlan}
               onClick={() => {
-                // Stands in for the Stripe redirect: flag the intent, land on success_url
+                // Stands in for the Stripe redirect: flag the intent, land back
+                // on the billing page with the checkout result in the query
                 try {
                   sessionStorage.setItem(CHECKOUT_INTENT_KEY, pkg.id)
                 } catch {
-                  // storage unavailable: the success page will show no checkout in progress
+                  // storage unavailable: the result dialog simply won't show
                 }
-                navigate(`/billing/success?pack=${pkg.id}`)
+                setSearchParams({ checkout: 'success', pack: pkg.id })
               }}
             >
               Buy {pkg.name}
@@ -242,13 +258,15 @@ function CreditActivityTable() {
 
 function SubscriptionPlans() {
   const { billingCycle, setBillingCycle, subscriptionTier, setSubscription } = useBilling()
-  const [confirmingDowngrade, setConfirmingDowngrade] = useState(false)
+
+  // Upgrades only: Stripe charges the difference going up, but moving down
+  // mid-period would mean owing a prorated refund. The only path down is
+  // Cancel Subscription, which runs to the end of the billing period.
+  const effectiveTierId = subscriptionTier ?? 'free'
+  const rank = (id: string) => subscriptionTiers.findIndex((t) => t.id === id)
+  const currentRank = rank(effectiveTierId)
 
   const choose = (tier: SubscriptionTier) => {
-    if (tier.id === 'free') {
-      setConfirmingDowngrade(true)
-      return
-    }
     setSubscription(tier.id)
     toast.success(`Subscribed to ${tier.name}`, { description: 'Demo mode — no payment processed.' })
   }
@@ -288,7 +306,8 @@ function SubscriptionPlans() {
       <div className="grid gap-4 md:grid-cols-2">
         {subscriptionTiers.map((tier) => {
           const price = billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual
-          const current = tier.id === subscriptionTier
+          const current = tier.id === effectiveTierId
+          const isLower = rank(tier.id) < currentRank
           return (
             <Card
               key={tier.id}
@@ -320,13 +339,19 @@ function SubscriptionPlans() {
                   <Button variant="secondary" fullWidth disabled>
                     Current Plan
                   </Button>
+                ) : isLower ? (
+                  <>
+                    <Button variant="secondary" fullWidth disabled>
+                      Downgrade unavailable
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-ink-subtle">
+                      To move down, cancel your current plan — it stays active until the end of the
+                      billing period.
+                    </p>
+                  </>
                 ) : (
-                  <Button
-                    variant={tier.id !== 'free' && tier.popular ? 'primary' : 'secondary'}
-                    fullWidth
-                    onClick={() => choose(tier)}
-                  >
-                    {tier.id === 'free' ? 'Downgrade' : 'Subscribe'}
+                  <Button variant={tier.popular ? 'primary' : 'secondary'} fullWidth onClick={() => choose(tier)}>
+                    Subscribe
                   </Button>
                 )}
               </div>
@@ -335,19 +360,6 @@ function SubscriptionPlans() {
         })}
       </div>
 
-      <ConfirmDialog
-        open={confirmingDowngrade}
-        title="Downgrade to Free?"
-        description="You'll lose unlimited jobs and credits, and Free-tier limits apply immediately."
-        confirmLabel="Downgrade"
-        danger
-        onConfirm={() => {
-          setConfirmingDowngrade(false)
-          setSubscription('free')
-          toast.success('Switched to the Free plan', { description: 'Demo mode — no payment processed.' })
-        }}
-        onClose={() => setConfirmingDowngrade(false)}
-      />
     </section>
   )
 }
@@ -358,6 +370,52 @@ export default function Billing() {
   const [showSubscription, setShowSubscription] = useState(false)
   const [activeTab, setActiveTab] = useState('history')
   const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null)
+  const checkoutConsumed = useRef(false)
+
+  // A finished checkout lands here as ?checkout=success|cancelled (set by the
+  // buy button today; a real Stripe redirect URL later). Consume the intent
+  // exactly once, credit the pack, and show the receipt as a modal.
+  useEffect(() => {
+    const status = searchParams.get('checkout')
+    if (!status) {
+      checkoutConsumed.current = false
+      return
+    }
+    if (status === 'cancelled') {
+      setCheckoutResult({ status: 'cancelled' })
+      return
+    }
+    if (status !== 'success' || checkoutConsumed.current) return
+    checkoutConsumed.current = true
+
+    const pack = creditPacks.find((p) => p.id === searchParams.get('pack'))
+    const dismiss = () => setSearchParams({}, { replace: true })
+    if (!pack) return dismiss()
+    try {
+      const intent = sessionStorage.getItem(CHECKOUT_INTENT_KEY)
+      const done = sessionStorage.getItem(CHECKOUT_DONE_KEY)
+      if (intent === pack.id) {
+        sessionStorage.removeItem(CHECKOUT_INTENT_KEY)
+        sessionStorage.setItem(CHECKOUT_DONE_KEY, pack.id)
+        addCredits(pack.credits, `${pack.name} — ${pack.credits} credits`)
+        setCheckoutResult({ status: 'success', credits: pack.credits })
+      } else if (done === pack.id) {
+        // Refresh of an already-processed checkout: re-show the receipt, no re-credit
+        setCheckoutResult({ status: 'success', credits: pack.credits })
+      } else {
+        dismiss() // stale or shared link: nothing to show
+      }
+    } catch {
+      dismiss()
+    }
+  }, [searchParams, setSearchParams])
+
+  const closeCheckoutDialog = () => {
+    setCheckoutResult(null)
+    setSearchParams({}, { replace: true })
+  }
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
   // Card is always shown; a null subscription displays under the free tier's limits
   const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier) ?? subscriptionTiers[0]
@@ -422,12 +480,12 @@ export default function Billing() {
             ]}
             onCancel={activeTier.id !== 'free' ? () => setConfirmingCancel(true) : undefined}
           />
-          <ConfirmDialog
+          <CancelPlanDialog
             open={confirmingCancel}
-            title="Cancel subscription?"
-            description={`Your ${activeTier.name} plan stays active until the end of the billing period, then you move to the Free tier.`}
-            confirmLabel="Cancel subscription"
-            danger
+            planName={activeTier.name}
+            periodEnd="June 1, 2025"
+            lostFeatures={activeTier.features.filter((f) => !subscriptionTiers[0].features.includes(f))}
+            fallbackNote={`Afterwards you move to the Free plan: ${subscriptionTiers[0].features.join(' · ').toLowerCase()}.`}
             onConfirm={() => {
               setConfirmingCancel(false)
               toast('Cancel subscription — Demo mode, no action taken')
@@ -485,6 +543,8 @@ export default function Billing() {
           )}
         </div>
       </div>
+
+      <CheckoutResultDialog result={checkoutResult} balance={creditBalance} onClose={closeCheckoutDialog} />
     </div>
   )
 }
