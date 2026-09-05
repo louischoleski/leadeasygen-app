@@ -8,6 +8,39 @@
 @theme {
   --font-sans: 'Inter', 'SF Pro Display', system-ui, sans-serif;
 
+  /* Dialog motion: overlay fades, panel settles in with a slight rise, and
+     result icons pop with a small overshoot. Keyframes define only `from` —
+     the resting state comes from each element's own utilities, so the
+     animation can never fight the layout (the panel keeps translateY(-50%)). */
+  --animate-overlay-in: overlay-in 150ms ease-out;
+  --animate-dialog-in: dialog-in 220ms cubic-bezier(0.22, 1.1, 0.36, 1);
+  --animate-icon-pop: icon-pop 350ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(calc(-50% + 12px)) scale(0.96);
+    }
+  }
+  @keyframes icon-pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    70% {
+      transform: scale(1.12);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 8px;

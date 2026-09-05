@@ -32,7 +32,11 @@ export function DialogShell({ open, labelledBy, onClose, children }: DialogShell
 
   return createPortal(
     <>
-      <div className="fixed inset-0 z-50 bg-overlay/50" onClick={onClose} aria-hidden="true" />
+      <div
+        className="fixed inset-0 z-50 bg-overlay/50 motion-reduce:animate-none animate-overlay-in"
+        onClick={onClose}
+        aria-hidden="true"
+      />
       <div
         role="dialog"
         aria-modal="true"
@@ -40,7 +44,7 @@ export function DialogShell({ open, labelledBy, onClose, children }: DialogShell
         onKeyDown={(e) => {
           if (e.key === 'Escape') onClose()
         }}
-        className="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-sm -translate-y-1/2"
+        className="fixed inset-x-4 top-1/2 z-50 mx-auto max-w-sm -translate-y-1/2 motion-reduce:animate-none animate-dialog-in"
       >
         <div className="relative">
           {children}
