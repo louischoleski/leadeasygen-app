@@ -258,13 +258,15 @@ function CreditActivityTable() {
 
 function SubscriptionPlans() {
   const { billingCycle, setBillingCycle, subscriptionTier, setSubscription } = useBilling()
-  const [confirmingDowngrade, setConfirmingDowngrade] = useState(false)
+
+  // Upgrades only: Stripe charges the difference going up, but moving down
+  // mid-period would mean owing a prorated refund. The only path down is
+  // Cancel Subscription, which runs to the end of the billing period.
+  const effectiveTierId = subscriptionTier ?? 'free'
+  const rank = (id: string) => subscriptionTiers.findIndex((t) => t.id === id)
+  const currentRank = rank(effectiveTierId)
 
   const choose = (tier: SubscriptionTier) => {
-    if (tier.id === 'free') {
-      setConfirmingDowngrade(true)
-      return
-    }
     setSubscription(tier.id)
     toast.success(`Subscribed to ${tier.name}`, { description: 'Demo mode — no payment processed.' })
   }
@@ -304,7 +306,8 @@ function SubscriptionPlans() {
       <div className="grid gap-4 md:grid-cols-2">
         {subscriptionTiers.map((tier) => {
           const price = billingCycle === 'monthly' ? tier.priceMonthly : tier.priceAnnual
-          const current = tier.id === subscriptionTier
+          const current = tier.id === effectiveTierId
+          const isLower = rank(tier.id) < currentRank
           return (
             <Card
               key={tier.id}
@@ -336,13 +339,19 @@ function SubscriptionPlans() {
                   <Button variant="secondary" fullWidth disabled>
                     Current Plan
                   </Button>
+                ) : isLower ? (
+                  <>
+                    <Button variant="secondary" fullWidth disabled>
+                      Downgrade unavailable
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-ink-subtle">
+                      To move down, cancel your current plan — it stays active until the end of the
+                      billing period.
+                    </p>
+                  </>
                 ) : (
-                  <Button
-                    variant={tier.id !== 'free' && tier.popular ? 'primary' : 'secondary'}
-                    fullWidth
-                    onClick={() => choose(tier)}
-                  >
-                    {tier.id === 'free' ? 'Downgrade' : 'Subscribe'}
+                  <Button variant={tier.popular ? 'primary' : 'secondary'} fullWidth onClick={() => choose(tier)}>
+                    Subscribe
                   </Button>
                 )}
               </div>
@@ -351,19 +360,6 @@ function SubscriptionPlans() {
         })}
       </div>
 
-      <ConfirmDialog
-        open={confirmingDowngrade}
-        title="Downgrade to Free?"
-        description="You'll lose unlimited jobs and credits, and Free-tier limits apply immediately."
-        confirmLabel="Downgrade"
-        danger
-        onConfirm={() => {
-          setConfirmingDowngrade(false)
-          setSubscription('free')
-          toast.success('Switched to the Free plan', { description: 'Demo mode — no payment processed.' })
-        }}
-        onClose={() => setConfirmingDowngrade(false)}
-      />
     </section>
   )
 }
