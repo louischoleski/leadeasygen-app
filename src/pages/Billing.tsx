@@ -35,9 +35,20 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
 
 function CreditPacks() {
   const [, setSearchParams] = useSearchParams()
+  const { subscriptionTier } = useBilling()
+  const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
+  // A paid plan includes unlimited credits — selling packs on top of it
+  // would charge for something the subscription already covers.
+  const hasPaidPlan = !!tier && tier.priceMonthly > 0
 
   return (
     <section id="packages" className="scroll-mt-20 space-y-4">
+      {hasPaidPlan && (
+        <p className="rounded-lg border border-hairline bg-surface-2/50 px-4 py-3 text-sm text-ink-subtle">
+          Your {tier.name} plan already includes unlimited credits, so credit packs are unavailable
+          while it's active.
+        </p>
+      )}
       <div className="grid gap-4 md:grid-cols-3">
         {creditPacks.map((pkg) => (
           <Card key={pkg.id} className={cn('relative p-6', pkg.popular && 'border-primary shadow-sm')}>
@@ -58,6 +69,7 @@ function CreditPacks() {
             <Button
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
+              disabled={hasPaidPlan}
               onClick={() => {
                 // Stands in for the Stripe redirect: flag the intent, land back
                 // on the billing page with the checkout result in the query
