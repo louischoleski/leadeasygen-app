@@ -1,16 +1,19 @@
 import { Check, Coin, CreditCard, Crown, Download, Plus, Receipt } from '@phosphor-icons/react'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { CheckoutResultDialog, type CheckoutResult } from '../components/CheckoutResultDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
 import { Tabs } from '../components/Tabs'
 import { Toggle } from '../components/Toggle'
 import {
+  addCredits,
   billingHistory,
+  CHECKOUT_DONE_KEY,
   CHECKOUT_INTENT_KEY,
   creditPacks,
   subscriptionTiers,
@@ -31,7 +34,7 @@ const statusBadge: Record<BillingRecord['status'], { label: string; className: s
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
 function CreditPacks() {
-  const navigate = useNavigate()
+  const [, setSearchParams] = useSearchParams()
 
   return (
     <section id="packages" className="scroll-mt-20 space-y-4">
@@ -56,13 +59,14 @@ function CreditPacks() {
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
               onClick={() => {
-                // Stands in for the Stripe redirect: flag the intent, land on success_url
+                // Stands in for the Stripe redirect: flag the intent, land back
+                // on the billing page with the checkout result in the query
                 try {
                   sessionStorage.setItem(CHECKOUT_INTENT_KEY, pkg.id)
                 } catch {
-                  // storage unavailable: the success page will show no checkout in progress
+                  // storage unavailable: the result dialog simply won't show
                 }
-                navigate(`/billing/success?pack=${pkg.id}`)
+                setSearchParams({ checkout: 'success', pack: pkg.id })
               }}
             >
               Buy {pkg.name}
@@ -358,6 +362,52 @@ export default function Billing() {
   const [showSubscription, setShowSubscription] = useState(false)
   const [activeTab, setActiveTab] = useState('history')
   const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null)
+  const checkoutConsumed = useRef(false)
+
+  // A finished checkout lands here as ?checkout=success|cancelled (set by the
+  // buy button today; a real Stripe redirect URL later). Consume the intent
+  // exactly once, credit the pack, and show the receipt as a modal.
+  useEffect(() => {
+    const status = searchParams.get('checkout')
+    if (!status) {
+      checkoutConsumed.current = false
+      return
+    }
+    if (status === 'cancelled') {
+      setCheckoutResult({ status: 'cancelled' })
+      return
+    }
+    if (status !== 'success' || checkoutConsumed.current) return
+    checkoutConsumed.current = true
+
+    const pack = creditPacks.find((p) => p.id === searchParams.get('pack'))
+    const dismiss = () => setSearchParams({}, { replace: true })
+    if (!pack) return dismiss()
+    try {
+      const intent = sessionStorage.getItem(CHECKOUT_INTENT_KEY)
+      const done = sessionStorage.getItem(CHECKOUT_DONE_KEY)
+      if (intent === pack.id) {
+        sessionStorage.removeItem(CHECKOUT_INTENT_KEY)
+        sessionStorage.setItem(CHECKOUT_DONE_KEY, pack.id)
+        addCredits(pack.credits, `${pack.name} — ${pack.credits} credits`)
+        setCheckoutResult({ status: 'success', credits: pack.credits })
+      } else if (done === pack.id) {
+        // Refresh of an already-processed checkout: re-show the receipt, no re-credit
+        setCheckoutResult({ status: 'success', credits: pack.credits })
+      } else {
+        dismiss() // stale or shared link: nothing to show
+      }
+    } catch {
+      dismiss()
+    }
+  }, [searchParams, setSearchParams])
+
+  const closeCheckoutDialog = () => {
+    setCheckoutResult(null)
+    setSearchParams({}, { replace: true })
+  }
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
   // Card is always shown; a null subscription displays under the free tier's limits
   const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier) ?? subscriptionTiers[0]
@@ -485,6 +535,8 @@ export default function Billing() {
           )}
         </div>
       </div>
+
+      <CheckoutResultDialog result={checkoutResult} balance={creditBalance} onClose={closeCheckoutDialog} />
     </div>
   )
 }
