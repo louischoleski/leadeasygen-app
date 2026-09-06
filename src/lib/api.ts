@@ -1,11 +1,13 @@
 import { fonderie } from './fonderie'
 
 /**
- * Typed access to the scraper api (/v1/tasks, /v1/credits). These routes
- * return plain JSON bodies (not the fonderie response envelope), so calls
- * go through the fonderie client — which owns the Bearer token and refresh
- * dance — and are cast to the wire shapes here. The client throws
- * FonderieApiError (carrying `.status`) on any non-2xx response.
+ * Typed access to the scraper api (/v1/tasks). These routes return plain JSON
+ * bodies (not the fonderie response envelope), so calls go through the fonderie
+ * client — which owns the Bearer token and refresh dance — and are cast to the
+ * wire shapes here. The client throws FonderieApiError (carrying `.status`) on
+ * any non-2xx response. Billing (balance, packs, invoices, subscription) is not
+ * here — it goes through `@fonderie/client`'s billing sub-client + the
+ * `@fonderie/react-billing` hooks.
  */
 
 export type ApiTaskStatus = 'pending' | 'scraping' | 'complete' | 'error'
@@ -84,6 +86,3 @@ export const createTask = (input: CreateTaskInput) =>
 
 export const retryTask = (id: string) =>
   fonderie.post(`/v1/tasks/${id}/retry`) as unknown as Promise<CreatedTask>
-
-export const getCreditBalance = () =>
-  fonderie.get('/v1/credits/balance', { cache: false }) as unknown as Promise<{ credits: number }>

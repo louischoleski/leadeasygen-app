@@ -1,30 +1,45 @@
+import { useEffect } from 'react'
 import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
-import { getCreditBalance } from '../lib/api'
+import { fonderie } from '../lib/fonderie'
+import { apiErrorStatus } from '../lib/api'
 
-// Credit packs — one-time purchase
+// Cross-cutting billing state observed across the app (navbar, dashboard,
+// settings, scrape form, billing page): the credit balance and the current
+// subscription tier. Both come from @fonderie/billing — the wallet balance
+// from GET /billing/wallet (which withBilling keeps current, including the
+// monthly free grant) and the tier from GET /billing/subscription. Page-local
+// billing data (ledger, invoices, card, checkout) is read directly from the
+// react-billing hooks in the billing page, not mirrored here.
+
+// ── Display config (frontend copy; the real money flow is billing's) ──────────
+
+export type BillingCycle = 'monthly' | 'annual'
+
+// Credit packs shown on the billing page. `id` MUST match the billing catalog
+// (api src/billing/catalog.ts → wallet.creditPacks) — checkout sends it as
+// packId and the server prices the pack from its own catalogue.
 export interface CreditPack {
   id: string
   name: string
   credits: number
-  price: number // in USD
+  price: number // USD, display only — the server is the source of truth
   popular?: boolean
 }
 
 export const creditPacks: CreditPack[] = [
-  { id: 'pack-100', name: 'Pack 100', credits: 100, price: 9 },
-  { id: 'pack-300', name: 'Pack 300', credits: 300, price: 19 },
-  { id: 'pack-500', name: 'Pack 500', credits: 500, price: 29, popular: true },
+  { id: 'small', name: '10 credits', credits: 10, price: 5 },
+  { id: 'medium', name: '50 credits', credits: 50, price: 20 },
+  { id: 'large', name: '100 credits', credits: 100, price: 35, popular: true },
 ]
 
-// Subscription tiers — recurring
 export interface TierLimits {
   activeJobs: number | null // null = unlimited
   creditsPerMonth: number | null
 }
 
 export interface SubscriptionTier {
-  id: string
+  id: string // matches the billing plan name ('free' | 'unlimited')
   name: string
   priceMonthly: number
   priceAnnual: number
@@ -56,196 +71,45 @@ export const subscriptionTiers: SubscriptionTier[] = [
   },
 ]
 
-export type BillingRecordType = 'subscription' | 'credits'
-
-export interface BillingRecord {
-  id: string
-  date: string
-  type: BillingRecordType
-  description: string
-  amount: string
-  status: 'paid' | 'pending' | 'failed'
-}
-
-export const billingHistory: BillingRecord[] = [
-  { id: 'INV-001', date: 'May 1, 2025', type: 'subscription', description: 'Unlimited Plan — Monthly', amount: '$49.00', status: 'paid' },
-  { id: 'CR-042', date: 'Apr 28, 2025', type: 'credits', description: 'Pack 500 — 500 credits', amount: '$29.00', status: 'paid' },
-  { id: 'INV-002', date: 'Apr 1, 2025', type: 'subscription', description: 'Unlimited Plan — Monthly', amount: '$49.00', status: 'paid' },
-  { id: 'CR-038', date: 'Mar 15, 2025', type: 'credits', description: 'Pack 100 — 100 credits', amount: '$9.00', status: 'paid' },
-  { id: 'INV-003', date: 'Mar 1, 2025', type: 'subscription', description: 'Unlimited Plan — Monthly', amount: '$49.00', status: 'paid' },
-]
-
-// Credit ledger — every credit movement, newest first, so the current
-// balance is always explainable from the entries alone.
-// Type ids follow the credits-service wire vocabulary (see SWAP.md);
-// display labels are frontend copy.
-export type LedgerEntryType = 'purchase' | 'usage' | 'refund' | 'bonus'
-
-export interface LedgerEntry {
-  id: string
-  date: string // ISO
-  type: LedgerEntryType
-  description: string
-  amount: number // signed: + for purchase/refund/grant, - for spend
-  balanceAfter: number
-}
-
-const LEDGER_CAP = 50
-
-// Demo checkout handshake: the buy button sets the intent, the success page
-// consumes it exactly once. Dies when Stripe verifies sessions server-side.
-export const CHECKOUT_INTENT_KEY = 'checkout-intent'
-export const CHECKOUT_DONE_KEY = 'checkout-done'
-
-export type BillingCycle = 'monthly' | 'annual'
-
-export interface UsageState {
-  creditsUsed: number // credits spent this month; refunds are subtracted back
-}
+// ── Cross-cutting store (balance + tier), sourced from billing ────────────────
 
 interface BillingState {
   creditBalance: number
-  subscriptionTier: string | null // null = no active sub, 'free' = free tier
-  billingCycle: BillingCycle
-  usage: UsageState
-  ledger: LedgerEntry[]
+  subscriptionTier: string | null // null until first read; then a plan name ('free'|'unlimited')
 }
 
-const STORAGE_KEY = 'billing'
-
-const defaults: BillingState = {
-  creditBalance: 247,
-  subscriptionTier: 'free',
-  billingCycle: 'monthly',
-  usage: { creditsUsed: 18 },
-  // Demo window; entries reconcile step-by-step down to the seeded balance
-  ledger: [
-    { id: 'led-005', date: '2025-06-02T09:14:00Z', type: 'usage', description: 'Scrape job — Austin, TX', amount: -18, balanceAfter: 247 },
-    { id: 'led-004', date: '2025-06-01T00:00:00Z', type: 'bonus', description: 'Monthly free credits', amount: 50, balanceAfter: 265 },
-    { id: 'led-003', date: '2025-05-25T15:40:00Z', type: 'usage', description: 'Scrape job — Chicago, IL', amount: -28, balanceAfter: 215 },
-    { id: 'led-002', date: '2025-05-22T11:05:00Z', type: 'refund', description: 'Refund — failed job (Brooklyn, NY)', amount: 14, balanceAfter: 243 },
-    { id: 'led-001', date: '2025-05-15T10:30:00Z', type: 'usage', description: 'Scrape job — Brooklyn, NY', amount: -14, balanceAfter: 229 },
-  ],
-}
-
-const ledgerTypes: LedgerEntryType[] = ['purchase', 'usage', 'refund', 'bonus']
-
-// Entries persisted before the wire-vocabulary alignment keep their history
-const legacyLedgerTypes: Record<string, LedgerEntryType> = { spend: 'usage', grant: 'bonus' }
-
-function normalizeLedgerEntry(value: unknown): unknown {
-  if (typeof value !== 'object' || value === null) return value
-  const e = value as { type?: unknown }
-  if (typeof e.type === 'string' && e.type in legacyLedgerTypes) {
-    return { ...e, type: legacyLedgerTypes[e.type] }
-  }
-  return value
-}
-
-function isLedgerEntry(value: unknown): value is LedgerEntry {
-  if (typeof value !== 'object' || value === null) return false
-  const e = value as Partial<LedgerEntry>
-  return (
-    typeof e.id === 'string' &&
-    typeof e.date === 'string' &&
-    typeof e.description === 'string' &&
-    ledgerTypes.includes(e.type as LedgerEntryType) &&
-    typeof e.amount === 'number' &&
-    Number.isFinite(e.amount) &&
-    typeof e.balanceAfter === 'number' &&
-    Number.isFinite(e.balanceAfter)
-  )
-}
-
-function readStored(): BillingState {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return defaults
-    const parsed: unknown = JSON.parse(raw)
-    if (typeof parsed !== 'object' || parsed === null) return defaults
-    const p = parsed as Partial<BillingState>
-    const tierValid =
-      p.subscriptionTier === null ||
-      (typeof p.subscriptionTier === 'string' && subscriptionTiers.some((t) => t.id === p.subscriptionTier))
-    const storedUsage: Partial<UsageState> = typeof p.usage === 'object' && p.usage !== null ? p.usage : {}
-    const usageField = (value: unknown, fallback: number) =>
-      typeof value === 'number' && value >= 0 ? value : fallback
-    return {
-      creditBalance:
-        typeof p.creditBalance === 'number' && p.creditBalance >= 0 ? p.creditBalance : defaults.creditBalance,
-      subscriptionTier: tierValid ? (p.subscriptionTier as string | null) : defaults.subscriptionTier,
-      billingCycle: p.billingCycle === 'annual' ? 'annual' : 'monthly',
-      usage: {
-        creditsUsed: usageField(storedUsage.creditsUsed, defaults.usage.creditsUsed),
-      },
-      ledger: Array.isArray(p.ledger)
-        ? p.ledger.map(normalizeLedgerEntry).filter(isLedgerEntry).slice(0, LEDGER_CAP)
-        : defaults.ledger,
-    }
-  } catch {
-    return defaults
-  }
-}
-
-// Module-level store (same pattern as useTheme/useLocale) so the balance hero,
-// sidebar, and settings all observe one balance
-let state: BillingState = readStored()
+let state: BillingState = { creditBalance: 0, subscriptionTier: null }
 const store = createSubscribable()
 
 function update(next: Partial<BillingState>) {
-  state = { ...state, ...next }
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  } catch {
-    // storage unavailable: keep the in-memory value for this session
+  const merged = { ...state, ...next }
+  if (merged.creditBalance === state.creditBalance && merged.subscriptionTier === state.subscriptionTier) {
+    return // no change — don't churn subscribers
   }
+  state = merged
   store.emit()
 }
 
-function recordEntry(type: LedgerEntryType, description: string, amount: number, balanceAfter: number): LedgerEntry[] {
-  const entry: LedgerEntry = {
-    id: `led-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
-    date: new Date().toISOString(),
-    type,
-    description,
-    amount,
-    balanceAfter,
-  }
-  return [entry, ...state.ledger].slice(0, LEDGER_CAP)
-}
-
-// Module-level actions so other stores (e.g. the jobs engine) can write
-// billing state without going through a React hook
-export function addCredits(amount: number, description: string) {
-  const creditBalance = state.creditBalance + amount
-  update({ creditBalance, ledger: recordEntry('purchase', description, amount, creditBalance) })
-}
-
-export function spendCredits(amount: number, description: string): boolean {
-  if (state.creditBalance < amount) return false
-  const creditBalance = state.creditBalance - amount
-  update({
-    creditBalance,
-    usage: { creditsUsed: state.usage.creditsUsed + amount },
-    ledger: recordEntry('usage', description, -amount, creditBalance),
-  })
-  return true
-}
-
-// The real balance lives in the api's credit ledger. Once a read succeeds it
-// replaces the demo balance in the store (persisting like any other change);
-// while the api is unreachable or the user is logged out, the demo value
-// stands so the rest of the mock billing page keeps working.
+// Re-read the wallet balance from billing. Callable from non-React code (the
+// jobs engine re-reads it when a scrape settles, since completion is when the
+// server charges). Non-fatal: an unauthenticated / offline read leaves the
+// current value in place. A call that arrives while one is in flight is NOT
+// dropped — it schedules a trailing re-run, so the post-charge read (which may
+// fire while an in-flight pre-charge read is still resolving) is never lost.
 let balanceInFlight = false
-
+let balancePending = false
 export async function refreshBalance(): Promise<void> {
-  if (balanceInFlight) return
+  if (balanceInFlight) {
+    balancePending = true
+    return
+  }
   balanceInFlight = true
   try {
-    const res = await getCreditBalance()
-    if (typeof res?.credits === 'number' && res.credits !== state.creditBalance) {
-      update({ creditBalance: res.credits })
-    }
+    do {
+      balancePending = false
+      const { result } = await fonderie.billing.getWallet({ bust: true })
+      update({ creditBalance: Number(result.wallet.balance) })
+    } while (balancePending) // a refresh requested mid-flight → read again
   } catch {
     // unauthenticated or api down — keep the current value
   } finally {
@@ -253,21 +117,40 @@ export async function refreshBalance(): Promise<void> {
   }
 }
 
-export function refundCredits(amount: number, description: string) {
-  const creditBalance = state.creditBalance + amount
-  update({
-    creditBalance,
-    usage: { creditsUsed: Math.max(0, state.usage.creditsUsed - amount) },
-    ledger: recordEntry('refund', description, amount, creditBalance),
-  })
+// Re-read the current subscription tier. A 404 means no subscription — the user
+// is on the free plan (billing applies the free plan's rules to no-sub users).
+// Same trailing-re-run dedup as refreshBalance.
+let subInFlight = false
+let subPending = false
+export async function refreshSubscription(): Promise<void> {
+  if (subInFlight) {
+    subPending = true
+    return
+  }
+  subInFlight = true
+  try {
+    do {
+      subPending = false
+      try {
+        const { result } = await fonderie.billing.getSubscription({ bust: true })
+        update({ subscriptionTier: result.subscription?.plan ?? 'free' })
+      } catch (err) {
+        if (apiErrorStatus(err) === 404) update({ subscriptionTier: 'free' })
+        // other errors — keep the current value
+      }
+    } while (subPending)
+  } finally {
+    subInFlight = false
+  }
 }
 
 export function useBilling() {
   const current = useSyncExternalStore(store.subscribe, () => state)
-  return {
-    ...current,
-    addCredits,
-    setSubscription: (tierId: string | null) => update({ subscriptionTier: tierId }),
-    setBillingCycle: (cycle: BillingCycle) => update({ billingCycle: cycle }),
-  }
+  // Load once on first mount of any consumer; the in-flight guards dedupe the
+  // concurrent calls from multiple mounted consumers (navbar + page + …).
+  useEffect(() => {
+    void refreshBalance()
+    void refreshSubscription()
+  }, [])
+  return current
 }

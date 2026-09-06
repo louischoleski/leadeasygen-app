@@ -1,45 +1,59 @@
 import { Check, Coin, CreditCard, Crown, Download, Plus, Receipt } from '@phosphor-icons/react'
-import { useEffect, useRef, useState } from 'react'
+import {
+  useCancelSubscription,
+  useCheckout,
+  useInvoices,
+  usePaymentMethod,
+  useWalletCheckout,
+  useWalletTransactions,
+  type IInvoiceDTO,
+  type IWalletTransactionDTO,
+} from '@fonderie/react-billing'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { CancelPlanDialog } from '../components/CancelPlanDialog'
-import { CheckoutResultDialog, type CheckoutResult } from '../components/CheckoutResultDialog'
 import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
 import { Tabs } from '../components/Tabs'
 import { Toggle } from '../components/Toggle'
 import {
-  addCredits,
-  billingHistory,
-  CHECKOUT_DONE_KEY,
-  CHECKOUT_INTENT_KEY,
   creditPacks,
+  refreshBalance,
+  refreshSubscription,
   subscriptionTiers,
   useBilling,
-  type BillingRecord,
-  type LedgerEntryType,
+  type BillingCycle,
   type SubscriptionTier,
 } from '../data/billing'
 import { useJobs } from '../data/jobs'
 import { cn } from '../lib/cn'
 
-const statusBadge: Record<BillingRecord['status'], { label: string; className: string }> = {
-  paid: { label: 'Paid', className: 'bg-success/10 text-success' },
-  pending: { label: 'Pending', className: 'bg-warning/10 text-warning' },
-  failed: { label: 'Failed', className: 'bg-error/10 text-error' },
-}
-
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
+// A money amount billing returns as a string in the smallest currency unit.
+const money = (minor: string, currency: string) =>
+  `${new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(minor) / 100)}`
+
 function CreditPacks() {
-  const [, setSearchParams] = useSearchParams()
   const { subscriptionTier } = useBilling()
+  const { checkout, isLoading } = useWalletCheckout()
   const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
-  // A paid plan includes unlimited credits — selling packs on top of it
-  // would charge for something the subscription already covers.
+  // A paid plan includes unlimited credits — selling packs on top of it would
+  // charge for something the subscription already covers (G5: hide packs while
+  // subscribed). Enforced server-side too once GAP-1 lands in billing.
   const hasPaidPlan = !!tier && tier.priceMonthly > 0
+
+  const buy = async (packId: string) => {
+    try {
+      const url = await checkout({ packId })
+      window.location.assign(url) // hosted Stripe checkout; the webhook credits the wallet
+    } catch {
+      toast.error('Could not start checkout. Please try again.')
+    }
+  }
 
   return (
     <section id="packages" className="scroll-mt-20 space-y-4">
@@ -69,17 +83,8 @@ function CreditPacks() {
             <Button
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
-              disabled={hasPaidPlan}
-              onClick={() => {
-                // Stands in for the Stripe redirect: flag the intent, land back
-                // on the billing page with the checkout result in the query
-                try {
-                  sessionStorage.setItem(CHECKOUT_INTENT_KEY, pkg.id)
-                } catch {
-                  // storage unavailable: the result dialog simply won't show
-                }
-                setSearchParams({ checkout: 'success', pack: pkg.id })
-              }}
+              disabled={hasPaidPlan || isLoading}
+              onClick={() => void buy(pkg.id)}
             >
               Buy {pkg.name}
             </Button>
@@ -90,14 +95,54 @@ function CreditPacks() {
   )
 }
 
-function BillingHistoryTable() {
+const invoiceStatusBadge = (status: string): { label: string; className: string } => {
+  switch (status) {
+    case 'paid':
+      return { label: 'Paid', className: 'bg-success/10 text-success' }
+    case 'open':
+    case 'draft':
+      return { label: status === 'open' ? 'Open' : 'Draft', className: 'bg-warning/10 text-warning' }
+    default:
+      return { label: status.charAt(0).toUpperCase() + status.slice(1), className: 'bg-error/10 text-error' }
+  }
+}
+
+const invoiceDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+
+// Subscription invoices from billing; each row links out to the provider-hosted
+// invoice / PDF (Anthropic-style: the list lives in-app, the document on Stripe).
+function InvoicesTable() {
+  const { invoices, isLoading, error } = useInvoices()
+
+  if (isLoading) {
+    return <Card className="p-12 text-center text-ink-subtle">Loading invoices…</Card>
+  }
+  if (error) {
+    return <Card className="p-12 text-center text-error">Couldn't load invoices.</Card>
+  }
+  if (invoices.length === 0) {
+    return (
+      <Card className="p-12 text-center">
+        <Receipt className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
+        <p className="text-ink-subtle">No invoices yet.</p>
+      </Card>
+    )
+  }
+
+  const open = (inv: IInvoiceDTO, prefer: 'pdf' | 'hosted') => {
+    const url = prefer === 'pdf' ? (inv.invoicePdf ?? inv.hostedInvoiceUrl) : (inv.hostedInvoiceUrl ?? inv.invoicePdf)
+    if (url) window.open(url, '_blank', 'noopener,noreferrer')
+    else toast('This invoice has no link yet.')
+  }
+
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm whitespace-nowrap">
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
-              {['Invoice', 'Date', 'Type', 'Description', 'Amount', 'Status'].map((heading) => (
+              {['Invoice', 'Date', 'Amount', 'Status'].map((heading) => (
                 <th
                   key={heading}
                   scope="col"
@@ -115,55 +160,48 @@ function BillingHistoryTable() {
             </tr>
           </thead>
           <tbody>
-            {billingHistory.map((record) => (
-              <tr
-                key={record.id}
-                className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
-              >
-                <td className="p-4 font-medium text-ink">{record.id}</td>
-                <td className="p-4 text-ink-subtle">{record.date}</td>
-                <td className="p-4">
-                  <span
-                    className={cn(
-                      'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold',
-                      record.type === 'subscription' ? 'bg-primary/10 text-link' : 'bg-surface-2 text-ink-subtle',
-                    )}
-                  >
-                    {record.type === 'subscription' ? 'Subscription' : 'Credits'}
-                  </span>
-                </td>
-                <td className="p-4 text-ink">{record.description}</td>
-                <td className="p-4 font-medium text-ink">{record.amount}</td>
-                <td className="p-4">
-                  <span
-                    className={cn(
-                      'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold',
-                      statusBadge[record.status].className,
-                    )}
-                  >
-                    {statusBadge[record.status].label}
-                  </span>
-                </td>
-                <td className="p-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <IconButton
-                      icon={Download}
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`Download ${record.id}`}
-                      onClick={() => toast('Invoice downloads are not wired up yet')}
-                    />
-                    <IconButton
-                      icon={Receipt}
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`View ${record.id}`}
-                      onClick={() => toast('Invoice viewer is not wired up yet')}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {invoices.map((inv) => {
+              const badge = invoiceStatusBadge(inv.status)
+              return (
+                <tr
+                  key={inv.id}
+                  className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
+                >
+                  <td className="p-4 font-medium text-ink">{inv.number ?? inv.id}</td>
+                  <td className="p-4 text-ink-subtle">{invoiceDate(inv.created)}</td>
+                  {/* amountDue is the invoice total; amountPaid is 0 until paid, so it would show $0.00 on open/dunning rows */}
+                  <td className="p-4 font-medium text-ink">{money(inv.amountDue, inv.currency)}</td>
+                  <td className="p-4">
+                    <span
+                      className={cn(
+                        'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold',
+                        badge.className,
+                      )}
+                    >
+                      {badge.label}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <IconButton
+                        icon={Download}
+                        variant="ghost"
+                        size="sm"
+                        aria-label={`Download ${inv.number ?? inv.id}`}
+                        onClick={() => open(inv, 'pdf')}
+                      />
+                      <IconButton
+                        icon={Receipt}
+                        variant="ghost"
+                        size="sm"
+                        aria-label={`View ${inv.number ?? inv.id}`}
+                        onClick={() => open(inv, 'hosted')}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -171,21 +209,31 @@ function BillingHistoryTable() {
   )
 }
 
-// Keys are the credits-service wire types; labels stay our copy
-const ledgerBadge: Record<LedgerEntryType, { label: string; className: string }> = {
+// Wallet ledger types → display badges (see @fonderie/billing wallet ledger).
+const ledgerBadge: Record<string, { label: string; className: string }> = {
   purchase: { label: 'Purchase', className: 'bg-primary/10 text-link' },
+  grant: { label: 'Grant', className: 'bg-success/10 text-success' },
   usage: { label: 'Spend', className: 'bg-surface-2 text-ink-subtle' },
   refund: { label: 'Refund', className: 'bg-success/10 text-success' },
-  bonus: { label: 'Grant', className: 'bg-success/10 text-success' },
+  adjustment: { label: 'Adjustment', className: 'bg-surface-2 text-ink-subtle' },
+  expiry: { label: 'Expired', className: 'bg-surface-2 text-ink-subtle' },
 }
 
 const ledgerDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
 function CreditActivityTable() {
-  const { ledger } = useBilling()
+  const { transactions, isLoading, error, hasMore, loadMore } = useWalletTransactions()
 
-  if (ledger.length === 0) {
+  // Loading / error cards only on the INITIAL load — a failed `loadMore` sets
+  // `error` too, and we must not wipe the rows already on screen for that.
+  if (isLoading && transactions.length === 0) {
+    return <Card className="p-12 text-center text-ink-subtle">Loading activity…</Card>
+  }
+  if (error && transactions.length === 0) {
+    return <Card className="p-12 text-center text-error">Couldn't load credit activity.</Card>
+  }
+  if (transactions.length === 0) {
     return (
       <Card className="p-12 text-center">
         <Coin className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
@@ -193,6 +241,8 @@ function CreditActivityTable() {
       </Card>
     )
   }
+
+  const badgeFor = (t: IWalletTransactionDTO) => ledgerBadge[t.type] ?? ledgerBadge.adjustment
 
   return (
     <Card className="overflow-hidden">
@@ -221,43 +271,90 @@ function CreditActivityTable() {
             </tr>
           </thead>
           <tbody>
-            {ledger.map((entry) => (
-              <tr
-                key={entry.id}
-                className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
-              >
-                <td className="p-4 text-ink-subtle">{ledgerDate(entry.date)}</td>
-                <td className="p-4 text-ink">{entry.description}</td>
-                <td className="p-4">
-                  <span
-                    className={cn(
-                      'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold',
-                      ledgerBadge[entry.type].className,
-                    )}
-                  >
-                    {ledgerBadge[entry.type].label}
-                  </span>
-                </td>
-                <td
-                  className={cn(
-                    'p-4 text-right font-medium',
-                    entry.amount > 0 ? 'text-success' : 'text-ink',
-                  )}
+            {transactions.map((entry) => {
+              const amount = Number(entry.amount)
+              const badge = badgeFor(entry)
+              return (
+                <tr
+                  key={entry.id}
+                  className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
                 >
-                  {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
-                </td>
-                <td className="p-4 text-right font-medium text-ink">{entry.balanceAfter}</td>
-              </tr>
-            ))}
+                  <td className="p-4 text-ink-subtle">{ledgerDate(entry.createdAt)}</td>
+                  <td className="p-4 text-ink">{entry.description ?? badge.label}</td>
+                  <td className="p-4">
+                    <span
+                      className={cn(
+                        'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold',
+                        badge.className,
+                      )}
+                    >
+                      {badge.label}
+                    </span>
+                  </td>
+                  <td className={cn('p-4 text-right font-medium', amount > 0 ? 'text-success' : 'text-ink')}>
+                    {amount > 0 ? `+${amount}` : amount}
+                  </td>
+                  <td className="p-4 text-right font-medium text-ink">{entry.balanceAfter}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
+      </div>
+      {hasMore && (
+        <div className="border-t border-hairline p-3 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void loadMore().catch(() => toast.error('Could not load more activity.'))}
+          >
+            Load more
+          </Button>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function PaymentMethodCard() {
+  const { paymentMethod, isLoading } = usePaymentMethod()
+
+  if (isLoading) {
+    return <Card className="p-12 text-center text-ink-subtle">Loading…</Card>
+  }
+  if (!paymentMethod) {
+    return (
+      <Card className="p-12 text-center">
+        <CreditCard className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
+        <p className="text-ink-subtle">No payment methods on file.</p>
+        <p className="mt-1 text-xs text-ink-subtle">A card is saved automatically the first time you buy credits or subscribe.</p>
+      </Card>
+    )
+  }
+
+  const brand = paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)
+  return (
+    <Card className="p-6">
+      <div className="flex items-center gap-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+          <CreditCard className="h-6 w-6 text-primary" aria-hidden="true" />
+        </div>
+        <div>
+          <p className="font-medium text-ink">
+            {brand} •••• {paymentMethod.last4}
+          </p>
+          <p className="text-sm text-ink-subtle">
+            Expires {String(paymentMethod.expMonth).padStart(2, '0')}/{paymentMethod.expYear}
+          </p>
+        </div>
       </div>
     </Card>
   )
 }
 
-function SubscriptionPlans() {
-  const { billingCycle, setBillingCycle, subscriptionTier, setSubscription } = useBilling()
+function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: BillingCycle; setBillingCycle: (c: BillingCycle) => void }) {
+  const { subscriptionTier } = useBilling()
+  const { checkout, isLoading } = useCheckout()
 
   // Upgrades only: Stripe charges the difference going up, but moving down
   // mid-period would mean owing a prorated refund. The only path down is
@@ -266,9 +363,13 @@ function SubscriptionPlans() {
   const rank = (id: string) => subscriptionTiers.findIndex((t) => t.id === id)
   const currentRank = rank(effectiveTierId)
 
-  const choose = (tier: SubscriptionTier) => {
-    setSubscription(tier.id)
-    toast.success(`Subscribed to ${tier.name}`, { description: 'Demo mode — no payment processed.' })
+  const choose = async (tier: SubscriptionTier) => {
+    try {
+      const url = await checkout({ plan: tier.id, interval: billingCycle === 'annual' ? 'year' : 'month' })
+      window.location.assign(url)
+    } catch {
+      toast.error('Could not start checkout. Please try again.')
+    }
   }
 
   return (
@@ -350,7 +451,12 @@ function SubscriptionPlans() {
                     </p>
                   </>
                 ) : (
-                  <Button variant={tier.popular ? 'primary' : 'secondary'} fullWidth onClick={() => choose(tier)}>
+                  <Button
+                    variant={tier.popular ? 'primary' : 'secondary'}
+                    fullWidth
+                    disabled={isLoading}
+                    onClick={() => void choose(tier)}
+                  >
                     Subscribe
                   </Button>
                 )}
@@ -359,63 +465,36 @@ function SubscriptionPlans() {
           )
         })}
       </div>
-
     </section>
   )
 }
 
 export default function Billing() {
-  const { creditBalance, subscriptionTier, billingCycle, usage } = useBilling()
+  const { creditBalance, subscriptionTier } = useBilling()
   const { activeJobs } = useJobs()
+  const { cancel, isLoading: cancelling } = useCancelSubscription()
   const [showSubscription, setShowSubscription] = useState(false)
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [activeTab, setActiveTab] = useState('history')
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
-  const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null)
-  const checkoutConsumed = useRef(false)
 
-  // A finished checkout lands here as ?checkout=success|cancelled (set by the
-  // buy button today; a real Stripe redirect URL later). Consume the intent
-  // exactly once, credit the pack, and show the receipt as a modal.
+  // Return from a hosted checkout: the payment webhook credits the wallet /
+  // activates the subscription server-side, so just re-read our state and
+  // acknowledge. No client-side crediting.
   useEffect(() => {
     const status = searchParams.get('checkout')
-    if (!status) {
-      checkoutConsumed.current = false
-      return
+    if (!status) return
+    if (status === 'success') {
+      void refreshBalance()
+      void refreshSubscription()
+      toast.success('Payment complete', { description: 'Your account has been updated.' })
+    } else if (status === 'cancelled') {
+      toast('Checkout cancelled — no charge was made.')
     }
-    if (status === 'cancelled') {
-      setCheckoutResult({ status: 'cancelled' })
-      return
-    }
-    if (status !== 'success' || checkoutConsumed.current) return
-    checkoutConsumed.current = true
-
-    const pack = creditPacks.find((p) => p.id === searchParams.get('pack'))
-    const dismiss = () => setSearchParams({}, { replace: true })
-    if (!pack) return dismiss()
-    try {
-      const intent = sessionStorage.getItem(CHECKOUT_INTENT_KEY)
-      const done = sessionStorage.getItem(CHECKOUT_DONE_KEY)
-      if (intent === pack.id) {
-        sessionStorage.removeItem(CHECKOUT_INTENT_KEY)
-        sessionStorage.setItem(CHECKOUT_DONE_KEY, pack.id)
-        addCredits(pack.credits, `${pack.name} — ${pack.credits} credits`)
-        setCheckoutResult({ status: 'success', credits: pack.credits })
-      } else if (done === pack.id) {
-        // Refresh of an already-processed checkout: re-show the receipt, no re-credit
-        setCheckoutResult({ status: 'success', credits: pack.credits })
-      } else {
-        dismiss() // stale or shared link: nothing to show
-      }
-    } catch {
-      dismiss()
-    }
+    setSearchParams({}, { replace: true })
   }, [searchParams, setSearchParams])
 
-  const closeCheckoutDialog = () => {
-    setCheckoutResult(null)
-    setSearchParams({}, { replace: true })
-  }
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
   // Card is always shown; a null subscription displays under the free tier's limits
   const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier) ?? subscriptionTiers[0]
@@ -427,6 +506,19 @@ export default function Billing() {
   const showPlans = () => {
     setShowSubscription(true)
     requestAnimationFrame(() => scrollTo('plans'))
+  }
+
+  const confirmCancel = async () => {
+    setConfirmingCancel(false)
+    try {
+      await cancel() // at period end by default — access continues until paid-through
+      await refreshSubscription()
+      toast.success('Subscription cancelled', {
+        description: 'You keep access until the end of the current billing period.',
+      })
+    } catch {
+      toast.error('Could not cancel the subscription. Please try again.')
+    }
   }
 
   return (
@@ -473,24 +565,22 @@ export default function Billing() {
           <CurrentPlanCard
             planName={activeTier.name}
             billingCycle={billingCycle}
-            nextBillingDate="June 1, 2025"
+            nextBillingDate="—"
             metrics={[
               { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
-              { label: 'Credits this month', used: usage.creditsUsed, total: activeTier.limits.creditsPerMonth },
+              { label: 'Credits', used: creditBalance, total: activeTier.limits.creditsPerMonth },
             ]}
             onCancel={activeTier.id !== 'free' ? () => setConfirmingCancel(true) : undefined}
           />
           <CancelPlanDialog
             open={confirmingCancel}
             planName={activeTier.name}
-            periodEnd="June 1, 2025"
+            periodEnd="the end of your billing period"
             lostFeatures={activeTier.features.filter((f) => !subscriptionTiers[0].features.includes(f))}
             fallbackNote={`Afterwards you move to the Free plan: ${subscriptionTiers[0].features.join(' · ').toLowerCase()}.`}
-            onConfirm={() => {
-              setConfirmingCancel(false)
-              toast('Cancel subscription — Demo mode, no action taken')
-            }}
+            onConfirm={() => void confirmCancel()}
             onClose={() => setConfirmingCancel(false)}
+            confirmDisabled={cancelling}
           />
         </div>
         <div className="min-w-0 lg:col-span-2">
@@ -511,40 +601,30 @@ export default function Billing() {
               aria-label="Choose billing mode"
             />
           </div>
-          {showSubscription ? <SubscriptionPlans /> : <CreditPacks />}
+          {showSubscription ? (
+            <SubscriptionPlans billingCycle={billingCycle} setBillingCycle={setBillingCycle} />
+          ) : (
+            <CreditPacks />
+          )}
         </div>
       </div>
 
       <div>
         <Tabs
           tabs={[
-            { id: 'history', label: 'Billing History' },
+            { id: 'history', label: 'Invoices' },
             { id: 'activity', label: 'Credit Activity' },
-            { id: 'methods', label: 'Payment Methods' },
+            { id: 'methods', label: 'Payment Method' },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}
         />
         <div className="mt-2">
-          {activeTab === 'history' && <BillingHistoryTable />}
+          {activeTab === 'history' && <InvoicesTable />}
           {activeTab === 'activity' && <CreditActivityTable />}
-          {activeTab === 'methods' && (
-            <Card className="p-12 text-center">
-              <CreditCard className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
-              <p className="text-ink-subtle">No payment methods on file.</p>
-              <Button
-                variant="secondary"
-                className="mt-4"
-                onClick={() => toast('Payment methods are not wired up yet')}
-              >
-                Add Payment Method
-              </Button>
-            </Card>
-          )}
+          {activeTab === 'methods' && <PaymentMethodCard />}
         </div>
       </div>
-
-      <CheckoutResultDialog result={checkoutResult} balance={creditBalance} onClose={closeCheckoutDialog} />
     </div>
   )
 }

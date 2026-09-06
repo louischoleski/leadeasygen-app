@@ -1,5 +1,19 @@
 # Backend swap points & divergence charter
 
+> **STATUS — billing migrated to `@fonderie/billing` (phase E, 2026-09-06).**
+> Credits, packs, subscription, invoices, and the payment card now run through
+> `@fonderie/client` + `@fonderie/react-billing`, NOT the hand-rolled `/v1/credits`
+> routes this doc describes. Concretely: balance ← `useWallet` / `GET /billing/wallet`;
+> ledger ← `useWalletTransactions` / `GET /billing/wallet/transactions`; pack purchase
+> ← `useWalletCheckout` / `POST /billing/wallet/checkout` (hosted Stripe redirect);
+> subscribe ← `useCheckout`; cancel ← `useCancelSubscription` (in-app, no portal);
+> card ← `usePaymentMethod` / `GET /billing/payment-method`; invoices ← `useInvoices`
+> / `GET /billing/invoices` (each links to the hosted invoice). The `data/billing.ts`
+> store now holds only the cross-cutting balance + tier, sourced from billing; the
+> demo state, `/v1/credits/*`, and the sessionStorage checkout handshake are gone.
+> The sections below are the ORIGINAL pre-billing charter, kept for history — the
+> "Credit transactions" and "Balance" bullets are superseded by the above.
+
 The frontend is complete and demo-wired. When the Fonderie backend and Stripe are
 live, create `src/lib/api.ts` with the real client and replace the implementations
 below. The component layer needs zero changes — every consumer observes the stores.
