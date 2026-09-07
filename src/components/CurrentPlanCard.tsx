@@ -9,6 +9,10 @@ export interface UsageMetric {
   used: number
   total: number | null // null = unlimited
   unit?: string
+  // 'usage' (default): `used` of `total` consumed — fuller = worse (red near cap).
+  // 'remaining': `used` is what's LEFT of `total` — fuller = better (red near empty),
+  // for a use-it-or-lose-it allowance where "how much is left" is the useful read.
+  mode?: 'usage' | 'remaining'
 }
 
 interface CurrentPlanCardProps {
@@ -25,7 +29,7 @@ interface CurrentPlanCardProps {
   resuming?: boolean // reactivate request in flight
 }
 
-function MetricRow({ label, used, total, unit }: UsageMetric) {
+function MetricRow({ label, used, total, unit, mode = 'usage' }: UsageMetric) {
   if (total === null) {
     return (
       <div className="flex items-center justify-between text-sm">
@@ -38,7 +42,23 @@ function MetricRow({ label, used, total, unit }: UsageMetric) {
     )
   }
 
-  // red only when genuinely over the limit; at-limit reads as warning
+  if (mode === 'remaining') {
+    // `used` is what's LEFT. Fuller bar = more remaining = good; warn as it runs low.
+    const remaining = Math.max(0, Math.min(used, total))
+    const pct = total > 0 ? (remaining / total) * 100 : 0
+    const status = pct > 50 ? 'success' : pct > 20 ? 'warning' : 'error'
+    return (
+      <UsageBar
+        label={label}
+        used={remaining}
+        total={total}
+        status={status}
+        valueText={`${remaining} / ${total} left${unit ? ` ${unit}` : ''}`}
+      />
+    )
+  }
+
+  // usage: red only when genuinely over the limit; at-limit reads as warning
   const pct = (used / total) * 100
   const status = pct > 100 ? 'error' : pct > 50 ? 'warning' : 'success'
   return <UsageBar label={label} used={used} total={total} suffix={unit} status={status} />

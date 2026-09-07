@@ -700,13 +700,15 @@ export default function Billing() {
             nextBillingDate={activeTier.id !== 'free' ? periodEnd : '—'}
             metrics={[
               { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
-              // Monthly plan credits only — how much of the cycle's allowance is
-              // used (allowance − remaining grant). Purchased packs are a separate
-              // bar below, so this never reads over 100% after a purchase.
+              // Monthly plan credits — how many of the cycle's use-it-or-lose-it
+              // allowance remain (the grant resets each period). Shown as remaining
+              // so "how much is left this month" reads at a glance; purchased packs
+              // are a separate, never-expiring bar below.
               {
                 label: 'Monthly credits',
-                used: Math.max(0, (activeTier.limits.creditsPerMonth ?? 0) - grantedCredits),
+                used: grantedCredits,
                 total: activeTier.limits.creditsPerMonth,
+                mode: 'remaining',
               },
             ]}
             purchasedCredits={purchasedCredits}
