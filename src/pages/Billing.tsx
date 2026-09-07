@@ -4,6 +4,7 @@ import {
   useCheckout,
   useInvoices,
   usePaymentMethod,
+  usePurchasePack,
   useReactivateSubscription,
   useRemovePaymentMethod,
   useSubscription,
@@ -43,19 +44,40 @@ const money = (minor: string, currency: string) =>
 
 function CreditPacks() {
   const { subscriptionTier } = useBilling()
-  const { checkout, isLoading } = useWalletCheckout()
+  const { purchase, isLoading: purchasing } = usePurchasePack()
+  const { checkout, isLoading: checkingOut } = useWalletCheckout()
+  const isLoading = purchasing || checkingOut
   const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
   // A paid plan includes unlimited credits — selling packs on top of it would
   // charge for something the subscription already covers (G5: hide packs while
   // subscribed). Enforced server-side too once GAP-1 lands in billing.
   const hasPaidPlan = !!tier && tier.priceMonthly > 0
 
+  // Charge the saved card in-app first — no redirect. The server tells us when it
+  // can't (no card on file, or the card needs 3-D Secure) via `checkout_required`,
+  // and only then do we fall back to hosted Stripe checkout.
   const buy = async (packId: string) => {
     try {
+      const result = await purchase(packId)
+      if (result.status === 'credited') {
+        toast.success('Credits added to your balance')
+        await refreshBalance()
+        return
+      }
+      if (result.status === 'processing') {
+        toast('Payment is processing — your balance will update shortly.')
+        await refreshBalance()
+        return
+      }
+      if (result.status === 'declined') {
+        toast.error('Your saved card was declined — opening checkout to try another card.')
+        // fall through to hosted checkout so they can pay with a different card
+      }
+      // checkout_required (no saved card / 3-D Secure) or declined → hosted checkout
       const url = await checkout({ packId })
-      window.location.assign(url) // hosted Stripe checkout; the webhook credits the wallet
+      window.location.assign(url) // the payment webhook credits the wallet
     } catch {
-      toast.error('Could not start checkout. Please try again.')
+      toast.error('Could not complete the purchase. Please try again.')
     }
   }
 
