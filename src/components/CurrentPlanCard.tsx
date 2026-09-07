@@ -16,7 +16,10 @@ interface CurrentPlanCardProps {
   billingCycle: BillingCycle
   nextBillingDate: string
   metrics: UsageMetric[]
-  onCancel?: () => void // omit when there is nothing to cancel (free tier)
+  onCancel?: () => void // omit when there is nothing to cancel (free tier / already scheduled)
+  scheduledToCancel?: boolean // subscription is set to cancel at period end
+  onResume?: () => void // un-cancel a scheduled cancellation (shown instead of Cancel)
+  resuming?: boolean // reactivate request in flight
 }
 
 function MetricRow({ label, used, total, unit }: UsageMetric) {
@@ -44,6 +47,9 @@ export function CurrentPlanCard({
   nextBillingDate,
   metrics,
   onCancel,
+  scheduledToCancel = false,
+  onResume,
+  resuming = false,
 }: CurrentPlanCardProps) {
   return (
     <Card className="flex h-full flex-col">
@@ -52,15 +58,21 @@ export function CurrentPlanCard({
           <h2 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h2>
           <p className="text-sm text-ink-subtle capitalize">{billingCycle} billing</p>
         </div>
-        <span className="inline-flex items-center rounded-md bg-surface-2 px-3 py-1 text-xs font-semibold text-ink">
-          Active
-        </span>
+        {scheduledToCancel ? (
+          <span className="inline-flex items-center rounded-md bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
+            Cancels at period end
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-md bg-surface-2 px-3 py-1 text-xs font-semibold text-ink">
+            Active
+          </span>
+        )}
       </div>
 
       <div className="p-6 pt-4">
         <div className="flex items-center justify-between rounded-lg bg-surface-2 p-3">
           <div className="text-sm">
-            <p className="font-medium text-ink">Next billing date</p>
+            <p className="font-medium text-ink">{scheduledToCancel ? 'Access until' : 'Next billing date'}</p>
             <p className="text-ink-subtle">{nextBillingDate}</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -76,13 +88,19 @@ export function CurrentPlanCard({
         ))}
       </div>
 
-      {onCancel && (
+      {scheduledToCancel && onResume ? (
+        <div className="mt-auto px-6 pb-6">
+          <Button fullWidth onClick={onResume} disabled={resuming}>
+            {resuming ? 'Resuming…' : 'Resume Subscription'}
+          </Button>
+        </div>
+      ) : onCancel ? (
         <div className="mt-auto px-6 pb-6">
           <Button variant="secondary" fullWidth onClick={onCancel}>
             Cancel Subscription
           </Button>
         </div>
-      )}
+      ) : null}
     </Card>
   )
 }

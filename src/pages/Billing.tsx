@@ -4,6 +4,8 @@ import {
   useCheckout,
   useInvoices,
   usePaymentMethod,
+  useReactivateSubscription,
+  useSubscription,
   useWalletCheckout,
   useWalletTransactions,
   type IInvoiceDTO,
@@ -473,6 +475,11 @@ export default function Billing() {
   const { creditBalance, subscriptionTier } = useBilling()
   const { activeJobs } = useJobs()
   const { cancel, isLoading: cancelling } = useCancelSubscription()
+  // Detailed lifecycle state (cancel-scheduled? period end?) for the plan card —
+  // page-local, alongside cancel/reactivate. The cross-cutting store only tracks
+  // the plan name (navbar/dashboard); the schedule lives here.
+  const { subscription, refresh: refreshSub } = useSubscription()
+  const { reactivate, isLoading: resuming } = useReactivateSubscription()
   const [showSubscription, setShowSubscription] = useState(false)
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [activeTab, setActiveTab] = useState('history')
@@ -488,12 +495,13 @@ export default function Billing() {
     if (status === 'success') {
       void refreshBalance()
       void refreshSubscription()
+      void refreshSub({ force: true })
       toast.success('Payment complete', { description: 'Your account has been updated.' })
     } else if (status === 'cancelled') {
       toast('Checkout cancelled — no charge was made.')
     }
     setSearchParams({}, { replace: true })
-  }, [searchParams, setSearchParams])
+  }, [searchParams, setSearchParams, refreshSub])
 
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
   // Card is always shown; a null subscription displays under the free tier's limits
@@ -512,7 +520,7 @@ export default function Billing() {
     setConfirmingCancel(false)
     try {
       await cancel() // at period end by default — access continues until paid-through
-      await refreshSubscription()
+      await Promise.all([refreshSubscription(), refreshSub({ force: true })])
       toast.success('Subscription cancelled', {
         description: 'You keep access until the end of the current billing period.',
       })
@@ -520,6 +528,27 @@ export default function Billing() {
       toast.error('Could not cancel the subscription. Please try again.')
     }
   }
+
+  // Un-cancel a subscription scheduled to end at period close (1:1 with the
+  // Anthropic "resume" affordance — no provider portal round-trip).
+  const confirmResume = async () => {
+    try {
+      await reactivate()
+      await Promise.all([refreshSubscription(), refreshSub({ force: true })])
+      toast.success('Subscription resumed', {
+        description: 'Your plan will keep renewing as normal.',
+      })
+    } catch {
+      // 409 → already fully canceled; the fix is a fresh checkout, not a resume.
+      toast.error('Could not resume — the plan may have already ended. Start a new checkout to re-subscribe.')
+    }
+  }
+
+  // A paid subscription set to cancel at period end (not yet fully canceled).
+  const scheduledToCancel = subscription?.cancelAtPeriodEnd === true && subscription?.status !== 'canceled'
+  const periodEnd = subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+    : '—'
 
   return (
     <div className="space-y-8">
@@ -565,12 +594,17 @@ export default function Billing() {
           <CurrentPlanCard
             planName={activeTier.name}
             billingCycle={billingCycle}
-            nextBillingDate="—"
+            nextBillingDate={activeTier.id !== 'free' ? periodEnd : '—'}
             metrics={[
               { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
               { label: 'Credits', used: creditBalance, total: activeTier.limits.creditsPerMonth },
             ]}
-            onCancel={activeTier.id !== 'free' ? () => setConfirmingCancel(true) : undefined}
+            scheduledToCancel={activeTier.id !== 'free' && scheduledToCancel}
+            onCancel={
+              activeTier.id !== 'free' && !scheduledToCancel ? () => setConfirmingCancel(true) : undefined
+            }
+            onResume={activeTier.id !== 'free' && scheduledToCancel ? () => void confirmResume() : undefined}
+            resuming={resuming}
           />
           <CancelPlanDialog
             open={confirmingCancel}
