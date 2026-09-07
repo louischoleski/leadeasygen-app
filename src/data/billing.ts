@@ -74,16 +74,26 @@ export const subscriptionTiers: SubscriptionTier[] = [
 // ── Cross-cutting store (balance + tier), sourced from billing ────────────────
 
 interface BillingState {
-  creditBalance: number
+  creditBalance: number // total spendable = granted + purchased
+  // The wallet splits into two buckets: `granted` is the plan's monthly
+  // allowance (resets each cycle), `purchased` is pack credits (never expire).
+  // Spend is allowance-first, so granted depletes before purchased.
+  grantedCredits: number
+  purchasedCredits: number
   subscriptionTier: string | null // null until first read; then a plan name ('free'|'unlimited')
 }
 
-let state: BillingState = { creditBalance: 0, subscriptionTier: null }
+let state: BillingState = { creditBalance: 0, grantedCredits: 0, purchasedCredits: 0, subscriptionTier: null }
 const store = createSubscribable()
 
 function update(next: Partial<BillingState>) {
   const merged = { ...state, ...next }
-  if (merged.creditBalance === state.creditBalance && merged.subscriptionTier === state.subscriptionTier) {
+  if (
+    merged.creditBalance === state.creditBalance &&
+    merged.grantedCredits === state.grantedCredits &&
+    merged.purchasedCredits === state.purchasedCredits &&
+    merged.subscriptionTier === state.subscriptionTier
+  ) {
     return // no change — don't churn subscribers
   }
   state = merged
@@ -108,7 +118,13 @@ export async function refreshBalance(): Promise<void> {
     do {
       balancePending = false
       const { result } = await fonderie.billing.getWallet({ bust: true })
-      update({ creditBalance: Number(result.wallet.balance) })
+      const w = result.wallet
+      update({
+        creditBalance: Number(w.balance),
+        // Older APIs may omit the split — fall back so the monthly bar still works.
+        grantedCredits: Number(w.granted ?? w.balance),
+        purchasedCredits: Number(w.purchased ?? 0),
+      })
     } while (balancePending) // a refresh requested mid-flight → read again
   } catch {
     // unauthenticated or api down — keep the current value

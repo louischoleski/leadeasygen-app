@@ -572,7 +572,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
 }
 
 export default function Billing() {
-  const { creditBalance, subscriptionTier } = useBilling()
+  const { creditBalance, grantedCredits, purchasedCredits, subscriptionTier } = useBilling()
   const { activeJobs } = useJobs()
   const { cancel, isLoading: cancelling } = useCancelSubscription()
   // Detailed lifecycle state (cancel-scheduled? period end?) for the plan card —
@@ -700,8 +700,16 @@ export default function Billing() {
             nextBillingDate={activeTier.id !== 'free' ? periodEnd : '—'}
             metrics={[
               { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
-              { label: 'Credits', used: creditBalance, total: activeTier.limits.creditsPerMonth },
+              // Monthly plan credits only — how much of the cycle's allowance is
+              // used (allowance − remaining grant). Purchased packs are a separate
+              // bar below, so this never reads over 100% after a purchase.
+              {
+                label: 'Monthly credits',
+                used: Math.max(0, (activeTier.limits.creditsPerMonth ?? 0) - grantedCredits),
+                total: activeTier.limits.creditsPerMonth,
+              },
             ]}
+            purchasedCredits={purchasedCredits}
             scheduledToCancel={activeTier.id !== 'free' && scheduledToCancel}
             onCancel={
               activeTier.id !== 'free' && !scheduledToCancel ? () => setConfirmingCancel(true) : undefined

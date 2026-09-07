@@ -16,6 +16,9 @@ interface CurrentPlanCardProps {
   billingCycle: BillingCycle
   nextBillingDate: string
   metrics: UsageMetric[]
+  // Pack credits on top of the plan allowance — a separate, never-expiring
+  // bucket. Shown as its own bar so it never inflates the monthly-usage metric.
+  purchasedCredits?: number
   onCancel?: () => void // omit when there is nothing to cancel (free tier / already scheduled)
   scheduledToCancel?: boolean // subscription is set to cancel at period end
   onResume?: () => void // un-cancel a scheduled cancellation (shown instead of Cancel)
@@ -46,6 +49,7 @@ export function CurrentPlanCard({
   billingCycle,
   nextBillingDate,
   metrics,
+  purchasedCredits = 0,
   onCancel,
   scheduledToCancel = false,
   onResume,
@@ -86,6 +90,17 @@ export function CurrentPlanCard({
         {metrics.map((metric) => (
           <MetricRow key={metric.label} {...metric} />
         ))}
+        {purchasedCredits > 0 && (
+          // Purchased credits never expire and don't count against the monthly
+          // allowance — a full bar communicates "all available".
+          <UsageBar
+            label="Purchased credits"
+            used={purchasedCredits}
+            total={purchasedCredits}
+            status="success"
+            valueText={`${purchasedCredits} available`}
+          />
+        )}
       </div>
 
       {scheduledToCancel && onResume ? (
