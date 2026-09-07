@@ -235,18 +235,23 @@ function InvoicesTable() {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <IconButton
-                        icon={Download}
-                        variant="ghost"
-                        size="sm"
-                        aria-label={`Download ${label}`}
-                        onClick={() => open(inv, 'pdf')}
-                      />
+                      {/* Only subscription invoices have a distinct downloadable
+                          PDF; a one-time pack charge has just its hosted receipt,
+                          so we show a single action for it (no duplicate button). */}
+                      {inv.invoicePdf && (
+                        <IconButton
+                          icon={Download}
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`Download ${label} PDF`}
+                          onClick={() => open(inv, 'pdf')}
+                        />
+                      )}
                       <IconButton
                         icon={Receipt}
                         variant="ghost"
                         size="sm"
-                        aria-label={`View ${label}`}
+                        aria-label={inv.invoicePdf ? `View ${label}` : `View ${label} receipt`}
                         onClick={() => open(inv, 'hosted')}
                       />
                     </div>
