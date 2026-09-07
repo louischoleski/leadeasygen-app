@@ -191,7 +191,7 @@ function InvoicesTable() {
         <table className="w-full text-sm whitespace-nowrap">
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
-              {['Invoice', 'Date', 'Amount', 'Status'].map((heading) => (
+              {['Date', 'Due', 'Total', 'Status'].map((heading) => (
                 <th
                   key={heading}
                   scope="col"
@@ -211,16 +211,17 @@ function InvoicesTable() {
           <tbody>
             {invoices.map((inv) => {
               const badge = invoiceStatusBadge(inv.status)
-              // Subscription invoices have a number; one-time pack purchases are
-              // bare charges with none — show "Receipt" rather than a raw id.
-              const label = inv.number ?? 'Receipt'
+              // No id/number column — it's noise; a row is identified by its date.
+              const rowLabel = `invoice from ${invoiceDate(inv.created)}`
               return (
                 <tr
                   key={inv.id}
                   className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
                 >
-                  <td className="p-4 font-medium text-ink">{label}</td>
                   <td className="p-4 text-ink-subtle">{invoiceDate(inv.created)}</td>
+                  {/* Payment-terms due date — blank for anything paid on charge (pack
+                      purchases, subscription renewals), populated for net-terms invoices. */}
+                  <td className="p-4 text-ink-subtle">{inv.dueDate ? invoiceDate(inv.dueDate) : '—'}</td>
                   {/* amountDue is the invoice total; amountPaid is 0 until paid, so it would show $0.00 on open/dunning rows */}
                   <td className="p-4 font-medium text-ink">{money(inv.amountDue, inv.currency)}</td>
                   <td className="p-4">
@@ -243,7 +244,7 @@ function InvoicesTable() {
                           icon={Download}
                           variant="ghost"
                           size="sm"
-                          aria-label={`Download ${label} PDF`}
+                          aria-label={`Download ${rowLabel} PDF`}
                           onClick={() => open(inv, 'pdf')}
                         />
                       )}
@@ -251,7 +252,7 @@ function InvoicesTable() {
                         type="button"
                         onClick={() => open(inv, 'hosted')}
                         className="text-sm font-medium text-link hover:underline"
-                        aria-label={inv.invoicePdf ? `View ${label}` : `View ${label} receipt`}
+                        aria-label={inv.invoicePdf ? `View ${rowLabel}` : `View ${rowLabel} receipt`}
                       >
                         View
                       </button>
