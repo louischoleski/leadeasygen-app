@@ -20,6 +20,7 @@ import { AddPaymentMethod } from '../components/AddPaymentMethod'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { CancelPlanDialog } from '../components/CancelPlanDialog'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
 import { Tabs } from '../components/Tabs'
@@ -42,11 +43,14 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
 const money = (minor: string, currency: string) =>
   `${new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(minor) / 100)}`
 
-function CreditPacks() {
+function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
   const { subscriptionTier } = useBilling()
   const { purchase, isLoading: purchasing } = usePurchasePack()
   const { checkout, isLoading: checkingOut } = useWalletCheckout()
   const isLoading = purchasing || checkingOut
+  // The pack awaiting purchase confirmation — charging the saved card is
+  // immediate, so we confirm the amount before it happens.
+  const [pending, setPending] = useState<(typeof creditPacks)[number] | null>(null)
   const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
   // A paid plan includes unlimited credits — selling packs on top of it would
   // charge for something the subscription already covers (G5: hide packs while
@@ -62,11 +66,13 @@ function CreditPacks() {
       if (result.status === 'credited') {
         toast.success('Credits added to your balance')
         await refreshBalance()
+        onPurchased?.() // refresh the invoices + activity tables in place
         return
       }
       if (result.status === 'processing') {
         toast('Payment is processing — your balance will update shortly.')
         await refreshBalance()
+        onPurchased?.()
         return
       }
       if (result.status === 'declined') {
@@ -110,13 +116,30 @@ function CreditPacks() {
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
               disabled={hasPaidPlan || isLoading}
-              onClick={() => void buy(pkg.id)}
+              onClick={() => setPending(pkg)}
             >
               Buy {pkg.name}
             </Button>
           </Card>
         ))}
       </div>
+      <ConfirmDialog
+        open={!!pending}
+        title={pending ? `Buy ${pending.name}?` : ''}
+        description={
+          pending
+            ? `This charges $${pending.price} to your card on file and adds ${pending.credits.toLocaleString()} credits. No card on file? You'll be taken to secure checkout.`
+            : ''
+        }
+        confirmLabel={isLoading ? 'Processing…' : `Pay $${pending?.price ?? ''}`}
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          const pack = pending
+          setPending(null)
+          if (pack) void buy(pack.id)
+        }}
+        onClose={() => setPending(null)}
+      />
     </section>
   )
 }
@@ -188,12 +211,15 @@ function InvoicesTable() {
           <tbody>
             {invoices.map((inv) => {
               const badge = invoiceStatusBadge(inv.status)
+              // Subscription invoices have a number; one-time pack purchases are
+              // bare charges with none — show "Receipt" rather than a raw id.
+              const label = inv.number ?? 'Receipt'
               return (
                 <tr
                   key={inv.id}
                   className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
                 >
-                  <td className="p-4 font-medium text-ink">{inv.number ?? inv.id}</td>
+                  <td className="p-4 font-medium text-ink">{label}</td>
                   <td className="p-4 text-ink-subtle">{invoiceDate(inv.created)}</td>
                   {/* amountDue is the invoice total; amountPaid is 0 until paid, so it would show $0.00 on open/dunning rows */}
                   <td className="p-4 font-medium text-ink">{money(inv.amountDue, inv.currency)}</td>
@@ -213,14 +239,14 @@ function InvoicesTable() {
                         icon={Download}
                         variant="ghost"
                         size="sm"
-                        aria-label={`Download ${inv.number ?? inv.id}`}
+                        aria-label={`Download ${label}`}
                         onClick={() => open(inv, 'pdf')}
                       />
                       <IconButton
                         icon={Receipt}
                         variant="ghost"
                         size="sm"
-                        aria-label={`View ${inv.number ?? inv.id}`}
+                        aria-label={`View ${label}`}
                         onClick={() => open(inv, 'hosted')}
                       />
                     </div>
@@ -552,6 +578,9 @@ export default function Billing() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [activeTab, setActiveTab] = useState('history')
   const [confirmingCancel, setConfirmingCancel] = useState(false)
+  // Bumped after an in-app purchase to remount (and thus refetch) the invoices +
+  // activity tables, so a purchase shows up without a manual reload.
+  const [purchaseNonce, setPurchaseNonce] = useState(0)
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Return from a hosted checkout: the payment webhook credits the wallet /
@@ -706,7 +735,7 @@ export default function Billing() {
           {showSubscription ? (
             <SubscriptionPlans billingCycle={billingCycle} setBillingCycle={setBillingCycle} />
           ) : (
-            <CreditPacks />
+            <CreditPacks onPurchased={() => setPurchaseNonce((n) => n + 1)} />
           )}
         </div>
       </div>
@@ -722,8 +751,8 @@ export default function Billing() {
           onChange={setActiveTab}
         />
         <div className="mt-2">
-          {activeTab === 'history' && <InvoicesTable />}
-          {activeTab === 'activity' && <CreditActivityTable />}
+          {activeTab === 'history' && <InvoicesTable key={`inv-${purchaseNonce}`} />}
+          {activeTab === 'activity' && <CreditActivityTable key={`act-${purchaseNonce}`} />}
           {activeTab === 'methods' && <PaymentMethodCard />}
         </div>
       </div>
