@@ -212,10 +212,14 @@ export type CreateJobResult =
   | { ok: true; creditCost: number }
   | { ok: false; error: 'insufficient-credits' | 'request-failed' }
 
-const failureFrom = (err: unknown): CreateJobResult => ({
-  ok: false,
-  error: apiErrorStatus(err) === 403 ? 'insufficient-credits' : 'request-failed',
-})
+const failureFrom = (err: unknown): CreateJobResult => {
+  // Billing's wallet gate returns 402 (Payment Required); older builds used 403.
+  const status = apiErrorStatus(err)
+  return {
+    ok: false,
+    error: status === 402 || status === 403 ? 'insufficient-credits' : 'request-failed',
+  }
+}
 
 // The engine has no geo filter (it crawls a text search), so the radius knob
 // maps to the per-task lead cap: a wider radius asks for more results.

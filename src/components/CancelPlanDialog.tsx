@@ -14,6 +14,8 @@ interface CancelPlanDialogProps {
   fallbackNote: string
   onConfirm: () => void
   onClose: () => void
+  /** Disable the confirm button while the cancellation request is in flight. */
+  confirmDisabled?: boolean
 }
 
 /**
@@ -29,6 +31,7 @@ export function CancelPlanDialog({
   fallbackNote,
   onConfirm,
   onClose,
+  confirmDisabled = false,
 }: CancelPlanDialogProps) {
   return (
     <DialogShell open={open} labelledBy="cancel-plan-title" onClose={onClose} wide>
@@ -56,7 +59,7 @@ export function CancelPlanDialog({
           <Button variant="secondary" onClick={onClose} autoFocus>
             Keep my {planName} plan
           </Button>
-          <Button variant="danger" onClick={onConfirm}>
+          <Button variant="danger" onClick={onConfirm} disabled={confirmDisabled}>
             Cancel plan
           </Button>
         </div>
