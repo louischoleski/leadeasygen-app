@@ -56,8 +56,8 @@ export const subscriptionTiers: SubscriptionTier[] = [
     priceMonthly: 0,
     priceAnnual: 0,
     description: 'Get started with limited scraping',
-    features: ['50 credits/month', 'Basic support', '1 active job'],
-    limits: { activeJobs: 1, creditsPerMonth: 50 },
+    features: ['5 credits/month', 'Basic support', '1 active job'],
+    limits: { activeJobs: 1, creditsPerMonth: 5 },
   },
   {
     id: 'unlimited',
