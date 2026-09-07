@@ -1,6 +1,8 @@
 import { ArrowSquareOut, Envelope, Phone, Star } from '@phosphor-icons/react'
 import { toast } from 'sonner'
+import { useBilling } from '../data/billing'
 import type { Lead } from '../data/jobs'
+import { cn } from '../lib/cn'
 
 function copyToClipboard(text: string, message: string) {
   navigator.clipboard
@@ -12,9 +14,15 @@ function copyToClipboard(text: string, message: string) {
 const headings = ['Business', 'Category', 'Rating', 'Phone', 'Website', 'Emails', 'Address']
 
 export function ResultsTable({ leads }: { leads: Lead[] }) {
+  const { subscriptionTier } = useBilling()
+  // Lead data is the paid product: without a paid subscription the grid is
+  // view-only — no drag-select of the raw values (the per-lead phone/email
+  // copy buttons still work). A null tier means billing hasn't loaded yet;
+  // treat it as unsubscribed so the gate never flashes open.
+  const subscribed = subscriptionTier !== null && subscriptionTier !== 'free'
   return (
     <div className="overflow-hidden rounded-md border border-hairline">
-      <div className="max-h-[60vh] overflow-x-auto overflow-y-auto">
+      <div className={cn('max-h-[60vh] overflow-x-auto overflow-y-auto', !subscribed && 'select-none')}>
         <table className="w-full text-sm whitespace-nowrap">
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
