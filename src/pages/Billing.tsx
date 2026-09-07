@@ -247,13 +247,14 @@ function InvoicesTable() {
                           onClick={() => open(inv, 'pdf')}
                         />
                       )}
-                      <IconButton
-                        icon={Receipt}
-                        variant="ghost"
-                        size="sm"
-                        aria-label={inv.invoicePdf ? `View ${label}` : `View ${label} receipt`}
+                      <button
+                        type="button"
                         onClick={() => open(inv, 'hosted')}
-                      />
+                        className="text-sm font-medium text-link hover:underline"
+                        aria-label={inv.invoicePdf ? `View ${label}` : `View ${label} receipt`}
+                      >
+                        View
+                      </button>
                     </div>
                   </td>
                 </tr>
