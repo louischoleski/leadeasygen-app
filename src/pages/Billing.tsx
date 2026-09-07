@@ -5,6 +5,7 @@ import {
   useInvoices,
   usePaymentMethod,
   useReactivateSubscription,
+  useRemovePaymentMethod,
   useSubscription,
   useWalletCheckout,
   useWalletTransactions,
@@ -14,6 +15,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import { AddPaymentMethod } from '../components/AddPaymentMethod'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { CancelPlanDialog } from '../components/CancelPlanDialog'
@@ -319,17 +321,51 @@ function CreditActivityTable() {
 }
 
 function PaymentMethodCard() {
-  const { paymentMethod, isLoading } = usePaymentMethod()
+  const { paymentMethod, isLoading, refresh } = usePaymentMethod()
+  const { remove, isLoading: removing } = useRemovePaymentMethod()
+  const [editing, setEditing] = useState(false)
+
+  const onRemove = async () => {
+    try {
+      await remove()
+      await refresh()
+      toast.success('Card removed')
+    } catch {
+      toast.error('Could not remove the card. Please try again.')
+    }
+  }
 
   if (isLoading) {
     return <Card className="p-12 text-center text-ink-subtle">Loading…</Card>
   }
+
+  // Add / replace a card in-page (embedded Payment Element — no redirect).
+  if (editing) {
+    return (
+      <Card className="p-6">
+        <p className="mb-4 font-medium text-ink">{paymentMethod ? 'Replace card' : 'Add a card'}</p>
+        <AddPaymentMethod
+          onSaved={() => {
+            setEditing(false)
+            void refresh()
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      </Card>
+    )
+  }
+
   if (!paymentMethod) {
     return (
       <Card className="p-12 text-center">
         <CreditCard className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
         <p className="text-ink-subtle">No payment methods on file.</p>
-        <p className="mt-1 text-xs text-ink-subtle">A card is saved automatically the first time you buy credits or subscribe.</p>
+        <p className="mt-1 text-xs text-ink-subtle">Add a card to buy credits or subscribe without leaving the page.</p>
+        <div className="mt-4 flex justify-center">
+          <Button iconLeft={Plus} onClick={() => setEditing(true)}>
+            Add a card
+          </Button>
+        </div>
       </Card>
     )
   }
@@ -337,17 +373,27 @@ function PaymentMethodCard() {
   const brand = paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-          <CreditCard className="h-6 w-6 text-primary" aria-hidden="true" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+            <CreditCard className="h-6 w-6 text-primary" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="font-medium text-ink">
+              {brand} •••• {paymentMethod.last4}
+            </p>
+            <p className="text-sm text-ink-subtle">
+              Expires {String(paymentMethod.expMonth).padStart(2, '0')}/{paymentMethod.expYear}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="font-medium text-ink">
-            {brand} •••• {paymentMethod.last4}
-          </p>
-          <p className="text-sm text-ink-subtle">
-            Expires {String(paymentMethod.expMonth).padStart(2, '0')}/{paymentMethod.expYear}
-          </p>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => setEditing(true)} disabled={removing}>
+            Update
+          </Button>
+          <Button variant="secondary" onClick={() => void onRemove()} disabled={removing}>
+            {removing ? 'Removing…' : 'Remove'}
+          </Button>
         </div>
       </div>
     </Card>
