@@ -281,6 +281,23 @@ const ledgerBadge: Record<string, { label: string; className: string }> = {
 const ledgerDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
+// Ledger rows written before the worker composed human descriptions carry the
+// raw Maps URL ("Scrape completed: https://…/maps/search/<query>"). The ledger
+// is immutable, so rewrite those for display only — decode the URL back to its
+// search text. Newer rows arrive human-readable and pass through untouched.
+function ledgerDescription(description: string | null | undefined): string | null {
+  if (!description) return null
+  const url = description.match(/^Scrape completed: https?:\/\/\S+$/)
+  if (!url) return description
+  const search = description.match(/\/maps\/search\/([^/?#\s]+)/)
+  if (!search) return 'Scrape completed'
+  try {
+    return `Scrape completed: ${decodeURIComponent(search[1]).replace(/\+/g, ' ')}`
+  } catch {
+    return 'Scrape completed'
+  }
+}
+
 function CreditActivityTable() {
   const { transactions, isLoading, error, hasMore, loadMore } = useWalletTransactions()
 
@@ -339,7 +356,7 @@ function CreditActivityTable() {
                   className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
                 >
                   <td className="p-4 text-ink-subtle">{ledgerDate(entry.createdAt)}</td>
-                  <td className="p-4 text-ink">{entry.description ?? badge.label}</td>
+                  <td className="p-4 text-ink">{ledgerDescription(entry.description) ?? badge.label}</td>
                   <td className="p-4">
                     <span
                       className={cn(
