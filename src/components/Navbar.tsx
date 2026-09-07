@@ -47,7 +47,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   })
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-30 flex h-14 items-center border-b border-hairline bg-canvas pr-3 pl-1 md:pr-4 md:pl-0">
+    <nav className="fixed inset-x-0 top-0 z-30 flex h-14 items-center border-b border-hairline bg-surface-1 pr-3 pl-1 md:pr-4 md:pl-0">
       {/* Brand slab: md+ only, 200px to align with the sidebar edge, gone on mobile */}
       <Link
         to="/"
