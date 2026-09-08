@@ -14,13 +14,15 @@ export interface ParsedUserAgent {
 }
 
 function matchBrowser(ua: string): string {
-  // Order matters: Edge/Opera masquerade as Chrome; Chrome masquerades as Safari.
-  if (/\bEdg\//.test(ua)) return 'Edge'
-  if (/\bOPR\/|\bOpera\b/.test(ua)) return 'Opera'
-  if (/\bFirefox\//.test(ua)) return 'Firefox'
-  if (/\bChrome\//.test(ua)) return 'Chrome'
-  if (/\bSafari\//.test(ua) && /\bVersion\//.test(ua)) return 'Safari'
-  if (/\bcurl\//.test(ua)) return 'curl'
+  // Order matters: Edge/Opera embed "Chrome/"; Chrome embeds "Safari/". Match by
+  // substring (no \b) so variants like "HeadlessChrome/" and "CriOS/" still read
+  // as Chrome rather than falling through to Unknown.
+  if (/Edg(A|iOS)?\//.test(ua)) return 'Edge'
+  if (/OPR\/|Opera/.test(ua)) return 'Opera'
+  if (/Firefox\/|FxiOS\//.test(ua)) return 'Firefox'
+  if (/Chrome\/|CriOS\//.test(ua)) return 'Chrome'
+  if (/Safari\//.test(ua) && /Version\//.test(ua)) return 'Safari'
+  if (/curl\//.test(ua)) return 'curl'
   return 'Unknown browser'
 }
 
