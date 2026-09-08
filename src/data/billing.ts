@@ -30,7 +30,7 @@ export interface CreditPack {
 export const creditPacks: CreditPack[] = [
   { id: 'small', name: '10 credits', credits: 10, price: 5 },
   { id: 'medium', name: '50 credits', credits: 50, price: 20 },
-  { id: 'large', name: '100 credits', credits: 100, price: 35, popular: true },
+  { id: 'large', name: '100 credits', credits: 100, price: 38, popular: true },
 ]
 
 export interface TierLimits {

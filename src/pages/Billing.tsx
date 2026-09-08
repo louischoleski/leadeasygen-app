@@ -111,7 +111,9 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
               <span className="text-3xl font-bold text-ink">${pkg.price}</span>
               <span className="text-ink-subtle"> one-time</span>
             </div>
-            <p className="mb-6 text-sm text-ink-subtle">~{Math.round(pkg.credits / 20)} jobs at avg. cost</p>
+            <p className="mb-6 text-sm text-ink-subtle">
+              Good for ~{(pkg.credits * AVG_LEADS_PER_JOB).toLocaleString()} leads*
+            </p>
             <Button
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
@@ -123,6 +125,10 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
           </Card>
         ))}
       </div>
+      <p className="text-xs text-ink-subtle">
+        *Based on the average yield of ~{AVG_LEADS_PER_JOB} leads per credit (1 credit = 1 scrape job).
+        Actual results vary with location and category.
+      </p>
       <ConfirmDialog
         open={!!pending}
         title={pending ? `Buy ${pending.name}?` : ''}
@@ -269,6 +275,11 @@ function InvoicesTable() {
 }
 
 // Wallet ledger types → display badges (see @fonderie/billing wallet ledger).
+// Measured average across completed jobs (yield spans 0 to 80+ per job — a
+// dense city keyword maxes out, a remote one can return nothing), so pack
+// cards always frame lead counts as "~" averages, never promises.
+const AVG_LEADS_PER_JOB = 20
+
 const ledgerBadge: Record<string, { label: string; className: string }> = {
   purchase: { label: 'Purchase', className: 'bg-primary/10 text-link' },
   grant: { label: 'Grant', className: 'bg-success/10 text-success' },
