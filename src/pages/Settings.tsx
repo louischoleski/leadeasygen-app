@@ -1,7 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Coin, Envelope, Phone, ShieldCheck, User, Warning } from '@phosphor-icons/react'
+import {
+  Clock,
+  ClockCounterClockwise,
+  Coin,
+  Devices,
+  Envelope,
+  Phone,
+  ShieldCheck,
+  User,
+  Warning,
+} from '@phosphor-icons/react'
 import profile from '../assets/profile.jpg'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
@@ -19,15 +29,18 @@ import { LoginHistoryCard } from '../components/LoginHistoryCard'
 import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
 import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
 import { SectionHeader } from '../components/SectionHeader'
+import { cn } from '../lib/cn'
 
+// Icons mirror each section's SectionHeader so the nav item visually maps to
+// its card.
 const sections = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'datetime', label: 'Date & time' },
-  { id: 'security', label: 'Security' },
-  { id: 'activity', label: 'Login history' },
-  { id: 'sessions', label: 'Active sessions' },
-  { id: 'credits', label: 'Credits' },
-  { id: 'danger', label: 'Danger zone' },
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'datetime', label: 'Date & time', icon: Clock },
+  { id: 'security', label: 'Security', icon: ShieldCheck },
+  { id: 'activity', label: 'Login history', icon: ClockCounterClockwise },
+  { id: 'sessions', label: 'Active sessions', icon: Devices },
+  { id: 'credits', label: 'Credits', icon: Coin },
+  { id: 'danger', label: 'Danger zone', icon: Warning },
 ]
 
 const timezoneOptions = ['UTC', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Asia/Tokyo'].map(
@@ -417,8 +430,12 @@ export default function Settings() {
               <li key={s.id}>
                 <a
                   href={`#${s.id}`}
-                  className="block rounded-lg px-3 py-2 text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+                  className={cn(
+                    'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-surface-2 hover:text-ink',
+                    s.id === 'danger' ? 'text-error/80 hover:text-error' : 'text-ink-muted',
+                  )}
                 >
+                  <s.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                   {s.label}
                 </a>
               </li>
