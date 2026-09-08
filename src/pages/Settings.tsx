@@ -17,9 +17,11 @@ import { FonderieApiError, useChangePassword, useMfaSetup } from '@fonderie/reac
 import { OtpInput } from '../components/OtpInput'
 import { LoginHistoryCard } from '../components/LoginHistoryCard'
 import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
+import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
 
 const sections = [
   { id: 'profile', label: 'Profile' },
+  { id: 'datetime', label: 'Date & time' },
   { id: 'security', label: 'Security' },
   { id: 'activity', label: 'Login history' },
   { id: 'sessions', label: 'Active sessions' },
@@ -412,6 +414,7 @@ export default function Settings() {
         </nav>
         <div className="min-w-0 flex-1 space-y-4">
           <ProfileCard />
+          <DateTimeFormatCard />
           <SecurityCard />
           <LoginHistoryCard />
           <ActiveSessionsCard />
