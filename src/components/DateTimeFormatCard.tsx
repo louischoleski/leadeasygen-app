@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useFonderieClient } from '@fonderie/react'
 import { Button } from './Button'
 import { Card } from './Card'
+import { SectionHeader } from './SectionHeader'
 import { Select } from './Select'
 import { useAppSession } from '../lib/session'
 import {
@@ -47,11 +48,11 @@ export function DateTimeFormatCard() {
 
   return (
     <Card as="section" id="datetime" className="scroll-mt-20 p-5">
-      <div className="flex items-center gap-2">
-        <Clock className="h-5 w-5 text-ink-subtle" aria-hidden="true" />
-        <h2 className="text-card-title text-ink">Date &amp; Time Format</h2>
-      </div>
-      <p className="mt-1 text-sm text-ink-subtle">Customize how dates and times are displayed across the app.</p>
+      <SectionHeader
+        icon={Clock}
+        title="Date & Time Format"
+        description="Customize how dates and times are displayed across the app."
+      />
 
       <div className="mt-4 grid gap-x-6 gap-y-4 lg:grid-cols-2">
         <div>

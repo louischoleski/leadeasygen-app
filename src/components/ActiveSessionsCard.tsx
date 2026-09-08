@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Laptop, DeviceMobile, SignOut } from '@phosphor-icons/react'
+import { Laptop, DeviceMobile, Devices, SignOut } from '@phosphor-icons/react'
 import { useSessions } from '@fonderie/react-auth'
 import type { ISessionDTO } from '@fonderie/react-auth'
 import { toast } from 'sonner'
 import { Button } from './Button'
 import { Card } from './Card'
 import { ConfirmDialog } from './ConfirmDialog'
+import { SectionHeader } from './SectionHeader'
 import { parseUserAgent } from '../lib/userAgent'
 
 // "Signed in Sep 7, 2026" — honest until Phase 5 adds last_active_at; we only
@@ -82,18 +83,19 @@ export function ActiveSessionsCard() {
 
   return (
     <Card as="section" id="sessions" className="scroll-mt-20 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-card-title text-ink">Active Sessions</h2>
-          <p className="mt-1 text-sm text-ink-subtle">Devices currently signed in to your account.</p>
-        </div>
-        {others.length > 0 && (
-          <Button variant="secondary" size="sm" onClick={() => setConfirming('others')}>
-            <SignOut className="mr-1.5 h-4 w-4" aria-hidden="true" />
-            Terminate all others
-          </Button>
-        )}
-      </div>
+      <SectionHeader
+        icon={Devices}
+        title="Active Sessions"
+        description="Devices currently signed in to your account."
+        action={
+          others.length > 0 ? (
+            <Button variant="secondary" size="sm" onClick={() => setConfirming('others')}>
+              <SignOut className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Terminate all others
+            </Button>
+          ) : undefined
+        }
+      />
 
       {error ? (
         <p className="mt-4 text-sm text-error">Couldn't load sessions. {error.message}</p>

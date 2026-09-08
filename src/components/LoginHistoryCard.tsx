@@ -1,9 +1,10 @@
-import { CheckCircle, Download, WarningCircle } from '@phosphor-icons/react'
+import { CheckCircle, ClockCounterClockwise, Download, WarningCircle } from '@phosphor-icons/react'
 import { useLoginHistory } from '@fonderie/react-auth'
 import type { ILoginEventDTO } from '@fonderie/react-auth'
 import { toast } from 'sonner'
 import { Button } from './Button'
 import { Card } from './Card'
+import { SectionHeader } from './SectionHeader'
 import { parseUserAgent } from '../lib/userAgent'
 
 const methodLabel: Record<string, string> = {
@@ -50,21 +51,17 @@ export function LoginHistoryCard() {
 
   return (
     <Card as="section" id="activity" className="scroll-mt-20 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-card-title text-ink">Login History</h2>
-          <p className="mt-1 text-sm text-ink-subtle">Review recent login attempts to your account.</p>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => exportCsv(events)}
-          disabled={events.length === 0}
-        >
-          <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
-          Export history
-        </Button>
-      </div>
+      <SectionHeader
+        icon={ClockCounterClockwise}
+        title="Login History"
+        description="Review recent login attempts to your account."
+        action={
+          <Button variant="secondary" size="sm" onClick={() => exportCsv(events)} disabled={events.length === 0}>
+            <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
+            Export history
+          </Button>
+        }
+      />
 
       {error ? (
         <p className="mt-4 text-sm text-error">Couldn't load login history. {error.message}</p>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Envelope, Phone, User } from '@phosphor-icons/react'
+import { Coin, Envelope, Phone, ShieldCheck, User, Warning } from '@phosphor-icons/react'
 import profile from '../assets/profile.jpg'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
@@ -18,6 +18,7 @@ import { OtpInput } from '../components/OtpInput'
 import { LoginHistoryCard } from '../components/LoginHistoryCard'
 import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
 import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
+import { SectionHeader } from '../components/SectionHeader'
 
 const sections = [
   { id: 'profile', label: 'Profile' },
@@ -65,7 +66,12 @@ function ProfileCard() {
 
   return (
     <Card as="section" id="profile" className="scroll-mt-20 p-5">
-      <div className="flex items-center gap-3">
+      <SectionHeader
+        icon={User}
+        title="Profile"
+        description="Your account details and contact information."
+      />
+      <div className="mt-4 flex items-center gap-3">
         <img src={profile} alt="" className="h-16 w-16 rounded-full object-cover" />
         <div className="flex-1">
           <h2 className="font-medium text-ink">{userDisplayName(user)}</h2>
@@ -213,7 +219,11 @@ function SecurityCard() {
 
   return (
     <Card as="section" id="security" className="scroll-mt-20 p-5">
-      <h2 className="text-card-title text-ink">Security</h2>
+      <SectionHeader
+        icon={ShieldCheck}
+        title="Security"
+        description="Manage your password and two-factor authentication."
+      />
       <form noValidate onSubmit={handlePassword}>
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
           <Input label="Current password" type="password" required name="currentPassword" id="currentPassword" />
@@ -331,21 +341,22 @@ function CreditsCard() {
   const planLabel = tier ? `the ${tier.name} plan` : 'pay-as-you-go'
 
   return (
-    <Card as="section" id="credits" className="scroll-mt-20 flex flex-wrap items-center justify-between gap-3 p-5">
-      <div>
-        <h2 className="text-card-title text-ink">Credits</h2>
-        <p className="mt-1 text-sm text-ink-subtle">
-          You're on {planLabel}. Credits are spent per scraping job.
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="mr-3">
-          <span className="text-3xl font-bold text-ink">{creditBalance}</span>
-          <span className="ml-1 text-sm text-ink-subtle">remaining</span>
-        </div>
-        <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>
-        <Button asChild variant="secondary"><Link to="/billing">Manage billing</Link></Button>
-      </div>
+    <Card as="section" id="credits" className="scroll-mt-20 p-5">
+      <SectionHeader
+        icon={Coin}
+        title="Credits"
+        description={`You're on ${planLabel}. Credits are spent per scraping job.`}
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="mr-3">
+              <span className="text-3xl font-bold text-ink">{creditBalance}</span>
+              <span className="ml-1 text-sm text-ink-subtle">remaining</span>
+            </div>
+            <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>
+            <Button asChild variant="secondary"><Link to="/billing">Manage billing</Link></Button>
+          </div>
+        }
+      />
     </Card>
   )
 }
@@ -355,10 +366,12 @@ function DangerCard() {
 
   return (
     <Card as="section" id="danger" className="scroll-mt-20 border-error/40 bg-error/5 p-5">
-      <h2 className="text-card-title text-error">Danger zone</h2>
-      <p className="mt-1 text-sm text-ink-subtle">
-        Permanently delete your account and all associated data. This cannot be undone.
-      </p>
+      <SectionHeader
+        icon={Warning}
+        title="Danger zone"
+        description="Permanently delete your account and all associated data. This cannot be undone."
+        tone="error"
+      />
       <div className="mt-4">
         <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
           Delete account
