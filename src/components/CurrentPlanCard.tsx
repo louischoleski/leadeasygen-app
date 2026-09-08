@@ -44,7 +44,14 @@ function MetricRow({ label, used, total, unit, mode = 'usage' }: UsageMetric) {
 
   if (mode === 'remaining') {
     // `used` is what's LEFT. Fuller bar = more remaining = good; warn as it runs low.
-    const remaining = Math.max(0, Math.min(used, total))
+    // The allowance can legitimately exceed the plan's per-period amount — credits
+    // granted before a grant-config shrink stay valid until they expire — and
+    // clamping would peg the meter at "total / total left" no matter how much the
+    // user spends. Show the real count, minus the now-meaningless denominator.
+    if (used > total) {
+      return <UsageBar label={label} used={used} total={used} status="success" valueText={`${used} left`} />
+    }
+    const remaining = Math.max(0, used)
     const pct = total > 0 ? (remaining / total) * 100 : 0
     const status = pct > 50 ? 'success' : pct > 20 ? 'warning' : 'error'
     return (
