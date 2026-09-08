@@ -46,9 +46,17 @@ const sections = [
   { id: 'danger', label: 'Danger zone', icon: Warning },
 ]
 
-const timezoneOptions = ['UTC', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Asia/Tokyo'].map(
-  (tz) => ({ value: tz, label: tz }),
-)
+// The full IANA timezone list straight from the runtime (Intl) — no dependency
+// and nothing to maintain; the browser/Node keeps it current. Engines without
+// Intl.supportedValuesOf (pre-2022 browsers) fall back to a short common set.
+const TIMEZONE_FALLBACK = ['UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Paris', 'Asia/Tokyo']
+const timeZoneNames =
+  typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : TIMEZONE_FALLBACK
+// Guarantee UTC (the stored default) is selectable even if the runtime omits it.
+const timezoneOptions = (timeZoneNames.includes('UTC') ? timeZoneNames : ['UTC', ...timeZoneNames]).map((tz) => ({
+  value: tz,
+  label: tz.replace(/_/g, ' '),
+}))
 const languageOptions = locales.map((l) => ({ value: l, label: localeNames[l] }))
 
 const labelClass = 'mb-1 block text-sm font-medium text-ink'
