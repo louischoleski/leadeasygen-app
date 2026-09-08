@@ -15,10 +15,14 @@ import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import { useFonderieClient } from '@fonderie/react'
 import { FonderieApiError, useChangePassword, useMfaSetup } from '@fonderie/react-auth'
 import { OtpInput } from '../components/OtpInput'
+import { LoginHistoryCard } from '../components/LoginHistoryCard'
+import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
 
 const sections = [
   { id: 'profile', label: 'Profile' },
   { id: 'security', label: 'Security' },
+  { id: 'activity', label: 'Login history' },
+  { id: 'sessions', label: 'Active sessions' },
   { id: 'credits', label: 'Credits' },
   { id: 'danger', label: 'Danger zone' },
 ]
@@ -409,6 +413,8 @@ export default function Settings() {
         <div className="min-w-0 flex-1 space-y-4">
           <ProfileCard />
           <SecurityCard />
+          <LoginHistoryCard />
+          <ActiveSessionsCard />
           <CreditsCard />
           <DangerCard />
         </div>
