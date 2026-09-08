@@ -2,7 +2,7 @@ import { Coin, Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun,
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import profile from '../assets/profile.jpg'
-import { useBilling } from '../data/billing'
+import { subscriptionTiers, useBilling } from '../data/billing'
 import { useAppSession, userDisplayName } from '../lib/session'
 import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
@@ -19,7 +19,10 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { isMobile } = useViewport()
   const os = useOS()
   const { user, logout } = useAppSession()
-  const { creditBalance } = useBilling()
+  const { creditBalance, subscriptionTier } = useBilling()
+  // Tier is null until billing's first read resolves — render no plan line
+  // rather than flashing "Free" at a subscribed user.
+  const planName = subscriptionTiers.find((t) => t.id === subscriptionTier)?.name
   const [localeOpen, setLocaleOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -155,13 +158,16 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       >
         <button
           type="button"
-          aria-label={`Account: ${user?.email ?? ''}`}
+          aria-label={`Account: ${userDisplayName(user)}`}
           aria-haspopup="menu"
           aria-expanded={accountOpen}
           onClick={() => setAccountOpen((o) => !o)}
           className="flex h-11 cursor-pointer items-center gap-2 p-1 text-sm text-ink-subtle hover:text-ink"
         >
-          <span className="hidden lowercase lg:inline">{user?.email}</span>
+          <span className="hidden text-right lg:block">
+            <span className="block text-sm font-medium text-ink">{userDisplayName(user)}</span>
+            {planName && <span className="block text-xs text-ink-subtle">{planName} plan</span>}
+          </span>
           <img src={profile} alt="" className="h-9 w-9 rounded-full" />
         </button>
         {accountOpen && (
