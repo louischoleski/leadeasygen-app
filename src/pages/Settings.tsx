@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
+  BellRinging,
   Clock,
   ClockCounterClockwise,
   Coin,
@@ -28,6 +29,7 @@ import { OtpInput } from '../components/OtpInput'
 import { LoginHistoryCard } from '../components/LoginHistoryCard'
 import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
 import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
+import { NotificationsCard } from '../components/NotificationsCard'
 import { SectionHeader } from '../components/SectionHeader'
 import { cn } from '../lib/cn'
 
@@ -36,6 +38,7 @@ import { cn } from '../lib/cn'
 const sections = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'datetime', label: 'Date & time', icon: Clock },
+  { id: 'notifications', label: 'Notifications', icon: BellRinging },
   { id: 'security', label: 'Security', icon: ShieldCheck },
   { id: 'activity', label: 'Login history', icon: ClockCounterClockwise },
   { id: 'sessions', label: 'Active sessions', icon: Devices },
@@ -445,6 +448,7 @@ export default function Settings() {
         <div className="min-w-0 flex-1 space-y-4">
           <ProfileCard />
           <DateTimeFormatCard />
+          <NotificationsCard />
           <SecurityCard />
           <LoginHistoryCard />
           <ActiveSessionsCard />
