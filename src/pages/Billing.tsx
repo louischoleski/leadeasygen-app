@@ -36,6 +36,7 @@ import {
 } from '../data/billing'
 import { useJobs } from '../data/jobs'
 import { cn } from '../lib/cn'
+import { useDuplicatePurchaseGuard } from '../lib/useDuplicatePurchaseGuard'
 
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
@@ -47,6 +48,7 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
   const { subscriptionTier } = useBilling()
   const { purchase, isLoading: purchasing } = usePurchasePack()
   const { checkout, isLoading: checkingOut } = useWalletCheckout()
+  const { confirm: confirmNotDuplicate, dialog: duplicateDialog } = useDuplicatePurchaseGuard()
   const isLoading = purchasing || checkingOut
   // The pack awaiting purchase confirmation — charging the saved card is
   // immediate, so we confirm the amount before it happens.
@@ -118,7 +120,12 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
               fullWidth
               variant={pkg.popular ? 'primary' : 'secondary'}
               disabled={hasPaidPlan || isLoading}
-              onClick={() => setPending(pkg)}
+              onClick={async () => {
+                // Warn before a repeat pack purchase within the recent window.
+                if (await confirmNotDuplicate({ amountCents: pkg.price * 100, label: `the ${pkg.name} pack` })) {
+                  setPending(pkg)
+                }
+              }}
             >
               Buy {pkg.name}
             </Button>
@@ -146,6 +153,7 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
         }}
         onClose={() => setPending(null)}
       />
+      {duplicateDialog}
     </section>
   )
 }
@@ -486,6 +494,7 @@ function PaymentMethodCard() {
 function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: BillingCycle; setBillingCycle: (c: BillingCycle) => void }) {
   const { subscriptionTier } = useBilling()
   const { checkout, isLoading } = useCheckout()
+  const { confirm: confirmNotDuplicate, dialog: duplicateDialog } = useDuplicatePurchaseGuard()
 
   // Upgrades only: Stripe charges the difference going up, but moving down
   // mid-period would mean owing a prorated refund. The only path down is
@@ -495,6 +504,9 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
   const currentRank = rank(effectiveTierId)
 
   const choose = async (tier: SubscriptionTier) => {
+    // Guard against an accidental repeat subscription (latency / double-click).
+    const amountCents = (billingCycle === 'annual' ? tier.priceAnnual * 12 : tier.priceMonthly) * 100
+    if (!(await confirmNotDuplicate({ amountCents, label: `the ${tier.name} plan` }))) return
     try {
       const url = await checkout({ plan: tier.id, interval: billingCycle === 'annual' ? 'year' : 'month' })
       window.location.assign(url)
@@ -596,6 +608,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
           )
         })}
       </div>
+      {duplicateDialog}
     </section>
   )
 }
