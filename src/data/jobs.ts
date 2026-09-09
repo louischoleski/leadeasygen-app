@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
 import {
+  apiErrorReason,
   apiErrorStatus,
   createTask,
   duplicateTaskId,
@@ -212,16 +213,23 @@ export interface CreateJobInput {
   force?: boolean
 }
 
+export interface DuplicateKeyword {
+  keyword: string
+  existingTaskId: string
+}
+
 export type CreateJobResult =
   | { ok: true; creditCost: number }
-  | { ok: false; error: 'insufficient-credits' | 'request-failed' }
-  // The search already ran recently; existingTaskId names the prior task so
-  // the UI can point the user at it. Confirming re-runs with force:true.
-  | { ok: false; error: 'duplicate'; existingTaskId: string }
+  | { ok: false; error: 'insufficient-credits' | 'at-limit' | 'request-failed' }
+  // Some keywords already ran recently. `created` is how many new keywords were
+  // queued alongside; `duplicates` lists the ones to confirm — the UI names them
+  // and, on confirm, re-runs only those with force:true.
+  | { ok: false; error: 'duplicate'; created: number; duplicates: DuplicateKeyword[] }
 
+// Maps a hard (non-duplicate) create failure to a result. Duplicates are handled
+// in the loop, not here.
 const failureFrom = (err: unknown): CreateJobResult => {
-  const existingTaskId = duplicateTaskId(err)
-  if (existingTaskId) return { ok: false, error: 'duplicate', existingTaskId }
+  if (apiErrorReason(err) === 'ACTIVE_JOB_LIMIT') return { ok: false, error: 'at-limit' }
   // Billing's wallet gate returns 402 (Payment Required); older builds used 403.
   const status = apiErrorStatus(err)
   return {
@@ -236,6 +244,7 @@ const RADIUS_LEAD_LIMIT: Record<number, number> = { 5: 10, 10: 25, 25: 50, 50: 1
 
 export async function createJob(input: CreateJobInput): Promise<CreateJobResult> {
   const groupId = crypto.randomUUID()
+  const duplicates: DuplicateKeyword[] = []
   let created = 0
   for (const keyword of input.keywords) {
     try {
@@ -250,11 +259,23 @@ export async function createJob(input: CreateJobInput): Promise<CreateJobResult>
       })
       created++
     } catch (err) {
-      if (created === 0) return failureFrom(err)
-      break // partial group: what was enqueued keeps running and shows in the list
+      const existingTaskId = duplicateTaskId(err)
+      if (existingTaskId && !input.force) {
+        // Not a hard failure — collect it and keep going so genuinely-new
+        // keywords in the same submit still run.
+        duplicates.push({ keyword, existingTaskId })
+        continue
+      }
+      // Hard error (credits / active-job limit / network). Nothing runnable left
+      // to try, so stop; report it only if we have nothing else to surface.
+      if (created === 0 && duplicates.length === 0) return failureFrom(err)
+      break
     }
   }
   void refresh()
+  // Duplicates take priority over a bare success: the caller needs to decide
+  // whether to force them (the new keywords, if any, are already queued).
+  if (duplicates.length > 0) return { ok: false, error: 'duplicate', created, duplicates }
   return { ok: true, creditCost: created }
 }
 

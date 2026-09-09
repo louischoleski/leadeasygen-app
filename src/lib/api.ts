@@ -76,6 +76,15 @@ export function apiErrorStatus(err: unknown): number | undefined {
   return undefined
 }
 
+/** The `reason` code from a FonderieApiError, or undefined for other failures. */
+export function apiErrorReason(err: unknown): string | undefined {
+  if (typeof err === 'object' && err !== null && 'reason' in err) {
+    const reason = (err as { reason: unknown }).reason
+    return typeof reason === 'string' ? reason : undefined
+  }
+  return undefined
+}
+
 /**
  * If this error is the create endpoint's RECENT_DUPLICATE 409, the id of the
  * existing task the caller already ran recently; otherwise undefined. The

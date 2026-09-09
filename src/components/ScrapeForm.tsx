@@ -39,7 +39,7 @@ export function ScrapeForm() {
     register,
     handleSubmit,
     resetField,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ScrapeFormValues>({
     defaultValues: { location: '', radiusKm: 10, keywords: '', category: null },
     mode: 'all',
@@ -55,43 +55,76 @@ export function ScrapeForm() {
   const jobLimit = tier?.limits.activeJobs ?? null
   const atJobLimit = jobLimit !== null && activeJobs >= jobLimit
 
-  // Holds the form values while the "you already ran this" dialog is open, so
-  // confirming can re-submit the exact same search with force.
-  const [duplicatePrompt, setDuplicatePrompt] = useState<ScrapeFormValues | null>(null)
+  // Held while the confirm dialog is open: the search context plus only the
+  // keywords the server flagged as recent duplicates, so confirming force-runs
+  // just those (never the new keywords that already got queued).
+  const [duplicatePrompt, setDuplicatePrompt] = useState<{
+    location: string
+    radiusKm: number
+    category: string | null
+    keywords: string[]
+  } | null>(null)
 
-  const submit = async (data: ScrapeFormValues, force: boolean) => {
-    const result = await createJob({
-      location: data.location.trim(),
-      radiusKm: data.radiusKm,
-      keywords: parseKeywords(data.keywords),
-      category: data.category ?? undefined,
-      force,
-    })
-    if (!result.ok) {
-      if (result.error === 'duplicate') {
-        setDuplicatePrompt(data)
+  const run = (params: {
+    location: string
+    radiusKm: number
+    category: string | null
+    keywords: string[]
+    force: boolean
+  }) =>
+    createJob({
+      location: params.location.trim(),
+      radiusKm: params.radiusKm,
+      category: params.category ?? undefined,
+      keywords: params.keywords,
+      force: params.force,
+    }).then((result) => {
+      if (!result.ok) {
+        if (result.error === 'duplicate') {
+          // New keywords (if any) were already queued — acknowledge them, then
+          // warn only about the duplicates and offer to force just those.
+          if (result.created > 0) {
+            toast.success('Scrape job started', {
+              description: `${result.created} new ${result.created === 1 ? 'keyword' : 'keywords'} queued.`,
+            })
+          }
+          setDuplicatePrompt({
+            location: params.location,
+            radiusKm: params.radiusKm,
+            category: params.category,
+            keywords: result.duplicates.map((d) => d.keyword),
+          })
+          return
+        }
+        toast.error(
+          result.error === 'insufficient-credits'
+            ? 'Not enough credits for this job'
+            : result.error === 'at-limit'
+              ? "You've reached your plan's active-job limit"
+              : 'Could not reach the scraper — try again shortly',
+        )
         return
       }
-      toast.error(
-        result.error === 'insufficient-credits'
-          ? 'Not enough credits for this job'
-          : 'Could not reach the scraper — try again shortly',
-      )
-      return
-    }
-    toast.success('Scrape job started', {
-      description: `${result.creditCost} ${result.creditCost === 1 ? 'credit' : 'credits'} charged on completion.`,
+      toast.success('Scrape job started', {
+        description: `${result.creditCost} ${result.creditCost === 1 ? 'credit' : 'credits'} charged on completion.`,
+      })
+      resetField('location')
+      resetField('keywords')
     })
-    resetField('location')
-    resetField('keywords')
-  }
 
-  const onSubmit = (data: ScrapeFormValues) => submit(data, false)
+  const onSubmit = (data: ScrapeFormValues) =>
+    run({
+      location: data.location,
+      radiusKm: data.radiusKm,
+      category: data.category,
+      keywords: parseKeywords(data.keywords),
+      force: false,
+    })
 
   const confirmDuplicate = () => {
-    const data = duplicatePrompt
+    const prompt = duplicatePrompt
     setDuplicatePrompt(null)
-    if (data) void submit(data, true)
+    if (prompt) void run({ ...prompt, force: true })
   }
 
   return (
@@ -170,7 +203,7 @@ export function ScrapeForm() {
                 <Link to="/billing#packages">Buy credits</Link>
               </Button>
             ) : (
-              <Button type="submit" fullWidth className="lg:h-11" disabled={atJobLimit}>
+              <Button type="submit" fullWidth className="lg:h-11" disabled={atJobLimit || isSubmitting}>
                 Start scrape
               </Button>
             )}
@@ -190,9 +223,13 @@ export function ScrapeForm() {
 
       <ConfirmDialog
         open={duplicatePrompt !== null}
-        title="Run this search again?"
-        description="You already ran this search recently — it's in your list below. Running it again will spend another credit for the same results."
-        confirmLabel="Run again"
+        title={duplicatePrompt && duplicatePrompt.keywords.length > 1 ? 'Run these searches again?' : 'Run this search again?'}
+        description={
+          duplicatePrompt
+            ? `You already ran ${duplicatePrompt.keywords.length > 1 ? 'these searches' : 'this search'} recently: ${duplicatePrompt.keywords.join(', ')}. Running ${duplicatePrompt.keywords.length > 1 ? 'them' : 'it'} again will spend ${duplicatePrompt.keywords.length > 1 ? 'credits' : 'a credit'} for the same results.`
+            : ''
+        }
+        confirmLabel={duplicatePrompt && duplicatePrompt.keywords.length > 1 ? 'Run them again' : 'Run again'}
         cancelLabel="Cancel"
         onConfirm={confirmDuplicate}
         onClose={() => setDuplicatePrompt(null)}
