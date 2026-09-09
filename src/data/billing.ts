@@ -161,7 +161,13 @@ export async function refreshSubscription(): Promise<void> {
       subPending = false
       try {
         const { result } = await fonderie.billing.getSubscription({ bust: true })
-        update({ subscriptionTier: result.subscription?.plan ?? 'free' })
+        // Only an active (or trialing) subscription grants its tier. An
+        // 'incomplete' / 'past_due' / 'canceled' subscription must NOT unlock
+        // the plan — otherwise starting checkout (which creates an incomplete
+        // subscription before payment) would grant Unlimited for free.
+        const sub = result.subscription
+        const grants = sub != null && (sub.status === 'active' || sub.status === 'trialing')
+        update({ subscriptionTier: grants ? sub.plan : 'free' })
       } catch (err) {
         if (apiErrorStatus(err) === 404) update({ subscriptionTier: 'free' })
         // other errors — keep the current value
