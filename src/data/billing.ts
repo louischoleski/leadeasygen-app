@@ -80,10 +80,20 @@ interface BillingState {
   // Spend is allowance-first, so granted depletes before purchased.
   grantedCredits: number
   purchasedCredits: number
+  // When the current monthly allowance expires and the next grant lands — i.e.
+  // when free-plan credits renew. ISO string, or null if the wallet has no
+  // periodic grant (e.g. Unlimited). Drives the "Credits reset" date.
+  grantedExpiresAt: string | null
   subscriptionTier: string | null // null until first read; then a plan name ('free'|'unlimited')
 }
 
-let state: BillingState = { creditBalance: 0, grantedCredits: 0, purchasedCredits: 0, subscriptionTier: null }
+let state: BillingState = {
+  creditBalance: 0,
+  grantedCredits: 0,
+  purchasedCredits: 0,
+  grantedExpiresAt: null,
+  subscriptionTier: null,
+}
 const store = createSubscribable()
 
 function update(next: Partial<BillingState>) {
@@ -92,6 +102,7 @@ function update(next: Partial<BillingState>) {
     merged.creditBalance === state.creditBalance &&
     merged.grantedCredits === state.grantedCredits &&
     merged.purchasedCredits === state.purchasedCredits &&
+    merged.grantedExpiresAt === state.grantedExpiresAt &&
     merged.subscriptionTier === state.subscriptionTier
   ) {
     return // no change — don't churn subscribers
@@ -124,6 +135,7 @@ export async function refreshBalance(): Promise<void> {
         // Older APIs may omit the split — fall back so the monthly bar still works.
         grantedCredits: Number(w.granted ?? w.balance),
         purchasedCredits: Number(w.purchased ?? 0),
+        grantedExpiresAt: w.grantedExpiresAt ?? null,
       })
     } while (balancePending) // a refresh requested mid-flight → read again
   } catch {

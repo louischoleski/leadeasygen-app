@@ -19,6 +19,10 @@ interface CurrentPlanCardProps {
   planName: string
   billingCycle: BillingCycle
   nextBillingDate: string
+  // Overrides the date-box label. Free plans aren't billed, so they pass
+  // "Credits reset" (with the allowance renewal date) instead of the default
+  // "Next billing date".
+  dateLabel?: string
   metrics: UsageMetric[]
   // Pack credits on top of the plan allowance — a separate, never-expiring
   // bucket. Shown as its own bar so it never inflates the monthly-usage metric.
@@ -75,6 +79,7 @@ export function CurrentPlanCard({
   planName,
   billingCycle,
   nextBillingDate,
+  dateLabel,
   metrics,
   purchasedCredits = 0,
   onCancel,
@@ -103,7 +108,9 @@ export function CurrentPlanCard({
       <div className="p-6 pt-4">
         <div className="flex items-center justify-between rounded-lg bg-surface-2 p-3">
           <div className="text-sm">
-            <p className="font-medium text-ink">{scheduledToCancel ? 'Access until' : 'Next billing date'}</p>
+            <p className="font-medium text-ink">
+              {dateLabel ?? (scheduledToCancel ? 'Access until' : 'Next billing date')}
+            </p>
             <p className="text-ink-subtle">{nextBillingDate}</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">

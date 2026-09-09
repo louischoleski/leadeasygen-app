@@ -601,7 +601,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
 }
 
 export default function Billing() {
-  const { creditBalance, grantedCredits, purchasedCredits, subscriptionTier } = useBilling()
+  const { creditBalance, grantedCredits, purchasedCredits, grantedExpiresAt, subscriptionTier } = useBilling()
   const { activeJobs } = useJobs()
   const { cancel, isLoading: cancelling } = useCancelSubscription()
   // Detailed lifecycle state (cancel-scheduled? period end?) for the plan card —
@@ -726,7 +726,16 @@ export default function Billing() {
           <CurrentPlanCard
             planName={activeTier.name}
             billingCycle={billingCycle}
-            nextBillingDate={activeTier.id !== 'free' ? periodEnd : '—'}
+            // Free plans aren't billed — show when the monthly credit allowance
+            // renews instead of an empty billing date.
+            dateLabel={activeTier.id === 'free' ? 'Credits reset' : undefined}
+            nextBillingDate={
+              activeTier.id !== 'free'
+                ? periodEnd
+                : grantedExpiresAt
+                  ? new Date(grantedExpiresAt).toLocaleDateString()
+                  : '—'
+            }
             metrics={[
               { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
               // Monthly plan credits — how many of the cycle's use-it-or-lose-it
