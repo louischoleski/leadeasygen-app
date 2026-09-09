@@ -1,10 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useInvoices } from '@fonderie/react-billing'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-
-// The window within which an identical purchase is treated as a likely
-// accidental repeat (double-click, latency retry, impatient re-submit).
-const DUPLICATE_WINDOW_MS = 5 * 60 * 1000
+import { isRecentDuplicate } from './recentDuplicate'
 
 export interface PurchaseIntent {
   // Charge amount in the smallest currency unit (cents), used to match a
@@ -26,13 +23,7 @@ export function useDuplicatePurchaseGuard() {
 
   const confirm = useCallback(
     (intent: PurchaseIntent): Promise<boolean> => {
-      const now = Date.now()
-      const duplicate = invoices.some((inv) => {
-        const paid = Number(inv.amountPaid) || Number(inv.amountDue) || 0
-        if (paid !== intent.amountCents) return false
-        return now - new Date(inv.created).getTime() < DUPLICATE_WINDOW_MS
-      })
-      if (!duplicate) return Promise.resolve(true)
+      if (!isRecentDuplicate(invoices, intent.amountCents, Date.now())) return Promise.resolve(true)
       // Ask before charging again — resolved by the dialog buttons below.
       return new Promise((resolve) => setPending({ label: intent.label, resolve }))
     },
