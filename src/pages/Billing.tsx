@@ -1,5 +1,6 @@
 import { Check, Coin, CreditCard, Crown, Download, Plus, Receipt } from '@phosphor-icons/react'
 import {
+  FonderieApiError,
   useCancelSubscription,
   useCheckout,
   useInvoices,
@@ -510,8 +511,10 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
     try {
       const url = await checkout({ plan: tier.id, interval: billingCycle === 'annual' ? 'year' : 'month' })
       window.location.assign(url)
-    } catch {
-      toast.error('Could not start checkout. Please try again.')
+    } catch (err) {
+      // Surface the server's reason (e.g. "Already on Unlimited (month)…") rather
+      // than a generic message.
+      toast.error(err instanceof FonderieApiError ? err.explanation : 'Could not start checkout. Please try again.')
     }
   }
 

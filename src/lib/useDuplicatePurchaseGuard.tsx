@@ -17,6 +17,11 @@ export interface PurchaseIntent {
 // matching purchase, or after the user confirms the "you already bought this"
 // dialog. Render `dialog` once in the component. Backed by the invoice history
 // the app already loads — no extra state to maintain.
+//
+// Scope: this catches repeats MINUTES apart (the invoice history lags a
+// just-completed purchase by a webhook + refetch). Sub-second double-submits
+// are covered by the buttons' in-flight disabled state, and server-side
+// idempotency is the belt-and-suspenders layer for network retries.
 export function useDuplicatePurchaseGuard() {
   const { invoices } = useInvoices()
   const [pending, setPending] = useState<{ label: string; resolve: (ok: boolean) => void } | null>(null)
@@ -25,7 +30,14 @@ export function useDuplicatePurchaseGuard() {
     (intent: PurchaseIntent): Promise<boolean> => {
       if (!isRecentDuplicate(invoices, intent.amountCents, Date.now())) return Promise.resolve(true)
       // Ask before charging again — resolved by the dialog buttons below.
-      return new Promise((resolve) => setPending({ label: intent.label, resolve }))
+      return new Promise((resolve) => {
+        // If a prior confirm is still open, resolve it false rather than
+        // orphaning its awaiter (a second click replaces the dialog).
+        setPending((prev) => {
+          prev?.resolve(false)
+          return { label: intent.label, resolve }
+        })
+      })
     },
     [invoices],
   )
