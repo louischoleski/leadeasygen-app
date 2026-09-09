@@ -3,6 +3,7 @@ import { createSubscribable } from '../hooks/subscribable'
 import {
   apiErrorStatus,
   createTask,
+  duplicateTaskId,
   getTask,
   listTasks,
   retryTask,
@@ -206,13 +207,21 @@ export interface CreateJobInput {
   radiusKm: number
   keywords: string[]
   category?: string
+  // Re-run even if the same search ran recently — set once the user confirms
+  // past the duplicate warning.
+  force?: boolean
 }
 
 export type CreateJobResult =
   | { ok: true; creditCost: number }
   | { ok: false; error: 'insufficient-credits' | 'request-failed' }
+  // The search already ran recently; existingTaskId names the prior task so
+  // the UI can point the user at it. Confirming re-runs with force:true.
+  | { ok: false; error: 'duplicate'; existingTaskId: string }
 
 const failureFrom = (err: unknown): CreateJobResult => {
+  const existingTaskId = duplicateTaskId(err)
+  if (existingTaskId) return { ok: false, error: 'duplicate', existingTaskId }
   // Billing's wallet gate returns 402 (Payment Required); older builds used 403.
   const status = apiErrorStatus(err)
   return {
@@ -237,6 +246,7 @@ export async function createJob(input: CreateJobInput): Promise<CreateJobResult>
         category: input.category,
         groupId,
         limit: RADIUS_LEAD_LIMIT[input.radiusKm] ?? 25,
+        force: input.force,
       })
       created++
     } catch (err) {

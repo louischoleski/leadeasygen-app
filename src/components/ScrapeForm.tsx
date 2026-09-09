@@ -1,4 +1,5 @@
 import { Tag } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -6,6 +7,7 @@ import { subscriptionTiers, useBilling } from '../data/billing'
 import { createJob, jobCategories, jobCreditCost, useJobs } from '../data/jobs'
 import { Button } from './Button'
 import { Card } from './Card'
+import { ConfirmDialog } from './ConfirmDialog'
 import { Input } from './Input'
 import { LocationSearch } from './LocationSearch'
 import { Select } from './Select'
@@ -53,14 +55,23 @@ export function ScrapeForm() {
   const jobLimit = tier?.limits.activeJobs ?? null
   const atJobLimit = jobLimit !== null && activeJobs >= jobLimit
 
-  const onSubmit = async (data: ScrapeFormValues) => {
+  // Holds the form values while the "you already ran this" dialog is open, so
+  // confirming can re-submit the exact same search with force.
+  const [duplicatePrompt, setDuplicatePrompt] = useState<ScrapeFormValues | null>(null)
+
+  const submit = async (data: ScrapeFormValues, force: boolean) => {
     const result = await createJob({
       location: data.location.trim(),
       radiusKm: data.radiusKm,
       keywords: parseKeywords(data.keywords),
       category: data.category ?? undefined,
+      force,
     })
     if (!result.ok) {
+      if (result.error === 'duplicate') {
+        setDuplicatePrompt(data)
+        return
+      }
       toast.error(
         result.error === 'insufficient-credits'
           ? 'Not enough credits for this job'
@@ -73,6 +84,14 @@ export function ScrapeForm() {
     })
     resetField('location')
     resetField('keywords')
+  }
+
+  const onSubmit = (data: ScrapeFormValues) => submit(data, false)
+
+  const confirmDuplicate = () => {
+    const data = duplicatePrompt
+    setDuplicatePrompt(null)
+    if (data) void submit(data, true)
   }
 
   return (
@@ -168,6 +187,16 @@ export function ScrapeForm() {
           )}
         </p>
       </form>
+
+      <ConfirmDialog
+        open={duplicatePrompt !== null}
+        title="Run this search again?"
+        description="You already ran this search recently — it's in your list below. Running it again will spend another credit for the same results."
+        confirmLabel="Run again"
+        cancelLabel="Cancel"
+        onConfirm={confirmDuplicate}
+        onClose={() => setDuplicatePrompt(null)}
+      />
     </Card>
   )
 }

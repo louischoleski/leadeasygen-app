@@ -55,6 +55,9 @@ export interface CreateTaskInput {
   category?: string
   groupId?: string
   limit?: number
+  // Re-run even if the same search ran recently (the caller confirmed past the
+  // duplicate warning). Omitted/false lets the server dedup it.
+  force?: boolean
 }
 
 export interface CreatedTask {
@@ -69,6 +72,22 @@ export function apiErrorStatus(err: unknown): number | undefined {
   if (typeof err === 'object' && err !== null && 'status' in err) {
     const status = Number((err as { status: unknown }).status)
     return Number.isFinite(status) ? status : undefined
+  }
+  return undefined
+}
+
+/**
+ * If this error is the create endpoint's RECENT_DUPLICATE 409, the id of the
+ * existing task the caller already ran recently; otherwise undefined. The
+ * client packs the server's `details` onto FonderieApiError.
+ */
+export function duplicateTaskId(err: unknown): string | undefined {
+  if (typeof err !== 'object' || err === null) return undefined
+  if ((err as { reason?: unknown }).reason !== 'RECENT_DUPLICATE') return undefined
+  const details = (err as { details?: unknown }).details
+  if (typeof details === 'object' && details !== null && 'existingTaskId' in details) {
+    const id = (details as { existingTaskId: unknown }).existingTaskId
+    return typeof id === 'string' ? id : undefined
   }
   return undefined
 }
