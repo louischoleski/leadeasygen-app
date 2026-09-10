@@ -24,8 +24,8 @@ import { subscriptionTiers, useBilling } from '../data/billing'
 import { useAppSession, userDisplayName } from '../lib/session'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import { useFonderieClient } from '@fonderie/react'
-import { FonderieApiError, readToken, useChangePassword, useMfaSetup } from '@fonderie/react-auth'
-import { API_BASE_URL } from '../lib/fonderie'
+import { FonderieApiError, useChangePassword, useMfaSetup } from '@fonderie/react-auth'
+import { useUploadAvatar } from '@fonderie/react-media'
 import { OtpInput } from '../components/OtpInput'
 import { LoginHistoryCard } from '../components/LoginHistoryCard'
 import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
@@ -62,51 +62,27 @@ const languageOptions = locales.map((l) => ({ value: l, label: localeNames[l] })
 
 const labelClass = 'mb-1 block text-sm font-medium text-ink'
 
-// The avatar upload targets @fonderie/media's POST /media. Mirror its server
-// defaults so bad files are rejected before the round-trip (the server enforces
-// these regardless): 1 MB cap and raster image types only — SVG is rejected
-// server-side as a stored-XSS vector.
+// Client-side pre-checks mirror @fonderie/media's server defaults so bad files
+// are rejected before the round-trip (the server enforces them regardless):
+// 1 MB cap and raster image types only — SVG is rejected server-side as a
+// stored-XSS vector. The upload/encode/persist/cleanup itself lives in
+// @fonderie/react-media's useUploadAvatar.
 const ALLOWED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 const MAX_AVATAR_BYTES = 1_000_000
-
-// Pull the asset id out of one of our own `${API_BASE_URL}/media/:id` avatar
-// URLs; null for empty, external, or bundled-placeholder avatars — so cleanup
-// only ever deletes assets this app uploaded.
-function mediaAssetId(url: string | null | undefined): string | null {
-  if (!url) return null
-  const m = url.match(
-    /\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[/?#]|$)/i,
-  )
-  return m ? m[1] : null
-}
-
-// FileReader yields a `data:<mime>;base64,<payload>` URL; POST /media wants only
-// the base64 payload, so strip the prefix.
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onerror = () => reject(new Error('Could not read the file'))
-    reader.onload = () => {
-      const result = String(reader.result)
-      const comma = result.indexOf(',')
-      resolve(comma >= 0 ? result.slice(comma + 1) : result)
-    }
-    reader.readAsDataURL(file)
-  })
-}
 
 function ProfileCard() {
   const { locale, setLocale } = useLocale()
   const { user, refresh } = useAppSession()
   const client = useFonderieClient()
   const [saving, setSaving] = useState(false)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { uploadAvatar, isUploading } = useUploadAvatar()
 
-  // Avatar flow (no client.media sub-client ships yet): read the file → base64 →
-  // authenticated POST /media → the server returns a monomorphic `/media/:id`
-  // URL → persist it as the profile's avatarUrl (auth surfaces it back as
-  // user.profileImageUrl) → refresh the shared session so it shows everywhere.
+  // Avatar upload is one call: @fonderie/react-media's useUploadAvatar encodes
+  // the file, POSTs it to /media, sets it as the profile avatar, and deletes the
+  // previous asset — the whole flow that used to live here as a hand-rolled
+  // fetch. We keep only the client-side pre-checks (UX) and refresh the shared
+  // session so the new avatar shows everywhere.
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     // Allow re-selecting the same file later (change fires only on a new value).
@@ -120,47 +96,12 @@ function ProfileCard() {
       toast.error('Image must be 1 MB or smaller')
       return
     }
-    // Capture the outgoing avatar so we can delete its asset once the new one is
-    // safely in place (see the cleanup after refresh below).
-    const priorAvatarUrl = user?.profileImageUrl
-    setUploadingAvatar(true)
     try {
-      const dataBase64 = await fileToBase64(file)
-      const token = readToken()
-      const res = await fetch(`${API_BASE_URL}/media`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ dataBase64, purpose: 'avatar' }),
-      })
-      const json = (await res.json().catch(() => null)) as
-        | { explanation?: string; result?: { asset?: { url?: string } } }
-        | null
-      if (!res.ok) throw new Error(json?.explanation ?? 'Upload failed')
-      const url = json?.result?.asset?.url
-      if (!url) throw new Error('Upload succeeded but returned no URL')
-      // Store an absolute URL: auth validates avatarUrl as a full URL, and an
-      // <img src> from the app origin must point at the API host.
-      await client.auth.updateProfile({ avatarUrl: `${API_BASE_URL}${url}` })
+      await uploadAvatar(file)
       await refresh({ force: true })
-      // Delete the previous avatar's asset now that the new one is persisted.
-      // Done AFTER the swap (not before the upload) so a failed upload can never
-      // strand the account without an avatar; a failed delete just leaves one
-      // orphan and must never surface as an error, hence best-effort .catch().
-      const priorId = mediaAssetId(priorAvatarUrl)
-      if (priorId && priorId !== mediaAssetId(url)) {
-        await fetch(`${API_BASE_URL}/media/${priorId}`, {
-          method: 'DELETE',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }).catch(() => {})
-      }
       toast.success('Avatar updated')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not upload avatar')
-    } finally {
-      setUploadingAvatar(false)
     }
   }
 
@@ -212,7 +153,7 @@ function ProfileCard() {
         <Button
           variant="secondary"
           size="xs"
-          loading={uploadingAvatar}
+          loading={isUploading}
           onClick={() => fileInputRef.current?.click()}
         >
           Change avatar
