@@ -168,7 +168,11 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
             <span className="block text-sm font-medium text-ink">{userDisplayName(user)}</span>
             {planName && <span className="block text-xs text-ink-subtle">{planName} plan</span>}
           </span>
-          <img src={profile} alt="" className="h-9 w-9 rounded-full" />
+          <img
+            src={user?.profileImageUrl || profile}
+            alt=""
+            className="h-9 w-9 rounded-full object-cover"
+          />
         </button>
         {accountOpen && (
           <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-52 p-1">
