@@ -39,4 +39,13 @@ test('uploaded avatar shows in the top nav, not just the profile card', async ({
   const cardSrc = await cardAvatar.getAttribute('src')
   const navSrc = await navAvatar.getAttribute('src')
   expect(navSrc).toBe(cardSrc)
+  const uploadedUrl = navSrc as string
+
+  // Remove reverts both avatars to the bundled placeholder and deletes the asset.
+  await page.locator('#profile').getByRole('button', { name: 'Remove' }).click()
+  await expect(page.getByText('Avatar removed')).toBeVisible({ timeout: 20_000 })
+  await expect(cardAvatar).not.toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
+  await expect(navAvatar).not.toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
+  // The stored asset is gone (deleted), so the served URL now 404s.
+  expect((await page.request.get(uploadedUrl)).status()).toBe(404)
 })

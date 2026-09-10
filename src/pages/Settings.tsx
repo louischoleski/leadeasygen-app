@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   BellRinging,
+  Camera,
   Clock,
   ClockCounterClockwise,
   Coin,
@@ -10,6 +11,7 @@ import {
   Envelope,
   Phone,
   ShieldCheck,
+  Trash,
   User,
   Warning,
 } from '@phosphor-icons/react'
@@ -75,8 +77,10 @@ function ProfileCard() {
   const { user, refresh } = useAppSession()
   const client = useFonderieClient()
   const [saving, setSaving] = useState(false)
+  const [isRemoving, setIsRemoving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { uploadAvatar, isUploading } = useUploadAvatar()
+  const hasAvatar = !!user?.profileImageUrl
 
   // Avatar upload is one call: @fonderie/react-media's useUploadAvatar encodes
   // the file, POSTs it to /media, sets it as the profile avatar, and deletes the
@@ -102,6 +106,24 @@ function ProfileCard() {
       toast.success('Avatar updated')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not upload avatar')
+    }
+  }
+
+  // Remove the current avatar: clear it on the profile (avatarUrl: null) and
+  // best-effort delete the stored asset, then refresh the shared session so the
+  // placeholder shows everywhere.
+  const handleAvatarRemove = async () => {
+    const currentId = client.media.assetIdFromUrl(user?.profileImageUrl)
+    setIsRemoving(true)
+    try {
+      await client.auth.updateProfile({ avatarUrl: null })
+      if (currentId) await client.media.delete(currentId).catch(() => undefined)
+      await refresh({ force: true })
+      toast.success('Avatar removed')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not remove avatar')
+    } finally {
+      setIsRemoving(false)
     }
   }
 
@@ -133,15 +155,15 @@ function ProfileCard() {
         title="Profile"
         description="Your account details and contact information."
       />
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-4">
         <img
           src={user?.profileImageUrl || profile}
           alt=""
           className="h-16 w-16 rounded-full object-cover"
         />
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <h2 className="font-medium text-ink">{userDisplayName(user)}</h2>
-          <p className="text-sm text-ink-subtle">{user?.email}</p>
+          <p className="truncate text-sm text-ink-subtle">{user?.email}</p>
         </div>
         <input
           ref={fileInputRef}
@@ -150,14 +172,33 @@ function ProfileCard() {
           className="hidden"
           onChange={(e) => void handleAvatarChange(e)}
         />
-        <Button
-          variant="secondary"
-          size="xs"
-          loading={isUploading}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          Change avatar
-        </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="xs"
+              iconLeft={Camera}
+              loading={isUploading}
+              disabled={isRemoving}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Change
+            </Button>
+            {hasAvatar && (
+              <Button
+                variant="secondary"
+                size="xs"
+                iconLeft={Trash}
+                loading={isRemoving}
+                disabled={isUploading}
+                onClick={() => void handleAvatarRemove()}
+              >
+                Remove
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-ink-subtle">PNG, JPEG, WebP or GIF. Max 1&nbsp;MB.</p>
+        </div>
       </div>
       <form noValidate onSubmit={handleSubmit}>
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
