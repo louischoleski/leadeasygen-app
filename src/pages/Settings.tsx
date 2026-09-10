@@ -69,6 +69,17 @@ const labelClass = 'mb-1 block text-sm font-medium text-ink'
 const ALLOWED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 const MAX_AVATAR_BYTES = 1_000_000
 
+// Pull the asset id out of one of our own `${API_BASE_URL}/media/:id` avatar
+// URLs; null for empty, external, or bundled-placeholder avatars — so cleanup
+// only ever deletes assets this app uploaded.
+function mediaAssetId(url: string | null | undefined): string | null {
+  if (!url) return null
+  const m = url.match(
+    /\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[/?#]|$)/i,
+  )
+  return m ? m[1] : null
+}
+
 // FileReader yields a `data:<mime>;base64,<payload>` URL; POST /media wants only
 // the base64 payload, so strip the prefix.
 function fileToBase64(file: File): Promise<string> {
@@ -109,6 +120,9 @@ function ProfileCard() {
       toast.error('Image must be 1 MB or smaller')
       return
     }
+    // Capture the outgoing avatar so we can delete its asset once the new one is
+    // safely in place (see the cleanup after refresh below).
+    const priorAvatarUrl = user?.profileImageUrl
     setUploadingAvatar(true)
     try {
       const dataBase64 = await fileToBase64(file)
@@ -131,6 +145,17 @@ function ProfileCard() {
       // <img src> from the app origin must point at the API host.
       await client.auth.updateProfile({ avatarUrl: `${API_BASE_URL}${url}` })
       await refresh({ force: true })
+      // Delete the previous avatar's asset now that the new one is persisted.
+      // Done AFTER the swap (not before the upload) so a failed upload can never
+      // strand the account without an avatar; a failed delete just leaves one
+      // orphan and must never surface as an error, hence best-effort .catch().
+      const priorId = mediaAssetId(priorAvatarUrl)
+      if (priorId && priorId !== mediaAssetId(url)) {
+        await fetch(`${API_BASE_URL}/media/${priorId}`, {
+          method: 'DELETE',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }).catch(() => {})
+      }
       toast.success('Avatar updated')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not upload avatar')
