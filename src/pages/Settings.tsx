@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
@@ -24,7 +24,8 @@ import { subscriptionTiers, useBilling } from '../data/billing'
 import { useAppSession, userDisplayName } from '../lib/session'
 import { localeNames, locales, useLocale } from '../hooks/useLocale'
 import { useFonderieClient } from '@fonderie/react'
-import { FonderieApiError, useChangePassword, useMfaSetup } from '@fonderie/react-auth'
+import { FonderieApiError, readToken, useChangePassword, useMfaSetup } from '@fonderie/react-auth'
+import { API_BASE_URL } from '../lib/fonderie'
 import { OtpInput } from '../components/OtpInput'
 import { LoginHistoryCard } from '../components/LoginHistoryCard'
 import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
@@ -61,11 +62,82 @@ const languageOptions = locales.map((l) => ({ value: l, label: localeNames[l] })
 
 const labelClass = 'mb-1 block text-sm font-medium text-ink'
 
+// The avatar upload targets @fonderie/media's POST /media. Mirror its server
+// defaults so bad files are rejected before the round-trip (the server enforces
+// these regardless): 1 MB cap and raster image types only — SVG is rejected
+// server-side as a stored-XSS vector.
+const ALLOWED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+const MAX_AVATAR_BYTES = 1_000_000
+
+// FileReader yields a `data:<mime>;base64,<payload>` URL; POST /media wants only
+// the base64 payload, so strip the prefix.
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('Could not read the file'))
+    reader.onload = () => {
+      const result = String(reader.result)
+      const comma = result.indexOf(',')
+      resolve(comma >= 0 ? result.slice(comma + 1) : result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 function ProfileCard() {
   const { locale, setLocale } = useLocale()
   const { user, refresh } = useAppSession()
   const client = useFonderieClient()
   const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Avatar flow (no client.media sub-client ships yet): read the file → base64 →
+  // authenticated POST /media → the server returns a monomorphic `/media/:id`
+  // URL → persist it as the profile's avatarUrl (auth surfaces it back as
+  // user.profileImageUrl) → refresh the shared session so it shows everywhere.
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    // Allow re-selecting the same file later (change fires only on a new value).
+    e.target.value = ''
+    if (!file) return
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      toast.error('Use a PNG, JPEG, WebP, or GIF image')
+      return
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error('Image must be 1 MB or smaller')
+      return
+    }
+    setUploadingAvatar(true)
+    try {
+      const dataBase64 = await fileToBase64(file)
+      const token = readToken()
+      const res = await fetch(`${API_BASE_URL}/media`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ dataBase64, purpose: 'avatar' }),
+      })
+      const json = (await res.json().catch(() => null)) as
+        | { explanation?: string; result?: { asset?: { url?: string } } }
+        | null
+      if (!res.ok) throw new Error(json?.explanation ?? 'Upload failed')
+      const url = json?.result?.asset?.url
+      if (!url) throw new Error('Upload succeeded but returned no URL')
+      // Store an absolute URL: auth validates avatarUrl as a full URL, and an
+      // <img src> from the app origin must point at the API host.
+      await client.auth.updateProfile({ avatarUrl: `${API_BASE_URL}${url}` })
+      await refresh({ force: true })
+      toast.success('Avatar updated')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not upload avatar')
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -96,12 +168,28 @@ function ProfileCard() {
         description="Your account details and contact information."
       />
       <div className="mt-4 flex items-center gap-3">
-        <img src={profile} alt="" className="h-16 w-16 rounded-full object-cover" />
+        <img
+          src={user?.profileImageUrl || profile}
+          alt=""
+          className="h-16 w-16 rounded-full object-cover"
+        />
         <div className="flex-1">
           <h2 className="font-medium text-ink">{userDisplayName(user)}</h2>
           <p className="text-sm text-ink-subtle">{user?.email}</p>
         </div>
-        <Button variant="secondary" size="xs" onClick={() => toast('Avatar upload is not wired up yet')}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ALLOWED_AVATAR_TYPES.join(',')}
+          className="hidden"
+          onChange={(e) => void handleAvatarChange(e)}
+        />
+        <Button
+          variant="secondary"
+          size="xs"
+          loading={uploadingAvatar}
+          onClick={() => fileInputRef.current?.click()}
+        >
           Change avatar
         </Button>
       </div>
