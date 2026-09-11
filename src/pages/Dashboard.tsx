@@ -48,7 +48,9 @@ export default function Dashboard() {
           </div>
           <div>
             <p className="text-sm text-ink-subtle">Available Credits</p>
-            <p className="text-2xl font-bold text-ink">{creditBalance}</p>
+            <p className="text-2xl font-bold text-ink">
+              {creditsUnlimited ? 'Unlimited' : creditBalance}
+            </p>
           </div>
         </div>
         {!creditsUnlimited && (

@@ -45,6 +45,10 @@ test('unlimited plan hides every Buy Credits CTA', async ({ page }) => {
   await expect(page.locator('#credits')).toContainText('Unlimited')
   await expect(page.locator('#credits').getByRole('link', { name: 'Buy credits' })).toHaveCount(0)
   await expect(page.locator('#credits').getByRole('link', { name: 'Manage billing' })).toBeVisible()
+  // Balance reads "Unlimited", not a numeric "N remaining".
+  await expect(page.locator('#credits')).not.toContainText('remaining')
+  // The nav pill shows Unlimited too (not "N credits").
+  await expect(page.getByRole('link', { name: 'Unlimited' })).toBeVisible()
 
   // Billing page: widget Buy Credits gone + no packs toggle; View Plans stays.
   await page.goto('/billing')

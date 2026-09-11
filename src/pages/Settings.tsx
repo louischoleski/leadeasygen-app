@@ -464,8 +464,14 @@ function CreditsCard() {
         action={
           <div className="flex flex-wrap items-center gap-3">
             <div className="mr-3">
-              <span className="text-3xl font-bold text-ink">{creditBalance}</span>
-              <span className="ml-1 text-sm text-ink-subtle">remaining</span>
+              {creditsUnlimited ? (
+                <span className="text-3xl font-bold text-ink">Unlimited</span>
+              ) : (
+                <>
+                  <span className="text-3xl font-bold text-ink">{creditBalance}</span>
+                  <span className="ml-1 text-sm text-ink-subtle">remaining</span>
+                </>
+              )}
             </div>
             {!creditsUnlimited && (
               <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>

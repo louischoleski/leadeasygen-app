@@ -716,7 +716,9 @@ export default function Billing() {
             </div>
             <div>
               <p className="text-sm text-ink-subtle">Available Credits</p>
-              <p className="text-4xl font-bold tracking-tight text-ink">{creditBalance}</p>
+              <p className="text-4xl font-bold tracking-tight text-ink">
+                {creditsUnlimited ? 'Unlimited' : creditBalance}
+              </p>
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">

@@ -19,7 +19,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { isMobile } = useViewport()
   const os = useOS()
   const { user, logout } = useAppSession()
-  const { creditBalance, subscriptionTier } = useBilling()
+  const { creditBalance, subscriptionTier, creditsUnlimited } = useBilling()
   // Tier is null until billing's first read resolves — render no plan line
   // rather than flashing "Free" at a subscribed user.
   const planName = subscriptionTiers.find((t) => t.id === subscriptionTier)?.name
@@ -92,8 +92,14 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         className="mr-2 ml-auto hidden items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-link transition-colors hover:bg-primary/15 md:inline-flex"
       >
         <Coin className="h-4 w-4" aria-hidden="true" />
-        {creditBalance.toLocaleString()}
-        <span className="hidden lg:inline">credits</span>
+        {creditsUnlimited ? (
+          'Unlimited'
+        ) : (
+          <>
+            {creditBalance.toLocaleString()}
+            <span className="hidden lg:inline">credits</span>
+          </>
+        )}
       </Link>
 
       <div
