@@ -2,7 +2,7 @@ import { ArrowSquareOut, Envelope, Phone, Star } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useBilling } from '../data/billing'
 import type { Lead } from '../data/jobs'
-import { cn } from '../lib/cn'
+import { Table } from './Table'
 
 function copyToClipboard(text: string, message: string) {
   navigator.clipboard
@@ -22,8 +22,7 @@ export function ResultsTable({ leads }: { leads: Lead[] }) {
   const subscribed = subscriptionTier !== null && subscriptionTier !== 'free'
   return (
     <div className="overflow-hidden rounded-md border border-hairline">
-      <div className={cn('max-h-[60vh] overflow-x-auto overflow-y-auto', !subscribed && 'select-none')}>
-        <table className="w-full text-sm whitespace-nowrap">
+      <Table wrapperClassName="max-h-[60vh] overflow-y-auto" selectable={subscribed}>
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
               {headings.map((heading) => (
@@ -116,8 +115,7 @@ export function ResultsTable({ leads }: { leads: Lead[] }) {
               )
             })}
           </tbody>
-        </table>
-      </div>
+      </Table>
     </div>
   )
 }

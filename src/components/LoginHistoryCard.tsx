@@ -4,6 +4,7 @@ import type { ILoginEventDTO } from '@fonderie/react-auth'
 import { toast } from 'sonner'
 import { Button } from './Button'
 import { Card } from './Card'
+import { Table } from './Table'
 import { SectionHeader } from './SectionHeader'
 import { parseUserAgent } from '../lib/userAgent'
 import { RECENT_LIST_LIMIT } from '../constants/lists'
@@ -76,8 +77,7 @@ export function LoginHistoryCard() {
       ) : (
         <>
           <div className="mt-4 overflow-hidden rounded-md border border-hairline">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm whitespace-nowrap">
+            <Table>
                 <thead>
                   <tr className="border-b border-hairline bg-surface-2 text-left text-xs font-medium tracking-wider text-ink-subtle uppercase">
                     <th className="h-10 px-4">Date &amp; time</th>
@@ -123,8 +123,7 @@ export function LoginHistoryCard() {
                     )
                   })}
                 </tbody>
-              </table>
-            </div>
+            </Table>
           </div>
         </>
       )}

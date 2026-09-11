@@ -24,6 +24,7 @@ import { CancelPlanDialog } from '../components/CancelPlanDialog'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CurrentPlanCard } from '../components/CurrentPlanCard'
 import { IconButton } from '../components/IconButton'
+import { Table } from '../components/Table'
 import { Tabs } from '../components/Tabs'
 import { Toggle } from '../components/Toggle'
 import {
@@ -202,8 +203,7 @@ function InvoicesTable() {
 
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm whitespace-nowrap">
+      <Table>
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
               {['Date', 'Due', 'Total', 'Status'].map((heading) => (
@@ -277,8 +277,7 @@ function InvoicesTable() {
               )
             })}
           </tbody>
-        </table>
-      </div>
+      </Table>
     </Card>
   )
 }
@@ -342,8 +341,7 @@ function CreditActivityTable() {
 
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm whitespace-nowrap">
+      <Table>
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
               {['Date', 'Description', 'Type'].map((heading) => (
@@ -395,8 +393,7 @@ function CreditActivityTable() {
               )
             })}
           </tbody>
-        </table>
-      </div>
+      </Table>
       {hasMore && (
         <div className="border-t border-hairline p-3 text-center">
           <Button
