@@ -534,7 +534,10 @@ export default function Settings() {
         </select>
       </div>
       <div className="flex gap-8">
-        <nav className="hidden w-[180px] shrink-0 lg:block" aria-label="Settings sections">
+        <nav
+          className="sticky top-20 hidden max-h-[calc(100vh-6rem)] w-[180px] shrink-0 self-start overflow-y-auto lg:block"
+          aria-label="Settings sections"
+        >
           <ul className="space-y-1">
             {sections.map((s) => (
               <li key={s.id}>
