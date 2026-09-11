@@ -6,6 +6,7 @@ import { Button } from './Button'
 import { Card } from './Card'
 import { SectionHeader } from './SectionHeader'
 import { parseUserAgent } from '../lib/userAgent'
+import { RECENT_LIST_LIMIT } from '../constants/lists'
 
 const methodLabel: Record<string, string> = {
   password: 'Password',
@@ -47,7 +48,10 @@ function exportCsv(events: ILoginEventDTO[]) {
 }
 
 export function LoginHistoryCard() {
-  const { events, isLoading, error, hasMore, loadMore, isLoadingMore } = useLoginHistory({ limit: 20 })
+  // Fetch a small buffer (export can use the fuller set) but only render the
+  // most recent RECENT_LIST_LIMIT until this card gets real pagination.
+  const { events, isLoading, error } = useLoginHistory({ limit: 20 })
+  const recent = events.slice(0, RECENT_LIST_LIMIT)
 
   return (
     <Card as="section" id="activity" className="scroll-mt-20 p-5">
@@ -84,7 +88,7 @@ export function LoginHistoryCard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {events.map((e) => {
+                  {recent.map((e) => {
                     const { date, time } = formatDate(e.createdAt)
                     const ua = parseUserAgent(e.userAgent)
                     const ok = e.outcome === 'success'
@@ -122,13 +126,6 @@ export function LoginHistoryCard() {
               </table>
             </div>
           </div>
-          {hasMore && (
-            <div className="mt-3 flex justify-center">
-              <Button variant="ghost" size="sm" onClick={() => void loadMore()} loading={isLoadingMore}>
-                Load more
-              </Button>
-            </div>
-          )}
         </>
       )}
     </Card>

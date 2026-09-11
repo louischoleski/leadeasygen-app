@@ -8,6 +8,7 @@ import { Card } from './Card'
 import { ConfirmDialog } from './ConfirmDialog'
 import { SectionHeader } from './SectionHeader'
 import { parseUserAgent } from '../lib/userAgent'
+import { RECENT_LIST_LIMIT } from '../constants/lists'
 
 // "Signed in Sep 7, 2026" — honest until Phase 5 adds last_active_at; we only
 // know when the session was created, not last used, so we say so plainly.
@@ -105,7 +106,9 @@ export function ActiveSessionsCard() {
         <p className="mt-4 text-sm text-ink-subtle">No active sessions.</p>
       ) : (
         <div className="mt-4 space-y-3">
-          {sessions.map((s) => (
+          {/* Show only the most recent RECENT_LIST_LIMIT until pagination lands;
+              "Terminate all others" still acts on every other session. */}
+          {sessions.slice(0, RECENT_LIST_LIMIT).map((s) => (
             <SessionRow key={s.id} session={s} onTerminate={(id) => setConfirming(id)} />
           ))}
         </div>
