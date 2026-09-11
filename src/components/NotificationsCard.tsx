@@ -8,50 +8,26 @@ import { Card } from './Card'
 import { SectionHeader } from './SectionHeader'
 import { Toggle } from './Toggle'
 import { useAppSession } from '../lib/session'
+import { useTranslation } from '../hooks/useTranslation'
 
 type ChannelKey = 'email' | 'inApp' | 'sms' | 'push'
-
-interface ChannelRow {
-  key: ChannelKey
-  icon: Icon
-  label: string
-  description: string
-}
 
 // The four channels @fonderie/auth models on user preferences. LeadEasyGen
 // only delivers over email today (SMS/push have no provider wired), so those
 // rows note the requirement — the preference still saves, and starts sending
-// once a provider is configured.
-const CHANNELS: ChannelRow[] = [
-  {
-    key: 'email',
-    icon: Envelope,
-    label: 'Email notifications',
-    description: 'Low-credit warnings, purchase receipts, security alerts, and account updates by email.',
-  },
-  {
-    key: 'inApp',
-    icon: ChatText,
-    label: 'In-app notifications',
-    description: 'Show notifications inside the app.',
-  },
-  {
-    key: 'sms',
-    icon: DeviceMobile,
-    label: 'SMS notifications',
-    description: 'Critical alerts by text message. Requires a verified phone number.',
-  },
-  {
-    key: 'push',
-    icon: BellRinging,
-    label: 'Push notifications',
-    description: 'Instant alerts on your device. Requires a registered device.',
-  },
+// once a provider is configured. Labels/descriptions live in the settings
+// dictionary under channels.<key>.
+const CHANNELS: { key: ChannelKey; icon: Icon }[] = [
+  { key: 'email', icon: Envelope },
+  { key: 'inApp', icon: ChatText },
+  { key: 'sms', icon: DeviceMobile },
+  { key: 'push', icon: BellRinging },
 ]
 
 const DEFAULTS: Record<ChannelKey, boolean> = { email: true, inApp: true, sms: false, push: false }
 
 export function NotificationsCard() {
+  const { t } = useTranslation()
   const { user, refresh } = useAppSession()
   const client = useFonderieClient()
 
@@ -74,9 +50,9 @@ export function NotificationsCard() {
       // updatePreferences REPLACES the notifications object, so send all four.
       await client.auth.updatePreferences({ notifications: channels })
       await refresh({ force: true })
-      toast.success('Notification preferences updated')
+      toast.success(t('settings.notifications.updated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not update notifications')
+      toast.error(err instanceof Error ? err.message : t('settings.notifications.updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -86,26 +62,26 @@ export function NotificationsCard() {
     <Card as="section" id="notifications" className="scroll-mt-20 p-5">
       <SectionHeader
         icon={BellRinging}
-        title="Notifications"
-        description="Choose which channels we use to reach you."
+        title={t('settings.notifications.title')}
+        description={t('settings.notifications.description')}
       />
 
       <div className="mt-4 divide-y divide-hairline">
-        {CHANNELS.map(({ key, icon: RowIcon, label, description }) => (
+        {CHANNELS.map(({ key, icon: RowIcon }) => (
           <div key={key} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
             <div className="flex items-start gap-3">
               <RowIcon className="mt-0.5 h-5 w-5 shrink-0 text-ink-subtle" aria-hidden="true" />
               <div>
-                <p className="text-sm font-medium text-ink">{label}</p>
-                <p className="text-sm text-ink-subtle">{description}</p>
+                <p className="text-sm font-medium text-ink">{t(`settings.notifications.channels.${key}.label`)}</p>
+                <p className="text-sm text-ink-subtle">{t(`settings.notifications.channels.${key}.description`)}</p>
               </div>
             </div>
             <Toggle
               pressed={channels[key]}
               onPressedChange={(next) => set(key, next)}
-              pressedLabel="On"
-              unpressedLabel="Off"
-              aria-label={label}
+              pressedLabel={t('settings.notifications.on')}
+              unpressedLabel={t('settings.notifications.off')}
+              aria-label={t(`settings.notifications.channels.${key}.label`)}
             />
           </div>
         ))}
@@ -113,7 +89,7 @@ export function NotificationsCard() {
 
       <div className="mt-4 flex justify-end">
         <Button onClick={() => void handleSave()} loading={saving} disabled={!dirty}>
-          Save preferences
+          {t('settings.notifications.save')}
         </Button>
       </div>
     </Card>

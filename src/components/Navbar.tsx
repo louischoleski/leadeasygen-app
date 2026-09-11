@@ -2,27 +2,28 @@ import { Coin, Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun,
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Avatar } from './Avatar'
-import { subscriptionTiers, useBilling } from '../data/billing'
+import { tierDisplayName, useBilling } from '../data/billing'
 import { useAppSession, userDisplayName } from '../lib/session'
 import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
 import { SHORTCUTS } from '../constants/shortcuts'
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut'
-import { localeNames, useLocale } from '../hooks/useLocale'
+import { useTranslation } from '../hooks/useTranslation'
+import { localeNames } from '../locales'
 import { useOS } from '../hooks/useOS'
 import { themeModes, useTheme } from '../hooks/useTheme'
 import { useViewport } from '../hooks/useViewport'
 
 export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
   const { theme, mode, setThemeMode } = useTheme()
-  const { locale } = useLocale()
+  const { t, m, locale } = useTranslation()
   const { isMobile } = useViewport()
   const os = useOS()
   const { user, logout } = useAppSession()
   const { creditBalance, subscriptionTier, creditsUnlimited } = useBilling()
   // Tier is null until billing's first read resolves — render no plan line
   // rather than flashing "Free" at a subscribed user.
-  const planName = subscriptionTiers.find((t) => t.id === subscriptionTier)?.name
+  const planName = tierDisplayName(m, subscriptionTier)
   const [localeOpen, setLocaleOpen] = useState(false)
   const [themeOpen, setThemeOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -57,21 +58,21 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         className="hidden h-full w-[200px] shrink-0 items-center gap-2 bg-primary px-5 transition-colors hover:bg-primary-hover md:flex"
       >
         <MagnetStraight size={20} aria-hidden="true" className="shrink-0 text-on-primary" />
-        <span className="text-sm font-semibold tracking-tight text-on-primary">LeadEasyGen</span>
+        <span className="text-sm font-semibold tracking-tight text-on-primary">{t('common.appName')}</span>
       </Link>
-      <IconButton icon={List} variant="ghost" aria-label="Toggle navigation" onClick={onToggleNav} className="md:ml-2" />
+      <IconButton icon={List} variant="ghost" aria-label={t('nav.toggleNavigation')} onClick={onToggleNav} className="md:ml-2" />
       <Link to="/" className="ml-1 flex items-center gap-2 md:hidden">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary">
           <MagnetStraight size={14} aria-hidden="true" className="text-on-primary" />
         </span>
-        <span className="text-sm font-semibold tracking-tight text-ink">LeadEasyGen</span>
+        <span className="text-sm font-semibold tracking-tight text-ink">{t('common.appName')}</span>
       </Link>
       <form className="relative ml-3 hidden md:block" role="search" onSubmit={(e) => e.preventDefault()}>
         <input
           ref={searchInputRef}
           type="search"
-          aria-label="Search"
-          placeholder="Search data for analysis"
+          aria-label={t('nav.search.label')}
+          placeholder={t('nav.search.placeholder')}
           className="w-[250px] rounded-md border border-hairline bg-surface-2 py-1.5 pr-12 pl-3 text-sm text-ink outline-none placeholder:text-ink-subtle focus:ring-2 focus:ring-primary-focus/50"
         />
         <kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 rounded border border-hairline bg-surface-1 px-1.5 py-0.5 font-mono text-[10px] text-ink-subtle">
@@ -82,7 +83,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       <IconButton
         icon={MagnifyingGlass}
         variant="ghost"
-        aria-label="Open search"
+        aria-label={t('nav.search.open')}
         onClick={() => setSearchOpen(true)}
         className="ml-auto md:hidden"
       />
@@ -93,11 +94,11 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       >
         <Coin className="h-4 w-4" aria-hidden="true" />
         {creditsUnlimited ? (
-          'Unlimited'
+          t('nav.credits.unlimited')
         ) : (
           <>
             {creditBalance.toLocaleString()}
-            <span className="hidden lg:inline">credits</span>
+            <span className="hidden lg:inline">{t('nav.credits.label')}</span>
           </>
         )}
       </Link>
@@ -112,7 +113,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           icon={Globe}
           variant="ghost"
           size="sm"
-          aria-label={`Language: ${localeNames[locale]}`}
+          aria-label={t('nav.language', { name: localeNames[locale] })}
           aria-haspopup="menu"
           aria-expanded={localeOpen}
           onClick={() => setLocaleOpen((o) => !o)}
@@ -131,26 +132,26 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
           icon={ThemeIcon}
           variant="ghost"
           size="sm"
-          aria-label={`Theme: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`}
+          aria-label={t('nav.theme.label', { name: t(`nav.theme.${mode}`) })}
           aria-haspopup="menu"
           aria-expanded={themeOpen}
           onClick={() => setThemeOpen((o) => !o)}
         />
         {themeOpen && (
           <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-28 p-1">
-            {themeModes.map((m) => (
+            {themeModes.map((themeMode) => (
               <button
-                key={m}
+                key={themeMode}
                 type="button"
                 role="menuitemradio"
-                aria-checked={m === mode}
+                aria-checked={themeMode === mode}
                 onClick={() => {
-                  setThemeMode(m)
+                  setThemeMode(themeMode)
                   setThemeOpen(false)
                 }}
-                className={`block w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-2 ${m === mode ? 'font-medium text-ink' : 'text-ink-muted'}`}
+                className={`block w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-2 ${themeMode === mode ? 'font-medium text-ink' : 'text-ink-muted'}`}
               >
-                {m.charAt(0).toUpperCase() + m.slice(1)}
+                {t(`nav.theme.${themeMode}`)}
               </button>
             ))}
           </div>
@@ -164,7 +165,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
       >
         <button
           type="button"
-          aria-label={`Account: ${userDisplayName(user)}`}
+          aria-label={t('nav.account.label', { name: userDisplayName(user) })}
           aria-haspopup="menu"
           aria-expanded={accountOpen}
           onClick={() => setAccountOpen((o) => !o)}
@@ -172,7 +173,11 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
         >
           <span className="hidden text-right lg:block">
             <span className="block text-sm font-medium text-ink">{userDisplayName(user)}</span>
-            {planName && <span className="block text-xs text-ink-subtle">{planName} plan</span>}
+            {planName && (
+              <span className="block text-xs text-ink-subtle">
+                {t('nav.account.plan', { plan: planName })}
+              </span>
+            )}
           </span>
           <Avatar src={user?.profileImageUrl} className="h-9 w-9" />
         </button>
@@ -188,7 +193,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
               onClick={() => setAccountOpen(false)}
               className="mt-1 block w-full rounded-sm px-2 py-1.5 text-left text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
             >
-              Settings
+              {t('nav.account.settings')}
             </Link>
             <button
               type="button"
@@ -196,7 +201,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
               onClick={() => void logout()}
               className="block w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
             >
-              Log out
+              {t('nav.account.logout')}
             </button>
           </div>
         )}
@@ -214,14 +219,14 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
             <input
               autoFocus
               type="search"
-              aria-label="Search"
-              placeholder="Search data for analysis"
+              aria-label={t('nav.search.label')}
+              placeholder={t('nav.search.placeholder')}
               className="h-11 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-subtle"
             />
             <IconButton
               icon={X}
               variant="ghost"
-              aria-label="Close search"
+              aria-label={t('nav.search.close')}
               onClick={() => setSearchOpen(false)}
               className="shrink-0"
             />

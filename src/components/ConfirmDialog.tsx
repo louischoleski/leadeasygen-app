@@ -1,6 +1,7 @@
 import { Button } from './Button'
 import { Card } from './Card'
 import { DialogShell } from './DialogShell'
+import { useTranslation } from '../hooks/useTranslation'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -18,11 +19,12 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Go back',
+  cancelLabel,
   danger,
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
   return (
     <DialogShell open={open} labelledBy="confirm-dialog-title" onClose={onClose}>
       <Card className="p-6">
@@ -32,7 +34,7 @@ export function ConfirmDialog({
         <p className="mt-2 text-sm text-ink-subtle">{description}</p>
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose} autoFocus>
-            {cancelLabel}
+            {cancelLabel ?? t('common.dialog.goBack')}
           </Button>
           <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>
             {confirmLabel}

@@ -22,9 +22,10 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { Toggle } from '../components/Toggle'
-import { subscriptionTiers, useBilling } from '../data/billing'
+import { tierDisplayName, useBilling } from '../data/billing'
 import { useAppSession, userDisplayName } from '../lib/session'
-import { localeNames, locales, useLocale } from '../hooks/useLocale'
+import { useTranslation } from '../hooks/useTranslation'
+import { localeNames, locales } from '../locales'
 import { useFonderieClient } from '@fonderie/react'
 import { FonderieApiError, useChangePassword, useMfaSetup } from '@fonderie/react-auth'
 import { useUploadAvatar } from '@fonderie/react-media'
@@ -37,17 +38,17 @@ import { SectionHeader } from '../components/SectionHeader'
 import { cn } from '../lib/cn'
 
 // Icons mirror each section's SectionHeader so the nav item visually maps to
-// its card.
+// its card. Labels come from the settings.sections dictionary, keyed by id.
 const sections = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'datetime', label: 'Date & time', icon: Clock },
-  { id: 'notifications', label: 'Notifications', icon: BellRinging },
-  { id: 'security', label: 'Security', icon: ShieldCheck },
-  { id: 'activity', label: 'Login history', icon: ClockCounterClockwise },
-  { id: 'sessions', label: 'Active sessions', icon: Devices },
-  { id: 'credits', label: 'Credits', icon: Coin },
-  { id: 'danger', label: 'Danger zone', icon: Warning },
-]
+  { id: 'profile', icon: User },
+  { id: 'datetime', icon: Clock },
+  { id: 'notifications', icon: BellRinging },
+  { id: 'security', icon: ShieldCheck },
+  { id: 'activity', icon: ClockCounterClockwise },
+  { id: 'sessions', icon: Devices },
+  { id: 'credits', icon: Coin },
+  { id: 'danger', icon: Warning },
+] as const
 
 // The full IANA timezone list straight from the runtime (Intl) — no dependency
 // and nothing to maintain; the browser/Node keeps it current. Engines without
@@ -73,7 +74,7 @@ const ALLOWED_AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gi
 const MAX_AVATAR_BYTES = 1_000_000
 
 function ProfileCard() {
-  const { locale, setLocale } = useLocale()
+  const { t, locale, setLocale } = useTranslation()
   const { user, refresh } = useAppSession()
   const client = useFonderieClient()
   const [saving, setSaving] = useState(false)
@@ -93,19 +94,19 @@ function ProfileCard() {
     e.target.value = ''
     if (!file) return
     if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
-      toast.error('Use a PNG, JPEG, WebP, or GIF image')
+      toast.error(t('settings.profile.avatarTypeError'))
       return
     }
     if (file.size > MAX_AVATAR_BYTES) {
-      toast.error('Image must be 1 MB or smaller')
+      toast.error(t('settings.profile.avatarSizeError'))
       return
     }
     try {
       await uploadAvatar(file)
       await refresh({ force: true })
-      toast.success('Avatar updated')
+      toast.success(t('settings.profile.avatarUpdated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not upload avatar')
+      toast.error(err instanceof Error ? err.message : t('settings.profile.avatarUploadFailed'))
     }
   }
 
@@ -119,9 +120,9 @@ function ProfileCard() {
       await client.auth.updateProfile({ avatarUrl: null })
       if (currentId) await client.media.delete(currentId).catch(() => undefined)
       await refresh({ force: true })
-      toast.success('Avatar removed')
+      toast.success(t('settings.profile.avatarRemoved'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not remove avatar')
+      toast.error(err instanceof Error ? err.message : t('settings.profile.avatarRemoveFailed'))
     } finally {
       setIsRemoving(false)
     }
@@ -140,9 +141,9 @@ function ProfileCard() {
       if (phone && phone !== user?.phone) await client.auth.updatePhone(phone)
       if (timezone) await client.auth.updatePreferences({ timezone, locale })
       await refresh({ force: true })
-      toast.success('Profile updated')
+      toast.success(t('settings.profile.updated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not update profile')
+      toast.error(err instanceof Error ? err.message : t('settings.profile.updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -152,8 +153,8 @@ function ProfileCard() {
     <Card as="section" id="profile" className="scroll-mt-20 p-5">
       <SectionHeader
         icon={User}
-        title="Profile"
-        description="Your account details and contact information."
+        title={t('settings.profile.title')}
+        description={t('settings.profile.description')}
       />
       <div className="mt-4 flex flex-wrap items-center gap-4">
         <Avatar src={user?.profileImageUrl} className="h-16 w-16" />
@@ -178,7 +179,7 @@ function ProfileCard() {
               disabled={isRemoving}
               onClick={() => fileInputRef.current?.click()}
             >
-              Change
+              {t('settings.profile.changeAvatar')}
             </Button>
             {hasAvatar && (
               <Button
@@ -189,37 +190,37 @@ function ProfileCard() {
                 disabled={isUploading}
                 onClick={() => void handleAvatarRemove()}
               >
-                Remove
+                {t('settings.profile.removeAvatar')}
               </Button>
             )}
           </div>
-          <p className="text-xs text-ink-subtle">PNG, JPEG, WebP or GIF. Max 1&nbsp;MB.</p>
+          <p className="text-xs text-ink-subtle">{t('settings.profile.avatarHint')}</p>
         </div>
       </div>
       <form noValidate onSubmit={handleSubmit}>
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
-          <Input label="Full name" name="name" id="name" defaultValue={userDisplayName(user)} iconLeft={User} />
+          <Input label={t('settings.profile.fullName')} name="name" id="name" defaultValue={userDisplayName(user)} iconLeft={User} />
           <Input
-            label="Email address"
+            label={t('settings.profile.email')}
             type="email"
             id="email"
             value={user?.email ?? ''}
             disabled
             iconLeft={Envelope}
-            helperText="Contact support to change your email"
+            helperText={t('settings.profile.emailHelper')}
           />
           <Input
-            label="Phone"
+            label={t('settings.profile.phone')}
             name="phone"
             id="phone"
             type="tel"
             format="phone"
             iconLeft={Phone}
-            placeholder="(555) 000-0000"
+            placeholder={t('settings.profile.phonePlaceholder')}
             defaultValue={user?.phone ?? ''}
           />
           <div>
-            <label className={labelClass} htmlFor="timezone">Timezone</label>
+            <label className={labelClass} htmlFor="timezone">{t('settings.profile.timezone')}</label>
             <Select
               inputId="timezone"
               name="timezone"
@@ -229,20 +230,20 @@ function ProfileCard() {
             />
           </div>
           <div>
-            <label className={labelClass} htmlFor="language">Language</label>
+            <label className={labelClass} htmlFor="language">{t('settings.profile.language')}</label>
             <Select
               inputId="language"
               options={languageOptions}
               value={languageOptions.find((o) => o.value === locale)}
               onChange={(option) => option && setLocale(option.value)}
-              placeholder="Select language..."
+              placeholder={t('settings.profile.languagePlaceholder')}
               isSearchable
             />
-            <p className="mt-1 text-xs text-ink-subtle">Applies immediately across the app</p>
+            <p className="mt-1 text-xs text-ink-subtle">{t('settings.profile.languageHint')}</p>
           </div>
         </div>
         <div className="mt-4 flex justify-end">
-          <Button type="submit" loading={saving}>Save profile</Button>
+          <Button type="submit" loading={saving}>{t('settings.profile.save')}</Button>
         </div>
       </form>
     </Card>
@@ -252,6 +253,7 @@ function ProfileCard() {
 type MfaMode = 'idle' | 'enrolling' | 'disabling' | 'regenerating'
 
 function SecurityCard() {
+  const { t } = useTranslation()
   const { user, refresh } = useAppSession()
   const client = useFonderieClient()
   const { changePassword, isLoading: changingPassword } = useChangePassword()
@@ -273,7 +275,7 @@ function SecurityCard() {
       await setup()
       enterMode('enrolling')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not start MFA setup')
+      toast.error(err instanceof Error ? err.message : t('settings.security.mfa.setupFailed'))
     }
   }
 
@@ -288,24 +290,24 @@ function SecurityCard() {
           if (err instanceof FonderieApiError) throw err
         }
         const { result } = await client.auth.getUser({ bust: true })
-        if (!result.user.mfaEnabled) throw new Error('Verification failed — try a fresh code')
+        if (!result.user.mfaEnabled) throw new Error(t('settings.security.mfa.verifyFailed'))
         await refresh({ force: true })
         enterMode('idle')
-        toast.success('Two-factor authentication enabled')
+        toast.success(t('settings.security.mfa.enabledToast'))
       } else if (mfaMode === 'disabling') {
         await disable(mfaCode)
         await refresh({ force: true })
         enterMode('idle')
-        toast('Two-factor authentication disabled')
+        toast(t('settings.security.mfa.disabledToast'))
       } else if (mfaMode === 'regenerating') {
         const codes = await regenerateBackupCodes(mfaCode)
         setMfaMode('idle')
         setMfaCode('')
         setFreshCodes(codes)
-        toast.success('New backup codes generated')
+        toast.success(t('settings.security.mfa.codesGenerated'))
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Invalid code')
+      toast.error(err instanceof Error ? err.message : t('settings.security.mfa.invalidCode'))
     }
   }
 
@@ -316,19 +318,19 @@ function SecurityCard() {
     const currentPassword = String(data.get('currentPassword') ?? '')
     const newPassword = String(data.get('newPassword') ?? '')
     if (newPassword !== data.get('repeatPassword')) {
-      toast.error('New passwords do not match')
+      toast.error(t('settings.security.passwordMismatch'))
       return
     }
     if (newPassword.length < 8) {
-      toast.error('Use at least 8 characters')
+      toast.error(t('settings.security.passwordTooShort'))
       return
     }
     try {
       await changePassword({ currentPassword, newPassword })
-      toast.success('Password changed')
+      toast.success(t('settings.security.passwordChanged'))
       form.reset()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not change password')
+      toast.error(err instanceof Error ? err.message : t('settings.security.passwordChangeFailed'))
     }
   }
 
@@ -336,29 +338,29 @@ function SecurityCard() {
     <Card as="section" id="security" className="scroll-mt-20 p-5">
       <SectionHeader
         icon={ShieldCheck}
-        title="Security"
-        description="Manage your password and two-factor authentication."
+        title={t('settings.security.title')}
+        description={t('settings.security.description')}
       />
       <form noValidate onSubmit={handlePassword}>
         <div className="mt-4 grid gap-x-6 gap-y-3 lg:grid-cols-2 xl:grid-cols-3">
-          <Input label="Current password" type="password" required name="currentPassword" id="currentPassword" />
-          <Input label="New password" type="password" required name="newPassword" id="newPassword" />
-          <Input label="Repeat new password" type="password" required name="repeatPassword" id="repeatPassword" />
+          <Input label={t('settings.security.currentPassword')} type="password" required name="currentPassword" id="currentPassword" />
+          <Input label={t('settings.security.newPassword')} type="password" required name="newPassword" id="newPassword" />
+          <Input label={t('settings.security.repeatPassword')} type="password" required name="repeatPassword" id="repeatPassword" />
         </div>
         <div className="mt-4 flex justify-end">
-          <Button type="submit" loading={changingPassword}>Change password</Button>
+          <Button type="submit" loading={changingPassword}>{t('settings.security.changePassword')}</Button>
         </div>
       </form>
       <hr className="my-4 border-hairline" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-medium text-ink">Two-factor authentication</h3>
-          <p className="text-xs text-ink-subtle">A one-time code from an authenticator app on every login.</p>
+          <h3 className="text-sm font-medium text-ink">{t('settings.security.mfa.title')}</h3>
+          <p className="text-xs text-ink-subtle">{t('settings.security.mfa.description')}</p>
         </div>
         <div className="flex items-center gap-2">
           {mfaEnabled && mfaMode === 'idle' && (
             <Button variant="secondary" size="xs" onClick={() => enterMode('regenerating')}>
-              Regenerate codes
+              {t('settings.security.mfa.regenerate')}
             </Button>
           )}
           <Toggle
@@ -367,9 +369,9 @@ function SecurityCard() {
               if (next && !mfaEnabled) void startEnroll()
               else if (!next && mfaEnabled) enterMode('disabling')
             }}
-            unpressedLabel="Disabled"
-            pressedLabel="Enabled"
-            aria-label="Two-factor authentication"
+            unpressedLabel={t('settings.security.mfa.disabled')}
+            pressedLabel={t('settings.security.mfa.enabled')}
+            aria-label={t('settings.security.mfa.title')}
           />
         </div>
       </div>
@@ -379,27 +381,27 @@ function SecurityCard() {
           <div className="flex flex-wrap gap-6">
             <img
               src={setupData.qr}
-              alt="QR code for your authenticator app"
+              alt={t('settings.security.mfa.qrAlt')}
               className="h-36 w-36 rounded-md bg-white p-2"
             />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-ink">Scan with your authenticator app</p>
+              <p className="text-sm font-medium text-ink">{t('settings.security.mfa.scan')}</p>
               <p id="mfa-enroll-label" className="mt-1 text-xs text-ink-subtle">
-                Then enter the 6-digit code it shows to finish enabling.
+                {t('settings.security.mfa.scanHint')}
               </p>
               <div className="mt-3">
                 <OtpInput value={mfaCode} onChange={setMfaCode} length={6} aria-labelledby="mfa-enroll-label" />
               </div>
               <div className="mt-3 flex justify-center gap-2">
                 <Button size="sm" onClick={() => void submitMfaCode()} loading={mfaBusy} disabled={mfaCode.length !== 6}>
-                  Enable
+                  {t('settings.security.mfa.enable')}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => enterMode('idle')}>Cancel</Button>
+                <Button size="sm" variant="ghost" onClick={() => enterMode('idle')}>{t('settings.security.mfa.cancel')}</Button>
               </div>
             </div>
           </div>
           <p className="mt-4 mb-2 text-xs text-ink-subtle">
-            Backup codes — store these safely, they are shown only once.
+            {t('settings.security.mfa.backupCodesEnroll')}
           </p>
           <div className="grid grid-cols-2 gap-1 font-mono text-xs text-ink sm:grid-cols-4">
             {setupData.backupCodes.map((code) => (
@@ -413,8 +415,8 @@ function SecurityCard() {
         <div className="mt-4 rounded-lg bg-surface-2 p-4">
           <p id="mfa-code-label" className="text-sm font-medium text-ink">
             {mfaMode === 'disabling'
-              ? 'Enter a code from your authenticator app to disable two-factor authentication'
-              : 'Enter a code from your authenticator app to generate new backup codes'}
+              ? t('settings.security.mfa.disablePrompt')
+              : t('settings.security.mfa.regeneratePrompt')}
           </p>
           <div className="mt-3">
             <OtpInput value={mfaCode} onChange={setMfaCode} length={6} aria-labelledby="mfa-code-label" />
@@ -427,9 +429,9 @@ function SecurityCard() {
               loading={mfaBusy}
               disabled={mfaCode.length !== 6}
             >
-              {mfaMode === 'disabling' ? 'Disable' : 'Generate codes'}
+              {mfaMode === 'disabling' ? t('settings.security.mfa.disable') : t('settings.security.mfa.generateCodes')}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => enterMode('idle')}>Cancel</Button>
+            <Button size="sm" variant="ghost" onClick={() => enterMode('idle')}>{t('settings.security.mfa.cancel')}</Button>
           </div>
         </div>
       )}
@@ -437,7 +439,7 @@ function SecurityCard() {
       {freshCodes && (
         <div className="mt-4 rounded-lg bg-surface-2 p-4">
           <p className="mb-2 text-xs text-ink-subtle">
-            Store these backup codes safely — they are shown only once.
+            {t('settings.security.mfa.backupCodesFresh')}
           </p>
           <div className="grid grid-cols-2 gap-1 font-mono text-xs text-ink sm:grid-cols-4">
             {freshCodes.map((code) => (
@@ -451,32 +453,36 @@ function SecurityCard() {
 }
 
 function CreditsCard() {
+  const { t, m } = useTranslation()
   const { creditBalance, subscriptionTier, creditsUnlimited } = useBilling()
-  const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
-  const planLabel = tier ? `the ${tier.name} plan` : 'pay-as-you-go'
+  const planName = tierDisplayName(m, subscriptionTier)
 
   return (
     <Card as="section" id="credits" className="scroll-mt-20 p-5">
       <SectionHeader
         icon={Coin}
-        title="Credits"
-        description={`You're on ${planLabel}. Credits are spent per scraping job.`}
+        title={t('settings.credits.title')}
+        description={
+          planName
+            ? t('settings.credits.descriptionPlan', { plan: planName })
+            : t('settings.credits.descriptionPayg')
+        }
         action={
           <div className="flex flex-wrap items-center gap-3">
             <div className="mr-3">
               {creditsUnlimited ? (
-                <span className="text-3xl font-bold text-ink">Unlimited</span>
+                <span className="text-3xl font-bold text-ink">{t('settings.credits.unlimited')}</span>
               ) : (
                 <>
                   <span className="text-3xl font-bold text-ink">{creditBalance}</span>
-                  <span className="ml-1 text-sm text-ink-subtle">remaining</span>
+                  <span className="ml-1 text-sm text-ink-subtle">{t('settings.credits.remaining')}</span>
                 </>
               )}
             </div>
             {!creditsUnlimited && (
-              <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>
+              <Button asChild><Link to="/billing#packages">{t('settings.credits.buy')}</Link></Button>
             )}
-            <Button asChild variant="secondary"><Link to="/billing">Manage billing</Link></Button>
+            <Button asChild variant="secondary"><Link to="/billing">{t('settings.credits.manage')}</Link></Button>
           </div>
         }
       />
@@ -485,30 +491,31 @@ function CreditsCard() {
 }
 
 function DangerCard() {
+  const { t } = useTranslation()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   return (
     <Card as="section" id="danger" className="scroll-mt-20 border-error/40 bg-error/5 p-5">
       <SectionHeader
         icon={Warning}
-        title="Danger zone"
-        description="Permanently delete your account and all associated data. This cannot be undone."
+        title={t('settings.danger.title')}
+        description={t('settings.danger.description')}
         tone="error"
       />
       <div className="mt-4">
         <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
-          Delete account
+          {t('settings.danger.delete')}
         </Button>
       </div>
       <ConfirmDialog
         open={confirmingDelete}
-        title="Delete account?"
-        description="All jobs, results, and remaining credits are permanently removed. This cannot be undone."
-        confirmLabel="Delete account"
+        title={t('settings.danger.confirmTitle')}
+        description={t('settings.danger.confirmDescription')}
+        confirmLabel={t('settings.danger.delete')}
         danger
         onConfirm={() => {
           setConfirmingDelete(false)
-          toast.error('Account deletion is not wired up yet')
+          toast.error(t('settings.danger.notWired'))
         }}
         onClose={() => setConfirmingDelete(false)}
       />
@@ -517,11 +524,12 @@ function DangerCard() {
 }
 
 export default function Settings() {
+  const { t } = useTranslation()
   return (
     <div className="w-full">
-      <h1 className="text-headline mb-6 text-ink">Settings</h1>
+      <h1 className="text-headline mb-6 text-ink">{t('settings.title')}</h1>
       <div className="mb-4 lg:hidden">
-        <label className="sr-only" htmlFor="settings-section">Settings section</label>
+        <label className="sr-only" htmlFor="settings-section">{t('settings.sectionPicker')}</label>
         <select
           id="settings-section"
           className="input"
@@ -529,14 +537,14 @@ export default function Settings() {
           onChange={(e) => document.getElementById(e.target.value)?.scrollIntoView({ behavior: 'smooth' })}
         >
           {sections.map((s) => (
-            <option key={s.id} value={s.id}>{s.label}</option>
+            <option key={s.id} value={s.id}>{t(`settings.sections.${s.id}`)}</option>
           ))}
         </select>
       </div>
       <div className="flex gap-8">
         <nav
           className="sticky top-20 hidden max-h-[calc(100vh-6rem)] w-[180px] shrink-0 self-start overflow-y-auto lg:block"
-          aria-label="Settings sections"
+          aria-label={t('settings.sectionsNav')}
         >
           <ul className="space-y-1">
             {sections.map((s) => (
@@ -549,7 +557,7 @@ export default function Settings() {
                   )}
                 >
                   <s.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  {s.label}
+                  {t(`settings.sections.${s.id}`)}
                 </a>
               </li>
             ))}

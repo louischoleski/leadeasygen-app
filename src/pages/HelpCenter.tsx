@@ -23,67 +23,22 @@ import { toast } from 'sonner'
 import { Accordion } from '../components/Accordion'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
-import { categoryLabel, helpArticles, helpCategories } from '../data/helpCenter'
+import { categoryLabel, getHelpArticles, helpCategories } from '../data/helpCenter'
+import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
 
 const SUPPORT_EMAIL = 'support@leadeasygen.com'
 
-const faqs = [
-  {
-    id: 'credits',
-    title: 'How do credits work?',
-    content:
-      'You purchase credit packs via Stripe — they never expire. Each scrape job deducts credits based on its scope: a base of 10, plus 2 per keyword, plus a distance charge for the search radius. The form shows the exact cost before you start.',
-  },
-  {
-    id: 'data',
-    title: 'What data does a scrape return?',
-    content:
-      'Business name, category, rating, review count, phone number, website, address, and any discovered email addresses. Every completed job exports to CSV.',
-  },
-  {
-    id: 'failed',
-    title: 'Why did my job fail?',
-    content:
-      'Sources occasionally change their page layout or rate-limit scrapers. Failed and cancelled jobs are automatically refunded to your credit balance — you can see every refund in Billing under Credit Activity.',
-  },
-  {
-    id: 'limits',
-    title: 'Is there a limit to how many leads I can scrape?',
-    content:
-      'The Free plan allows 1 active job at a time; the Unlimited plan removes job and credit limits. Beyond that, your credit balance is the only practical cap.',
-  },
-  {
-    id: 'refunds',
-    title: 'Can I get a refund?',
-    content:
-      'Purchased credits are non-refundable, so start with a small pack to validate the service for your use case. Failed and cancelled jobs always refund their credits automatically.',
-  },
-]
-
-const tutorials = [
-  { id: 't1', title: 'Complete platform walkthrough', duration: '12:34' },
-  { id: 't2', title: 'Running a lead scrape', duration: '8:45' },
-  { id: 't3', title: 'From lead to estimate', duration: '15:21' },
-  { id: 't4', title: 'CSV export & integrations', duration: '10:15' },
-]
-
 const DOCS_BASE = 'https://leadeasygen.com/docs'
 
-interface Resource {
-  id: string
-  title: string
-  description: string
-  href: string
-  icon: Icon
+// Structure only (link targets and icons); titles and descriptions live in the
+// dictionaries under help.resources.items, matched by id.
+const resourceMeta: Record<string, { href: string; icon: Icon }> = {
+  r1: { href: `${DOCS_BASE}/api`, icon: FileText },
+  r2: { href: `${DOCS_BASE}/scraping`, icon: DownloadSimple },
+  r3: { href: `${DOCS_BASE}/templates`, icon: Lightning },
+  r4: { href: `${DOCS_BASE}/security`, icon: WarningCircle },
 }
-
-const resources: Resource[] = [
-  { id: 'r1', title: 'API documentation', description: 'Complete API reference and guides', href: `${DOCS_BASE}/api`, icon: FileText },
-  { id: 'r2', title: 'Scraping guides', description: 'Downloadable lead-sourcing playbooks', href: `${DOCS_BASE}/scraping`, icon: DownloadSimple },
-  { id: 'r3', title: 'Field-ops templates', description: 'Estimate and invoice templates', href: `${DOCS_BASE}/templates`, icon: Lightning },
-  { id: 'r4', title: 'Security best practices', description: 'Guidelines for keeping data safe', href: `${DOCS_BASE}/security`, icon: WarningCircle },
-]
 
 const supportTeam = [
   { initials: 'AJ', online: true },
@@ -92,34 +47,39 @@ const supportTeam = [
 ]
 
 export default function HelpCenter() {
+  const { t, m } = useTranslation()
+
   useEffect(() => {
-    document.title = 'LeadEasyGen — Help Center'
-  }, [])
+    document.title = `${t('common.appName')} — ${t('help.title')}`
+  }, [t])
 
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
 
   const q = query.trim().toLowerCase()
 
+  const articles = useMemo(() => getHelpArticles(m), [m])
   const filteredArticles = useMemo(
     () =>
-      helpArticles.filter(
+      articles.filter(
         (a) =>
           (activeCategory === 'all' || a.category === activeCategory) &&
           (q === '' || a.title.toLowerCase().includes(q)),
       ),
-    [activeCategory, q],
+    [articles, activeCategory, q],
   )
 
+  const faqs = m.help.faqs
   const filteredFaqs = useMemo(
     () =>
       faqs.filter(
         (f) => q === '' || f.title.toLowerCase().includes(q) || f.content.toLowerCase().includes(q),
       ),
-    [q],
+    [faqs, q],
   )
 
-  const soon = (label: string) => toast(`${label} isn't available yet`, { description: 'Coming soon.' })
+  const soon = (label: string) =>
+    toast(t('help.soon.toast', { label }), { description: t('help.soon.description') })
   const emailSupport = () => {
     window.location.href = `mailto:${SUPPORT_EMAIL}`
   }
@@ -128,9 +88,9 @@ export default function HelpCenter() {
     <div className="space-y-8 pb-10">
       {/* Header */}
       <div className="space-y-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">Help Center</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{t('help.title')}</h1>
         <p className="text-sm text-ink-subtle">
-          Find answers, guides, and support for everything LeadEasyGen.
+          {t('help.subtitle')}
         </p>
       </div>
 
@@ -147,18 +107,18 @@ export default function HelpCenter() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              aria-label="Search the Help Center"
-              placeholder="Search help articles, guides, and FAQs…"
+              aria-label={t('help.search.label')}
+              placeholder={t('help.search.placeholder')}
               className="h-10 w-full rounded-md border border-hairline bg-surface-1 pr-3 pl-9 text-sm text-ink shadow-sm transition-colors placeholder:text-ink-subtle focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary-focus/40 focus-visible:outline-none"
             />
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" fullWidth iconLeft={ChatCircleDots} onClick={() => soon('Live chat')}>
-            Live Chat
+          <Button variant="secondary" fullWidth iconLeft={ChatCircleDots} onClick={() => soon(t('help.soon.liveChat'))}>
+            {t('help.actions.liveChat')}
           </Button>
           <Button fullWidth iconLeft={EnvelopeSimple} onClick={emailSupport}>
-            Contact Support
+            {t('help.actions.contactSupport')}
           </Button>
         </div>
       </div>
@@ -186,7 +146,7 @@ export default function HelpCenter() {
                 aria-hidden="true"
                 className={cn('mb-2', active ? 'text-primary' : 'text-ink-subtle')}
               />
-              <span className="text-sm font-medium text-ink">{cat.label}</span>
+              <span className="text-sm font-medium text-ink">{categoryLabel(m, cat.id)}</span>
             </button>
           )
         })}
@@ -201,13 +161,13 @@ export default function HelpCenter() {
             <div className="space-y-1 p-6">
               <h2 className="flex items-center text-lg font-semibold text-ink">
                 <FileText size={20} aria-hidden="true" className="mr-2 text-ink-subtle" />
-                Popular articles
+                {t('help.popular.title')}
               </h2>
-              <p className="text-sm text-ink-subtle">Browse our most helpful guides and resources.</p>
+              <p className="text-sm text-ink-subtle">{t('help.popular.subtitle')}</p>
             </div>
             <div className="space-y-3 px-6">
               {filteredArticles.length === 0 ? (
-                <p className="pb-2 text-sm text-ink-subtle">No articles match your search.</p>
+                <p className="pb-2 text-sm text-ink-subtle">{t('help.popular.empty')}</p>
               ) : (
                 filteredArticles.map((a) => (
                   <Link
@@ -219,7 +179,7 @@ export default function HelpCenter() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium text-ink">{a.title}</span>
                         <span className="inline-flex items-center rounded-md border border-hairline px-2 py-0.5 text-xs font-medium text-ink-subtle">
-                          {categoryLabel(a.category)}
+                          {categoryLabel(m, a.category)}
                         </span>
                       </div>
                       <p className="text-xs text-ink-tertiary">{a.updated}</p>
@@ -230,8 +190,8 @@ export default function HelpCenter() {
               )}
             </div>
             <div className="p-6">
-              <Button variant="secondary" fullWidth iconRight={ArrowRight} onClick={() => soon('The full article library')}>
-                View all articles
+              <Button variant="secondary" fullWidth iconRight={ArrowRight} onClick={() => soon(t('help.soon.articleLibrary'))}>
+                {t('help.popular.viewAll')}
               </Button>
             </div>
           </Card>
@@ -241,20 +201,20 @@ export default function HelpCenter() {
             <div className="space-y-1 p-6">
               <h2 className="flex items-center text-lg font-semibold text-ink">
                 <Info size={20} aria-hidden="true" className="mr-2 text-ink-subtle" />
-                Frequently asked questions
+                {t('help.faq.title')}
               </h2>
-              <p className="text-sm text-ink-subtle">Quick answers to common questions.</p>
+              <p className="text-sm text-ink-subtle">{t('help.faq.subtitle')}</p>
             </div>
             <div className="px-6">
               {filteredFaqs.length === 0 ? (
-                <p className="text-sm text-ink-subtle">No FAQs match your search.</p>
+                <p className="text-sm text-ink-subtle">{t('help.faq.empty')}</p>
               ) : (
                 <Accordion items={filteredFaqs} />
               )}
             </div>
             <div className="p-6">
               <Button variant="secondary" fullWidth iconRight={ArrowRight} onClick={emailSupport}>
-                Still need help? Contact support
+                {t('help.faq.contact')}
               </Button>
             </div>
           </Card>
@@ -267,16 +227,16 @@ export default function HelpCenter() {
             <div className="space-y-1 p-6">
               <h2 className="flex items-center text-lg font-semibold text-ink">
                 <VideoCamera size={20} aria-hidden="true" className="mr-2 text-ink-subtle" />
-                Video tutorials
+                {t('help.tutorials.title')}
               </h2>
-              <p className="text-sm text-ink-subtle">Learn visually with step-by-step guides.</p>
+              <p className="text-sm text-ink-subtle">{t('help.tutorials.subtitle')}</p>
             </div>
             <div className="space-y-4 px-6">
-              {tutorials.map((t) => (
+              {m.help.tutorials.items.map((tut) => (
                 <button
-                  key={t.id}
+                  key={tut.id}
                   type="button"
-                  onClick={() => soon(t.title)}
+                  onClick={() => soon(tut.title)}
                   className="group block w-full overflow-hidden rounded-lg border border-hairline text-left transition-colors hover:bg-surface-2/50"
                 >
                   <div className="relative flex aspect-video w-full items-center justify-center bg-surface-2">
@@ -284,18 +244,18 @@ export default function HelpCenter() {
                       <Play size={22} weight="fill" aria-hidden="true" />
                     </span>
                     <span className="absolute right-2 bottom-2 rounded bg-ink/70 px-1.5 py-0.5 text-xs font-medium text-surface-1">
-                      {t.duration}
+                      {tut.duration}
                     </span>
                   </div>
                   <div className="p-3">
-                    <h3 className="text-sm font-medium text-ink">{t.title}</h3>
+                    <h3 className="text-sm font-medium text-ink">{tut.title}</h3>
                   </div>
                 </button>
               ))}
             </div>
             <div className="p-6">
-              <Button variant="secondary" fullWidth iconRight={ArrowRight} onClick={() => soon('The tutorial library')}>
-                View all tutorials
+              <Button variant="secondary" fullWidth iconRight={ArrowRight} onClick={() => soon(t('help.soon.tutorialLibrary'))}>
+                {t('help.tutorials.viewAll')}
               </Button>
             </div>
           </Card>
@@ -305,21 +265,21 @@ export default function HelpCenter() {
             <div className="space-y-1 p-6">
               <h2 className="flex items-center text-lg font-semibold text-ink">
                 <ChatCircleDots size={20} aria-hidden="true" className="mr-2 text-ink-subtle" />
-                Contact support
+                {t('help.contact.title')}
               </h2>
-              <p className="text-sm text-ink-subtle">Get personalized help from our team.</p>
+              <p className="text-sm text-ink-subtle">{t('help.contact.subtitle')}</p>
             </div>
             <div className="space-y-5 px-6">
               <div className="flex items-center -space-x-2">
-                {supportTeam.map((m) => (
-                  <span key={m.initials} className="relative">
+                {supportTeam.map((member) => (
+                  <span key={member.initials} className="relative">
                     <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-surface-1 bg-surface-2 text-xs font-medium text-ink-subtle">
-                      {m.initials}
+                      {member.initials}
                     </span>
                     <span
                       className={cn(
                         'absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-surface-1',
-                        m.online ? 'bg-success' : 'bg-warning',
+                        member.online ? 'bg-success' : 'bg-warning',
                       )}
                     />
                   </span>
@@ -331,8 +291,8 @@ export default function HelpCenter() {
                     <ChatCircleDots size={20} aria-hidden="true" className="text-primary" />
                   </span>
                   <div>
-                    <h3 className="text-sm font-medium text-ink">Live chat</h3>
-                    <p className="text-xs text-ink-subtle">Included on paid plans</p>
+                    <h3 className="text-sm font-medium text-ink">{t('help.contact.liveChat')}</h3>
+                    <p className="text-xs text-ink-subtle">{t('help.contact.liveChatNote')}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -340,7 +300,7 @@ export default function HelpCenter() {
                     <EnvelopeSimple size={20} aria-hidden="true" className="text-primary" />
                   </span>
                   <div>
-                    <h3 className="text-sm font-medium text-ink">Email support</h3>
+                    <h3 className="text-sm font-medium text-ink">{t('help.contact.email')}</h3>
                     <p className="text-xs text-ink-subtle">{SUPPORT_EMAIL}</p>
                   </div>
                 </div>
@@ -349,21 +309,21 @@ export default function HelpCenter() {
                     <Clock size={20} aria-hidden="true" className="text-primary" />
                   </span>
                   <div>
-                    <h3 className="text-sm font-medium text-ink">Response time</h3>
+                    <h3 className="text-sm font-medium text-ink">{t('help.contact.responseTime')}</h3>
                     <p className="flex items-center text-xs text-ink-subtle">
                       <CheckCircle size={12} aria-hidden="true" className="mr-1 text-success" />
-                      Typically under 2 hours
+                      {t('help.contact.responseValue')}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex flex-col gap-2 p-6">
-              <Button fullWidth iconLeft={ChatCircleDots} onClick={() => soon('Live chat')}>
-                Start live chat
+              <Button fullWidth iconLeft={ChatCircleDots} onClick={() => soon(t('help.soon.liveChat'))}>
+                {t('help.contact.startChat')}
               </Button>
               <Button variant="secondary" fullWidth iconLeft={EnvelopeSimple} onClick={emailSupport}>
-                Send email
+                {t('help.contact.sendEmail')}
               </Button>
             </div>
           </Card>
@@ -373,17 +333,19 @@ export default function HelpCenter() {
             <div className="space-y-1 p-6">
               <h2 className="flex items-center text-lg font-semibold text-ink">
                 <BookOpen size={20} aria-hidden="true" className="mr-2 text-ink-subtle" />
-                Resources
+                {t('help.resources.title')}
               </h2>
-              <p className="text-sm text-ink-subtle">Additional materials and documentation.</p>
+              <p className="text-sm text-ink-subtle">{t('help.resources.subtitle')}</p>
             </div>
             <div className="space-y-3 px-6 pb-6">
-              {resources.map((r) => {
-                const ResIcon = r.icon
+              {m.help.resources.items.map((r) => {
+                const meta = resourceMeta[r.id]
+                if (!meta) return null
+                const ResIcon = meta.icon
                 return (
                   <a
                     key={r.id}
-                    href={r.href}
+                    href={meta.href}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex w-full items-center justify-between gap-3 rounded-lg border border-hairline p-4 text-left transition-colors hover:bg-surface-2/50"
@@ -410,13 +372,13 @@ export default function HelpCenter() {
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-success" />
-              <span className="text-sm font-medium text-ink">All systems operational</span>
+              <span className="text-sm font-medium text-ink">{t('help.status.operational')}</span>
             </span>
             <span className="hidden h-5 w-px bg-hairline sm:block" />
-            <span className="text-sm text-ink-subtle">Last updated: 10 minutes ago</span>
+            <span className="text-sm text-ink-subtle">{t('help.status.lastUpdated')}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => soon('The status page')}>
-            View status page
+          <Button variant="ghost" size="sm" onClick={() => soon(t('help.soon.statusPage'))}>
+            {t('help.status.viewPage')}
           </Button>
         </div>
       </Card>

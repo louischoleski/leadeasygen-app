@@ -4,29 +4,18 @@ import { NavLink } from 'react-router-dom'
 import { IconButton } from './IconButton'
 import LocaleMenu from './LocaleMenu'
 import { ToggleGroup } from './Toggle'
-import { useLocale } from '../hooks/useLocale'
 import useLocalStorage from '../hooks/useLocalStorage'
 import { useTheme } from '../hooks/useTheme'
+import { useTranslation } from '../hooks/useTranslation'
 
-const themeOptions = [
-  { value: 'system', icon: Monitor, label: 'System' },
-  { value: 'light', icon: Sun, label: 'Light' },
-  { value: 'dark', icon: Moon, label: 'Dark' },
-] as const
-
+// Labels resolve at render time: the closed `key` union makes the
+// t(`nav.sidebar.links.${key}`) template typecheck against the dictionary.
 const mainLinks = [
-  { to: '/', label: 'Dashboard', icon: SquaresFour, end: true },
-  { to: '/billing', label: 'Billing', icon: Coin },
-  { to: '/settings', label: 'Settings', icon: GearSix },
-  { to: '/help', label: 'Help Center', icon: Lifebuoy },
-]
-
-const tips = [
-  { label: 'Tip', text: 'Use radius + keywords together for tighter lead targeting.' },
-  { label: 'Tip', text: 'Radius under 5km finds hyper-local businesses.' },
-  { label: 'New', text: 'Export results directly to CSV from the dashboard.' },
-  { label: 'Did you know', text: "Visiting a business's website often reveals emails not listed on Maps." },
-]
+  { to: '/', key: 'dashboard', icon: SquaresFour, end: true },
+  { to: '/billing', key: 'billing', icon: Coin },
+  { to: '/settings', key: 'settings', icon: GearSix },
+  { to: '/help', key: 'helpCenter', icon: Lifebuoy },
+] as const
 
 const categoryClass = 'mt-2.5 px-6 py-2 text-eyebrow text-ink'
 const itemClass = 'mx-2 flex h-11 items-center rounded-lg px-4 transition-colors'
@@ -42,10 +31,19 @@ type Props = {
 export default function Sidebar({ open, onNavigate }: Props) {
   const [commonOpen, setCommonOpen] = useState(false)
   const { mode, setThemeMode } = useTheme()
-  const { locale } = useLocale()
+  const { t, m, locale } = useTranslation()
   const [localeOpen, setLocaleOpen] = useState(false)
-  const [tip] = useState(() => tips[Math.floor(Math.random() * tips.length)])
+  // The random pick is an index so the tip re-resolves when the locale changes
+  const tips = m.nav.sidebar.tips
+  const [tipIndex] = useState(() => Math.floor(Math.random() * tips.length))
+  const tip = tips[tipIndex]
   const [tipHidden, setTipHidden] = useLocalStorage('hideSidebarTip', false)
+
+  const themeOptions = [
+    { value: 'system', icon: Monitor, label: t('nav.theme.system') },
+    { value: 'light', icon: Sun, label: t('nav.theme.light') },
+    { value: 'dark', icon: Moon, label: t('nav.theme.dark') },
+  ] as const
 
   const dismissTip = () => setTipHidden(true)
 
@@ -55,21 +53,21 @@ export default function Sidebar({ open, onNavigate }: Props) {
     >
       <nav className="flex-1">
         <ul>
-          <li className={categoryClass}>Main</li>
+          <li className={categoryClass}>{t('nav.sidebar.categories.main')}</li>
           {mainLinks.map((link) => (
             <li key={link.to}>
               <NavLink
                 to={link.to}
-                end={link.end}
+                end={'end' in link ? link.end : undefined}
                 onClick={onNavigate}
                 className={({ isActive }) => `${isActive ? activeClass : linkClass} gap-2.5`}
               >
                 <link.icon size={16} aria-hidden="true" className="shrink-0" />
-                {link.label}
+                {t(`nav.sidebar.links.${link.key}`)}
               </NavLink>
             </li>
           ))}
-          <li className={categoryClass}>App Pages</li>
+          <li className={categoryClass}>{t('nav.sidebar.categories.appPages')}</li>
           <li>
             <button
               type="button"
@@ -77,7 +75,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
               aria-expanded={commonOpen}
               className={`${linkClass} w-[calc(100%-1rem)] cursor-pointer justify-between`}
             >
-              Common
+              {t('nav.sidebar.common')}
               <CaretDown
                 size={14}
                 aria-hidden="true"
@@ -86,11 +84,19 @@ export default function Sidebar({ open, onNavigate }: Props) {
             </button>
             {commonOpen && (
               <ul>
-                <li><NavLink to="/login" onClick={onNavigate} className={subLinkClass}>Login</NavLink></li>
-                <li><NavLink to="/register" onClick={onNavigate} className={subLinkClass}>Register</NavLink></li>
+                <li>
+                  <NavLink to="/login" onClick={onNavigate} className={subLinkClass}>
+                    {t('nav.sidebar.commonLinks.login')}
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/register" onClick={onNavigate} className={subLinkClass}>
+                    {t('nav.sidebar.commonLinks.register')}
+                  </NavLink>
+                </li>
                 <li>
                   <NavLink to="/forgot-password" onClick={onNavigate} className={subLinkClass}>
-                    Forgot password
+                    {t('nav.sidebar.commonLinks.forgotPassword')}
                   </NavLink>
                 </li>
               </ul>
@@ -106,12 +112,12 @@ export default function Sidebar({ open, onNavigate }: Props) {
             icon={X}
             variant="ghost"
             size="xs"
-            aria-label="Dismiss tip"
+            aria-label={t('nav.sidebar.dismissTip')}
             onClick={dismissTip}
             className="absolute top-1 right-1"
           />
           <p className="pr-4 text-xs text-ink-subtle">
-            <span className="font-medium text-link">{tip.label}:</span> {tip.text}
+            <span className="font-medium text-link">{tip.label}</span> {tip.text}
           </p>
         </div>
       )}
@@ -132,7 +138,7 @@ export default function Sidebar({ open, onNavigate }: Props) {
             className="flex h-11 w-full cursor-pointer items-center justify-between rounded-lg px-1 text-sm transition-colors hover:bg-surface-2"
           >
             <span className="flex items-center gap-2 text-ink-muted">
-              <Globe size={16} aria-hidden="true" className="text-ink-subtle" /> Language
+              <Globe size={16} aria-hidden="true" className="text-ink-subtle" /> {t('nav.sidebar.language')}
             </span>
             <span className="flex items-center gap-1 text-ink">
               {locale.toUpperCase()} <CaretDown size={12} aria-hidden="true" className="text-ink-subtle" />
@@ -146,9 +152,14 @@ export default function Sidebar({ open, onNavigate }: Props) {
         </div>
         <div className="flex h-11 items-center justify-between px-1">
           <span className="flex items-center gap-2 text-sm text-ink-muted">
-            <Monitor size={16} aria-hidden="true" className="text-ink-subtle" /> Theme
+            <Monitor size={16} aria-hidden="true" className="text-ink-subtle" /> {t('nav.sidebar.theme')}
           </span>
-          <ToggleGroup value={mode} onValueChange={setThemeMode} options={[...themeOptions]} aria-label="Theme" />
+          <ToggleGroup
+            value={mode}
+            onValueChange={setThemeMode}
+            options={[...themeOptions]}
+            aria-label={t('nav.sidebar.theme')}
+          />
         </div>
       </div>
     </aside>

@@ -2,6 +2,7 @@ import { useSavePaymentMethod, useSetupPaymentMethod } from '@fonderie/react-bil
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { useEffect, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from '../hooks/useTranslation'
 import { getStripe } from '../lib/stripe'
 import { Button } from './Button'
 
@@ -10,6 +11,7 @@ import { Button } from './Button'
 // user on the site for cards that need no 3DS), then records the resulting
 // payment method server-side.
 function CardForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
+  const { t } = useTranslation()
   const stripe = useStripe()
   const elements = useElements()
   const { save, isLoading: saving } = useSavePaymentMethod()
@@ -22,7 +24,7 @@ function CardForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => 
     try {
       const { error, setupIntent } = await stripe.confirmSetup({ elements, redirect: 'if_required' })
       if (error) {
-        toast.error(error.message ?? 'Could not save the card.')
+        toast.error(error.message ?? t('billing.card.saveFailed'))
         return
       }
       const pm =
@@ -30,14 +32,14 @@ function CardForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => 
           ? setupIntent.payment_method
           : (setupIntent?.payment_method?.id ?? null)
       if (!pm) {
-        toast.error('Card confirmation did not return a payment method.')
+        toast.error(t('billing.card.noPaymentMethod'))
         return
       }
       await save(pm)
-      toast.success('Card saved')
+      toast.success(t('billing.card.saved'))
       onSaved()
     } catch {
-      toast.error('Could not save the card. Please try again.')
+      toast.error(t('billing.card.saveRetry'))
     } finally {
       setSubmitting(false)
     }
@@ -49,10 +51,10 @@ function CardForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => 
       <PaymentElement />
       <div className="flex gap-3">
         <Button type="submit" disabled={!stripe || busy}>
-          {busy ? 'Saving…' : 'Save card'}
+          {busy ? t('billing.card.saving') : t('billing.card.save')}
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>
-          Cancel
+          {t('billing.card.cancel')}
         </Button>
       </div>
     </form>
@@ -62,6 +64,7 @@ function CardForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => 
 // Kicks off the SetupIntent, then mounts the embedded Payment Element with its
 // client secret. The user never leaves the site.
 export function AddPaymentMethod({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
+  const { t } = useTranslation()
   const { setup, isLoading, error } = useSetupPaymentMethod()
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const stripePromise = getStripe()
@@ -83,15 +86,16 @@ export function AddPaymentMethod({ onSaved, onCancel }: { onSaved: () => void; o
   if (!stripePromise) {
     return (
       <p className="text-sm text-ink-subtle">
-        In-app card entry is unavailable — set <code>VITE_STRIPE_PUBLISHABLE_KEY</code> to enable it.
+        {t('billing.card.unavailableBefore')} <code>VITE_STRIPE_PUBLISHABLE_KEY</code>{' '}
+        {t('billing.card.unavailableAfter')}
       </p>
     )
   }
   if (error) {
-    return <p className="text-sm text-ink-subtle">Could not start card setup. Please try again.</p>
+    return <p className="text-sm text-ink-subtle">{t('billing.card.setupFailed')}</p>
   }
   if (isLoading || !clientSecret) {
-    return <p className="text-sm text-ink-subtle">Preparing secure card form…</p>
+    return <p className="text-sm text-ink-subtle">{t('billing.card.preparing')}</p>
   }
 
   return (

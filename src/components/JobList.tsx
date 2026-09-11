@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { retryJob, useJobs } from '../data/jobs'
+import { useTranslation } from '../hooks/useTranslation'
 import { JobCard } from './JobCard'
 import { Tabs } from './Tabs'
 
 export function JobList() {
+  const { t } = useTranslation()
   const { activeJobs, completedJobs } = useJobs()
   const [activeTab, setActiveTab] = useState('active')
 
@@ -15,14 +17,19 @@ export function JobList() {
     if (result === null) return
     if (!result.ok) {
       toast.error(
-        result.error === 'insufficient-credits'
-          ? 'Not enough credits to retry this job'
-          : 'Could not reach the scraper — try again shortly',
+        t(
+          result.error === 'insufficient-credits'
+            ? 'jobs.list.retryInsufficient'
+            : 'jobs.errors.scraperUnreachable',
+        ),
       )
       return
     }
-    toast.success('Scrape job restarted', {
-      description: `${result.creditCost} ${result.creditCost === 1 ? 'credit' : 'credits'} charged on completion.`,
+    toast.success(t('jobs.list.restarted'), {
+      description: t(
+        result.creditCost === 1 ? 'jobs.chargedOnCompletionOne' : 'jobs.chargedOnCompletion',
+        { count: result.creditCost },
+      ),
     })
   }
 
@@ -30,8 +37,8 @@ export function JobList() {
     <div className="space-y-4">
       <Tabs
         tabs={[
-          { id: 'active', label: `Active (${activeJobs.length})` },
-          { id: 'history', label: `History (${completedJobs.length})` },
+          { id: 'active', label: t('jobs.list.tabActive', { count: activeJobs.length }) },
+          { id: 'history', label: t('jobs.list.tabHistory', { count: completedJobs.length }) },
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}
@@ -39,7 +46,7 @@ export function JobList() {
 
       {displayJobs.length === 0 ? (
         <div className="py-12 text-center text-sm text-ink-subtle">
-          {activeTab === 'active' ? 'No active jobs. Start a new scrape above.' : 'No completed jobs yet.'}
+          {activeTab === 'active' ? t('jobs.list.emptyActive') : t('jobs.list.emptyHistory')}
         </div>
       ) : (
         <div className="space-y-3">

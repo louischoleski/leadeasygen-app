@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { useTranslation } from '../hooks/useTranslation'
 import { applyAuthError } from '../lib/authErrors'
 import { useAppSession } from '../lib/session'
 
@@ -17,6 +18,7 @@ interface LoginValues {
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const { login, isLoading } = useLogin()
   const { refresh } = useAppSession()
   // RequireAuth stashes the page the visitor was headed for
@@ -34,7 +36,7 @@ export default function Login() {
       const result = await login({ email: email.trim(), password })
       if (isMfaRequired(result)) {
         // Challenge UI lands with the MFA phase; surface the state honestly
-        toast('This account requires MFA — the challenge screen is not wired up yet')
+        toast(t('auth.login.mfaUnavailable'))
         return
       }
       await refresh({ force: true })
@@ -44,31 +46,33 @@ export default function Login() {
         err,
         setError,
         { INVALID_CREDENTIALS: 'password', email: 'email', password: 'password' },
-        'Login failed',
+        t('auth.login.failed'),
       )
     }
   }
 
   return (
-    <AuthCard title="Login" subtitle="Enter your email below to login to your account">
+    <AuthCard title={t('auth.login.title')} subtitle={t('auth.login.subtitle')}>
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
-          label="Email"
+          label={t('auth.login.email')}
           id="email"
           type="email"
-          placeholder="m@example.com"
+          placeholder={t('auth.login.emailPlaceholder')}
           iconLeft={Envelope}
           error={errors.email?.message}
           containerClassName="mb-4"
           {...register('email', {
-            required: 'Enter your email',
-            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email' },
+            required: t('auth.login.errors.emailRequired'),
+            pattern: { value: /^\S+@\S+\.\S+$/, message: t('auth.login.errors.emailInvalid') },
           })}
         />
         <div className="mb-1.5 flex items-center justify-between">
-          <label htmlFor="password" className="text-sm font-medium text-ink">Password</label>
+          <label htmlFor="password" className="text-sm font-medium text-ink">
+            {t('auth.login.password')}
+          </label>
           <Link to="/forgot-password" className="text-sm text-link underline">
-            Forgot your password?
+            {t('auth.login.forgotPassword')}
           </Link>
         </div>
         <Input
@@ -77,23 +81,23 @@ export default function Login() {
           placeholder="••••••"
           error={errors.password?.message}
           containerClassName="mb-6"
-          {...register('password', { required: 'Enter your password' })}
+          {...register('password', { required: t('auth.login.errors.passwordRequired') })}
         />
         <div className="space-y-2">
-          <Button type="submit" fullWidth loading={isLoading}>Login</Button>
+          <Button type="submit" fullWidth loading={isLoading}>{t('auth.login.submit')}</Button>
           <Button
             type="button"
             variant="secondary"
             fullWidth
             iconLeft={GoogleLogo}
-            onClick={() => toast('Google sign-in is not wired up yet')}
+            onClick={() => toast(t('auth.login.googleUnavailable'))}
           >
-            Login with Google
+            {t('auth.login.google')}
           </Button>
         </div>
         <p className="mt-4 text-center text-sm text-ink-subtle">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-link underline">Sign up</Link>
+          {t('auth.login.noAccount')}{' '}
+          <Link to="/register" className="text-link underline">{t('auth.login.signUp')}</Link>
         </p>
       </form>
     </AuthCard>

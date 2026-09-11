@@ -1,5 +1,6 @@
 import { Check } from '@phosphor-icons/react'
-import { localeNames, locales, useLocale } from '../hooks/useLocale'
+import { useLocale } from '../hooks/useLocale'
+import { localeNames, locales } from '../locales'
 
 type Props = {
   className?: string

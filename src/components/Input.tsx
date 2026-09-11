@@ -1,6 +1,7 @@
 import { Eye, EyeSlash, type Icon } from '@phosphor-icons/react'
 import { forwardRef, useCallback, useState } from 'react'
 import type { ChangeEvent, InputHTMLAttributes } from 'react'
+import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
 
 export type InputFormat = 'none' | 'phone' | 'credit-card'
@@ -48,6 +49,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref,
   ) => {
+    const { t } = useTranslation()
     const [showPassword, setShowPassword] = useState(false)
     const isPassword = type === 'password'
     const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
@@ -126,7 +128,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               type="button"
               onClick={() => setShowPassword((s) => !s)}
               className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-ink-subtle transition-colors hover:text-ink"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? t('common.input.hidePassword') : t('common.input.showPassword')}
               tabIndex={-1}
             >
               {showPassword ? <EyeSlash className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

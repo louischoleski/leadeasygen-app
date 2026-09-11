@@ -7,18 +7,20 @@ import { Card } from './Card'
 import { SectionHeader } from './SectionHeader'
 import { Select } from './Select'
 import { useAppSession } from '../lib/session'
+import { useTranslation } from '../hooks/useTranslation'
 import {
   DATE_FORMATS,
   DEFAULT_DATE_FORMAT,
   DEFAULT_TIME_FORMAT,
-  TIME_FORMATS,
   formatDate,
   formatTime,
+  getTimeFormats,
 } from '../lib/dateFormat'
 
 const labelClass = 'mb-1 block text-sm font-medium text-ink'
 
 export function DateTimeFormatCard() {
+  const { t } = useTranslation()
   const { user, refresh } = useAppSession()
   const client = useFonderieClient()
 
@@ -32,15 +34,17 @@ export function DateTimeFormatCard() {
   const dirty = dateFormat !== (saved?.dateFormat ?? DEFAULT_DATE_FORMAT) || timeFormat !== (saved?.timeFormat ?? DEFAULT_TIME_FORMAT)
 
   const now = new Date()
+  // Labels follow the active locale; this component re-renders on locale change.
+  const timeFormats = getTimeFormats()
 
   const handleSave = async () => {
     setSaving(true)
     try {
       await client.auth.updatePreferences({ dateFormat, timeFormat })
       await refresh({ force: true })
-      toast.success('Date & time format updated')
+      toast.success(t('settings.datetime.updated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not update format')
+      toast.error(err instanceof Error ? err.message : t('settings.datetime.updateFailed'))
     } finally {
       setSaving(false)
     }
@@ -50,44 +54,44 @@ export function DateTimeFormatCard() {
     <Card as="section" id="datetime" className="scroll-mt-20 p-5">
       <SectionHeader
         icon={Clock}
-        title="Date & Time Format"
-        description="Customize how dates and times are displayed across the app."
+        title={t('settings.datetime.title')}
+        description={t('settings.datetime.description')}
       />
 
       <div className="mt-4 grid gap-x-6 gap-y-4 lg:grid-cols-2">
         <div>
-          <label className={labelClass} htmlFor="dateFormat">Date format</label>
+          <label className={labelClass} htmlFor="dateFormat">{t('settings.datetime.dateFormat')}</label>
           <Select
             inputId="dateFormat"
             options={DATE_FORMATS}
             value={DATE_FORMATS.find((o) => o.value === dateFormat)}
             onChange={(o) => o && setDateFormat(o.value)}
           />
-          <p className="mt-1 text-xs text-ink-subtle">Choose your preferred date format.</p>
+          <p className="mt-1 text-xs text-ink-subtle">{t('settings.datetime.dateFormatHint')}</p>
         </div>
         <div>
-          <label className={labelClass} htmlFor="timeFormat">Time format</label>
+          <label className={labelClass} htmlFor="timeFormat">{t('settings.datetime.timeFormat')}</label>
           <Select
             inputId="timeFormat"
-            options={TIME_FORMATS}
-            value={TIME_FORMATS.find((o) => o.value === timeFormat)}
+            options={timeFormats}
+            value={timeFormats.find((o) => o.value === timeFormat)}
             onChange={(o) => o && setTimeFormat(o.value)}
           />
-          <p className="mt-1 text-xs text-ink-subtle">Choose between 12-hour and 24-hour time.</p>
+          <p className="mt-1 text-xs text-ink-subtle">{t('settings.datetime.timeFormatHint')}</p>
         </div>
       </div>
 
       <div className="mt-4 rounded-lg bg-surface-2 p-4">
-        <h3 className="mb-2 text-sm font-medium text-ink">Preview</h3>
+        <h3 className="mb-2 text-sm font-medium text-ink">{t('settings.datetime.preview')}</h3>
         <div className="space-y-1 text-sm text-ink-muted">
-          <div>Date: {formatDate(now, dateFormat)}</div>
-          <div>Time: {formatTime(now, timeFormat)}</div>
+          <div>{t('settings.datetime.previewDate', { value: formatDate(now, dateFormat) })}</div>
+          <div>{t('settings.datetime.previewTime', { value: formatTime(now, timeFormat) })}</div>
         </div>
       </div>
 
       <div className="mt-4 flex justify-end">
         <Button onClick={() => void handleSave()} loading={saving} disabled={!dirty}>
-          Save format
+          {t('settings.datetime.save')}
         </Button>
       </div>
     </Card>

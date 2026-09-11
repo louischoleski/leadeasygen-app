@@ -3,11 +3,16 @@
 // set the app actually supports and the formatting that honors them. Keep the
 // stored `value`s stable — they are what lives in the user's saved preferences.
 
+import { currentLocale } from '../hooks/useLocale'
+import { localeTags, type Locale } from '../locales'
+import { tNow } from '../hooks/useTranslation'
+
 export interface FormatOption {
   value: string
   label: string
 }
 
+// Date-format labels are the format patterns themselves — locale-independent.
 export const DATE_FORMATS: FormatOption[] = [
   { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
   { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
@@ -17,16 +22,31 @@ export const DATE_FORMATS: FormatOption[] = [
 
 // Values are format TOKENS, matching how @fonderie/auth stores the preference
 // (its defaults are 'MM/DD/YYYY' and 'hh:mm A') — so the select reflects the
-// saved value and writes back a token other tooling understands.
-export const TIME_FORMATS: FormatOption[] = [
-  { value: 'hh:mm A', label: '12 Hour (6:00 PM)' },
-  { value: 'HH:mm', label: '24 Hour (18:00)' },
-]
+// saved value and writes back a token other tooling understands. Labels are
+// display copy and follow the active locale, hence a getter.
+export function getTimeFormats(): FormatOption[] {
+  return [
+    { value: 'hh:mm A', label: tNow('settings.datetime.time12') },
+    { value: 'HH:mm', label: tNow('settings.datetime.time24') },
+  ]
+}
 
 export const DEFAULT_DATE_FORMAT = 'MM/DD/YYYY'
 export const DEFAULT_TIME_FORMAT = 'hh:mm A'
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// Short month names ('MMM D, YYYY') follow the active locale via Intl; one
+// formatter per locale, built lazily.
+const monthFormatters = new Map<Locale, Intl.DateTimeFormat>()
+function shortMonth(d: Date): string {
+  const locale = currentLocale()
+  let formatter = monthFormatters.get(locale)
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(localeTags[locale], { month: 'short' })
+    monthFormatters.set(locale, formatter)
+  }
+  return formatter.format(d)
+}
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 // A stored value we don't recognise falls back to the default rather than
@@ -43,7 +63,7 @@ export function formatDate(input: Date | number | string, fmt: string | undefine
     case 'YYYY-MM-DD':
       return `${yyyy}-${mm}-${dd}`
     case 'MMM D, YYYY':
-      return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${yyyy}`
+      return `${shortMonth(d)} ${d.getDate()}, ${yyyy}`
     default:
       return `${mm}/${dd}/${yyyy}` // MM/DD/YYYY
   }

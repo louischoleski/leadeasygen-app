@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import type { ClipboardEvent, KeyboardEvent } from 'react'
+import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
 
 export interface OtpInputProps {
@@ -26,6 +27,7 @@ export function OtpInput({
   'aria-labelledby': ariaLabelledby,
   className,
 }: OtpInputProps) {
+  const { t } = useTranslation()
   const refs = useRef<Array<HTMLInputElement | null>>([])
   const digits = Array.from({ length }, (_, i) => value[i] ?? '')
 
@@ -91,7 +93,7 @@ export function OtpInput({
           maxLength={length}
           value={digit}
           disabled={disabled}
-          aria-label={`Digit ${i + 1} of ${length}`}
+          aria-label={t('auth.otp.digit', { index: i + 1, total: length })}
           aria-invalid={error || undefined}
           onChange={(e) => insertAt(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}

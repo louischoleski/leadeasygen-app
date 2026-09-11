@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
+import { tNow } from '../hooks/useTranslation'
+import type { Messages } from '../locales'
 import {
   apiErrorReason,
   apiErrorStatus,
@@ -50,6 +52,8 @@ export interface Job {
   error?: string
 }
 
+// Canonical category values — part of the scrape request the server receives,
+// so they stay English. Display goes through jobCategoryLabel.
 export const jobCategories = [
   'Local Business',
   'Professional Services',
@@ -58,6 +62,12 @@ export const jobCategories = [
   'Food & Dining',
   'Home Services',
 ]
+
+// Localized display label for a category value (same pattern as billing's
+// tierDisplayName). Unknown values render as-is.
+export function jobCategoryLabel(m: Messages, category: string): string {
+  return (m.jobs.categories as Record<string, string | undefined>)[category] ?? category
+}
 
 // Keep the billing page's "~N jobs at avg. cost" copy on the same math
 export const AVG_JOB_COST = 20
@@ -127,7 +137,7 @@ function buildJobs(): Job[] {
       id,
       location: params?.location ?? group[0].url,
       radiusKm: params?.radiusKm ?? null,
-      keywords: keywords.length > 0 ? keywords : ['scrape'],
+      keywords: keywords.length > 0 ? keywords : [tNow('jobs.fallbackKeyword')],
       category: params?.category ?? undefined,
       status,
       progress: Math.round((terminal / group.length) * 100),

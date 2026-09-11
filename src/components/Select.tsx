@@ -1,10 +1,16 @@
 import ReactSelect, { type Props as ReactSelectProps } from 'react-select'
+import { useTranslation } from '../hooks/useTranslation'
 
 // All colors are CSS custom properties, so the control re-themes with the
 // .dark class — no theme prop threading needed.
 export function Select<Option>(props: ReactSelectProps<Option, false>) {
+  const { t } = useTranslation()
   return (
     <ReactSelect
+      // Localized fallbacks for react-select's built-in English messages;
+      // the props spread below lets callers override them.
+      noOptionsMessage={() => t('common.select.noOptions')}
+      loadingMessage={() => t('common.select.loading')}
       {...props}
       classNamePrefix="rs"
       styles={{

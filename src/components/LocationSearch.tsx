@@ -2,6 +2,7 @@ import { MapPin } from '@phosphor-icons/react'
 import { useId, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { usePlaceSuggestions, type PlaceSuggestion } from '../hooks/usePlaceSuggestions'
+import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
 import { Input, type InputProps } from './Input'
 
@@ -17,6 +18,7 @@ export interface LocationSearchProps
  * text input until suggestions arrive (or when no Maps API key is set).
  */
 export function LocationSearch({ value, onChange, onSelect, onBlur, ...inputProps }: LocationSearchProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(-1)
   const listId = useId()
@@ -79,7 +81,7 @@ export function LocationSearch({ value, onChange, onSelect, onBlur, ...inputProp
         <ul
           id={listId}
           role="listbox"
-          aria-label="Location suggestions"
+          aria-label={t('jobs.form.locationSuggestions')}
           className="absolute left-0 z-50 mt-1 w-max min-w-full max-w-[min(36rem,calc(100vw-3rem))] overflow-hidden rounded-lg border border-hairline bg-surface-1 py-1 shadow-card"
           // Keep focus in the input so onBlur doesn't close the list before a click lands
           onMouseDown={(e) => e.preventDefault()}

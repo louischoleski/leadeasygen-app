@@ -1,5 +1,6 @@
 import { Calendar, Check } from '@phosphor-icons/react'
 import type { BillingCycle } from '../data/billing'
+import { useTranslation } from '../hooks/useTranslation'
 import { Button } from './Button'
 import { Card } from './Card'
 import { UsageBar } from './UsageBar'
@@ -34,13 +35,14 @@ interface CurrentPlanCardProps {
 }
 
 function MetricRow({ label, used, total, unit, mode = 'usage' }: UsageMetric) {
+  const { t } = useTranslation()
   if (total === null) {
     return (
       <div className="flex items-center justify-between text-sm">
         <p className="text-ink-subtle">{label}</p>
         <div className="flex items-center gap-1.5 font-medium text-success">
           <Check className="h-4 w-4" weight="bold" aria-hidden="true" />
-          <span>Unlimited</span>
+          <span>{t('billing.plan.unlimited')}</span>
         </div>
       </div>
     )
@@ -53,7 +55,15 @@ function MetricRow({ label, used, total, unit, mode = 'usage' }: UsageMetric) {
     // clamping would peg the meter at "total / total left" no matter how much the
     // user spends. Show the real count, minus the now-meaningless denominator.
     if (used > total) {
-      return <UsageBar label={label} used={used} total={used} status="success" valueText={`${used} left`} />
+      return (
+        <UsageBar
+          label={label}
+          used={used}
+          total={used}
+          status="success"
+          valueText={t('billing.plan.left', { count: used })}
+        />
+      )
     }
     const remaining = Math.max(0, used)
     const pct = total > 0 ? (remaining / total) * 100 : 0
@@ -64,7 +74,7 @@ function MetricRow({ label, used, total, unit, mode = 'usage' }: UsageMetric) {
         used={remaining}
         total={total}
         status={status}
-        valueText={`${remaining} / ${total} left${unit ? ` ${unit}` : ''}`}
+        valueText={`${t('billing.plan.leftOf', { used: remaining, total })}${unit ? ` ${unit}` : ''}`}
       />
     )
   }
@@ -87,20 +97,21 @@ export function CurrentPlanCard({
   onResume,
   resuming = false,
 }: CurrentPlanCardProps) {
+  const { t } = useTranslation()
   return (
     <Card className="flex h-full flex-col">
       <div className="flex items-center justify-between p-6 pb-0">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-ink">{planName}</h2>
-          <p className="text-sm text-ink-subtle capitalize">{billingCycle} billing</p>
+          <p className="text-sm text-ink-subtle capitalize">{t(`billing.plan.cycle.${billingCycle}`)}</p>
         </div>
         {scheduledToCancel ? (
           <span className="inline-flex items-center rounded-md bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
-            Cancels at period end
+            {t('billing.plan.cancelsAtPeriodEnd')}
           </span>
         ) : (
           <span className="inline-flex items-center rounded-md bg-surface-2 px-3 py-1 text-xs font-semibold text-ink">
-            Active
+            {t('billing.plan.active')}
           </span>
         )}
       </div>
@@ -109,7 +120,7 @@ export function CurrentPlanCard({
         <div className="flex items-center justify-between rounded-lg bg-surface-2 p-3">
           <div className="text-sm">
             <p className="font-medium text-ink">
-              {dateLabel ?? (scheduledToCancel ? 'Access until' : 'Next billing date')}
+              {dateLabel ?? (scheduledToCancel ? t('billing.plan.accessUntil') : t('billing.plan.nextBillingDate'))}
             </p>
             <p className="text-ink-subtle">{nextBillingDate}</p>
           </div>
@@ -120,7 +131,7 @@ export function CurrentPlanCard({
       </div>
 
       <div className="space-y-4 px-6 pb-6">
-        <p className="text-sm font-medium text-ink">Plan Usage</p>
+        <p className="text-sm font-medium text-ink">{t('billing.plan.usage')}</p>
         {metrics.map((metric) => (
           <MetricRow key={metric.label} {...metric} />
         ))}
@@ -128,11 +139,11 @@ export function CurrentPlanCard({
           // Purchased credits never expire and don't count against the monthly
           // allowance — a full bar communicates "all available".
           <UsageBar
-            label="Purchased credits"
+            label={t('billing.plan.purchasedCredits')}
             used={purchasedCredits}
             total={purchasedCredits}
             status="success"
-            valueText={`${purchasedCredits} available`}
+            valueText={t('billing.plan.available', { count: purchasedCredits })}
           />
         )}
       </div>
@@ -140,13 +151,13 @@ export function CurrentPlanCard({
       {scheduledToCancel && onResume ? (
         <div className="mt-auto px-6 pb-6">
           <Button fullWidth onClick={onResume} disabled={resuming}>
-            {resuming ? 'Resuming…' : 'Resume Subscription'}
+            {resuming ? t('billing.plan.resuming') : t('billing.plan.resume')}
           </Button>
         </div>
       ) : onCancel ? (
         <div className="mt-auto px-6 pb-6">
           <Button variant="secondary" fullWidth onClick={onCancel}>
-            Cancel Subscription
+            {t('billing.plan.cancel')}
           </Button>
         </div>
       ) : null}

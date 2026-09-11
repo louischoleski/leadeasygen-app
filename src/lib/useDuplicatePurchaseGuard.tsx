@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useInvoices } from '@fonderie/react-billing'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useTranslation } from '../hooks/useTranslation'
 import { isRecentDuplicate } from './recentDuplicate'
 
 export interface PurchaseIntent {
@@ -23,6 +24,7 @@ export interface PurchaseIntent {
 // are covered by the buttons' in-flight disabled state, and server-side
 // idempotency is the belt-and-suspenders layer for network retries.
 export function useDuplicatePurchaseGuard() {
+  const { t } = useTranslation()
   const { invoices } = useInvoices()
   const [pending, setPending] = useState<{ label: string; resolve: (ok: boolean) => void } | null>(null)
 
@@ -50,10 +52,12 @@ export function useDuplicatePurchaseGuard() {
   const dialog = (
     <ConfirmDialog
       open={pending !== null}
-      title="Purchase this again?"
-      description={`You already purchased ${pending?.label ?? 'this'} in the last few minutes. Are you sure you want to purchase it again?`}
-      confirmLabel="Yes, purchase again"
-      cancelLabel="Cancel"
+      title={t('billing.duplicate.title')}
+      description={t('billing.duplicate.description', {
+        label: pending?.label ?? t('billing.duplicate.fallbackLabel'),
+      })}
+      confirmLabel={t('billing.duplicate.confirm')}
+      cancelLabel={t('billing.duplicate.cancel')}
       onConfirm={() => settle(true)}
       onClose={() => settle(false)}
     />

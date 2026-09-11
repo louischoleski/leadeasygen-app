@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react'
 import { createSubscribable } from '../hooks/subscribable'
 import { fonderie } from '../lib/fonderie'
 import { apiErrorStatus } from '../lib/api'
+import type { Messages } from '../locales'
 
 // Cross-cutting billing state observed across the app (navbar, dashboard,
 // settings, scrape form, billing page): the credit balance and the current
@@ -18,19 +19,20 @@ export type BillingCycle = 'monthly' | 'annual'
 
 // Credit packs shown on the billing page. `id` MUST match the billing catalog
 // (api src/billing/catalog.ts → wallet.creditPacks) — checkout sends it as
-// packId and the server prices the pack from its own catalogue.
+// packId and the server prices the pack from its own catalogue. Display copy
+// (a pack is named by its credit count) lives in the locale dictionaries
+// under billing.packs.
 export interface CreditPack {
   id: string
-  name: string
   credits: number
   price: number // USD, display only — the server is the source of truth
   popular?: boolean
 }
 
 export const creditPacks: CreditPack[] = [
-  { id: 'small', name: '10 credits', credits: 10, price: 5 },
-  { id: 'medium', name: '50 credits', credits: 50, price: 20 },
-  { id: 'large', name: '100 credits', credits: 100, price: 38, popular: true },
+  { id: 'small', credits: 10, price: 5 },
+  { id: 'medium', credits: 50, price: 20 },
+  { id: 'large', credits: 100, price: 38, popular: true },
 ]
 
 export interface TierLimits {
@@ -38,13 +40,12 @@ export interface TierLimits {
   creditsPerMonth: number | null
 }
 
+// Tier display copy (name, description, features) lives in the locale
+// dictionaries under billing.tiers, keyed by these ids.
 export interface SubscriptionTier {
   id: string // matches the billing plan name ('free' | 'unlimited')
-  name: string
   priceMonthly: number
   priceAnnual: number
-  description: string
-  features: string[]
   limits: TierLimits
   popular?: boolean
 }
@@ -52,24 +53,35 @@ export interface SubscriptionTier {
 export const subscriptionTiers: SubscriptionTier[] = [
   {
     id: 'free',
-    name: 'Free',
     priceMonthly: 0,
     priceAnnual: 0,
-    description: 'Get started with limited scraping',
-    features: ['5 credits/month', 'Basic support', '1 active job'],
     limits: { activeJobs: 1, creditsPerMonth: 5 },
   },
   {
     id: 'unlimited',
-    name: 'Unlimited',
     priceMonthly: 49,
     priceAnnual: 39,
-    description: 'Unlimited leads, no credit limits',
-    features: ['Unlimited jobs', 'Unlimited credits', 'Priority support', 'CSV export', 'API access'],
     limits: { activeJobs: null, creditsPerMonth: null },
     popular: true,
   },
 ]
+
+// Localized display name for a tier id ('free' | 'unlimited'); undefined until
+// billing's first read resolves so callers can render no plan line at all.
+export function tierDisplayName(m: Messages, id: string | null): string | undefined {
+  if (!id) return undefined
+  return (m.billing.tiers as Record<string, { name: string } | undefined>)[id]?.name
+}
+
+// Localized marketing description for a tier id; empty for unknown ids.
+export function tierDescription(m: Messages, id: string): string {
+  return (m.billing.tiers as Record<string, { description?: string } | undefined>)[id]?.description ?? ''
+}
+
+// Localized feature list for a tier id; empty for unknown ids.
+export function tierFeatures(m: Messages, id: string): string[] {
+  return (m.billing.tiers as Record<string, { features?: string[] } | undefined>)[id]?.features ?? []
+}
 
 // A subscriber on an unlimited-credits plan can't buy credit packs — the server
 // blocks it (blockPacksWhileSubscribed) — so every "Buy credits" CTA is hidden

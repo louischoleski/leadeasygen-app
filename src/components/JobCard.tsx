@@ -1,21 +1,25 @@
 import { Download } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import type { Job, JobStatus } from '../data/jobs'
+import { jobCategoryLabel, type Job, type JobStatus } from '../data/jobs'
+import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
 import { downloadJobCsv } from '../lib/csv'
+import { localeTags } from '../locales'
 import { Button } from './Button'
 import { Card } from './Card'
 import { Progress } from './Progress'
 
-export const statusConfig: Record<JobStatus, { label: string; className: string }> = {
-  queued: { label: 'Queued', className: 'bg-surface-2 text-ink-subtle' },
-  running: { label: 'Running', className: 'bg-primary/10 text-link' },
-  completed: { label: 'Completed', className: 'bg-success/10 text-success' },
-  failed: { label: 'Failed', className: 'bg-error/10 text-error' },
+// Badge style per status; the display labels live in the dictionary
+// (jobs.status.*) so they follow the active locale.
+export const statusConfig: Record<JobStatus, { className: string }> = {
+  queued: { className: 'bg-surface-2 text-ink-subtle' },
+  running: { className: 'bg-primary/10 text-link' },
+  completed: { className: 'bg-success/10 text-success' },
+  failed: { className: 'bg-error/10 text-error' },
 }
 
-const formatDate = (timestamp: number) =>
-  new Date(timestamp).toLocaleString(undefined, {
+const formatDate = (timestamp: number, localeTag: string) =>
+  new Date(timestamp).toLocaleString(localeTag, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -28,6 +32,7 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, onRetry }: JobCardProps) {
+  const { t, m, locale } = useTranslation()
   const status = statusConfig[job.status]
 
   return (
@@ -38,7 +43,7 @@ export function JobCard({ job, onRetry }: JobCardProps) {
             {job.location} — {job.keywords.join(', ')}
           </h3>
           <p className="text-xs text-ink-subtle">
-            {job.radiusKm ? `${job.radiusKm} km · ` : ''}{job.category ? `${job.category} · ` : ''}{formatDate(job.createdAt)} · {job.creditCost} {job.creditCost === 1 ? 'credit' : 'credits'}
+            {job.radiusKm ? `${job.radiusKm} km · ` : ''}{job.category ? `${jobCategoryLabel(m, job.category)} · ` : ''}{formatDate(job.createdAt, localeTags[locale])} · {t(job.creditCost === 1 ? 'jobs.creditsOne' : 'jobs.credits', { count: job.creditCost })}
           </p>
         </div>
         <span
@@ -47,26 +52,31 @@ export function JobCard({ job, onRetry }: JobCardProps) {
             status.className,
           )}
         >
-          {status.label}
+          {t(`jobs.status.${job.status}`)}
         </span>
       </div>
 
       {job.status === 'running' && (
         <div className="mt-4">
           <div className="mb-1 flex justify-between text-xs text-ink-subtle">
-            <span>Scraping…</span>
+            <span>{t('jobs.card.scraping')}</span>
             {job.keywords.length > 1 && (
-              <span>{job.keywords.length - Math.round((job.progress / 100) * job.keywords.length)} of {job.keywords.length} keywords left</span>
+              <span>
+                {t('jobs.card.keywordsLeft', {
+                  remaining: job.keywords.length - Math.round((job.progress / 100) * job.keywords.length),
+                  total: job.keywords.length,
+                })}
+              </span>
             )}
           </div>
-          <Progress value={job.progress} indeterminate={job.progress === 0} aria-label="Job progress" />
+          <Progress value={job.progress} indeterminate={job.progress === 0} aria-label={t('jobs.progressLabel')} />
         </div>
       )}
 
       {job.status === 'failed' && (
         <p className="mt-4 text-sm text-error">
-          {job.error ?? 'Job did not complete.'}
-          <span className="ml-1 text-ink-subtle">· no credits charged</span>
+          {job.error ?? t('jobs.failedFallback')}
+          <span className="ml-1 text-ink-subtle">{t('jobs.noCreditsCharged')}</span>
         </p>
       )}
 
@@ -74,16 +84,16 @@ export function JobCard({ job, onRetry }: JobCardProps) {
         {job.status === 'completed' && (
           <>
             <Button size="sm" variant="secondary" iconLeft={Download} onClick={() => downloadJobCsv(job)}>
-              Download CSV
+              {t('jobs.downloadCsv')}
             </Button>
             <Button size="sm" variant="ghost" asChild>
-              <Link to={`/jobs/${job.id}`}>View {job.results.length} leads</Link>
+              <Link to={`/jobs/${job.id}`}>{t('jobs.card.viewLeads', { count: job.results.length })}</Link>
             </Button>
           </>
         )}
         {job.status === 'failed' && (
           <Button size="sm" variant="secondary" onClick={() => onRetry(job.id)}>
-            Retry
+            {t('jobs.card.retry')}
           </Button>
         )}
       </div>

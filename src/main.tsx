@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-r
 import { Toaster } from 'sonner'
 import './index.css'
 import { fonderie } from './lib/fonderie'
+import { LocalePreferenceSync } from './lib/localeSync'
 import { SessionProvider } from './lib/session'
 import { GuestOnly, RequireAuth } from './components/RouteGuards'
 import { useTheme } from './hooks/useTheme'
@@ -47,6 +48,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <FonderieProvider client={fonderie}>
       <SessionProvider>
+        <LocalePreferenceSync />
         <BrowserRouter>
       <Routes>
         <Route element={<RequireAuth />}>

@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { useTranslation } from '../hooks/useTranslation'
 import { applyAuthError } from '../lib/authErrors'
 import { useAppSession } from '../lib/session'
 
@@ -19,6 +20,7 @@ interface RegisterValues {
 
 export default function Register() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { register: registerAccount, isLoading } = useRegister()
   const { refresh } = useAppSession()
 
@@ -52,55 +54,56 @@ export default function Register() {
           firstName: 'name',
           lastName: 'name',
         },
-        'Registration failed',
+        t('auth.register.failed'),
       )
     }
   }
 
   return (
-    <AuthCard title="Sign up" subtitle="Enter your details below to create your account">
+    <AuthCard title={t('auth.register.title')} subtitle={t('auth.register.subtitle')}>
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
-          label="Full name"
+          label={t('auth.register.name')}
           id="name"
           iconLeft={User}
           error={errors.name?.message}
           containerClassName="mb-4"
-          {...register('name', { required: 'Enter your name' })}
+          {...register('name', { required: t('auth.register.errors.nameRequired') })}
         />
         <Input
-          label="Email"
+          label={t('auth.register.email')}
           id="email"
           type="email"
-          placeholder="m@example.com"
+          placeholder={t('auth.register.emailPlaceholder')}
           iconLeft={Envelope}
           error={errors.email?.message}
           containerClassName="mb-4"
           {...register('email', {
-            required: 'Enter your email',
-            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email' },
+            required: t('auth.register.errors.emailRequired'),
+            pattern: { value: /^\S+@\S+\.\S+$/, message: t('auth.register.errors.emailInvalid') },
           })}
         />
         <Input
-          label="Password"
+          label={t('auth.register.password')}
           id="password"
           type="password"
           error={errors.password?.message}
           containerClassName="mb-4"
           {...register('password', {
-            required: 'Enter a password',
-            minLength: { value: 8, message: 'Use at least 8 characters' },
+            required: t('auth.register.errors.passwordRequired'),
+            minLength: { value: 8, message: t('auth.register.errors.passwordMinLength') },
           })}
         />
         <Input
-          label="Confirm password"
+          label={t('auth.register.confirmPassword')}
           id="confirmPassword"
           type="password"
           error={errors.confirmPassword?.message}
           containerClassName="mb-4"
           {...register('confirmPassword', {
-            required: 'Repeat your password',
-            validate: (value) => value === getValues('password') || 'Passwords do not match',
+            required: t('auth.register.errors.confirmRequired'),
+            validate: (value) =>
+              value === getValues('password') || t('auth.register.errors.passwordMismatch'),
           })}
         />
         <div className="mb-6">
@@ -112,17 +115,17 @@ export default function Register() {
               aria-describedby={errors.acceptTerms ? 'accept-terms-message' : undefined}
               className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
               {...register('acceptTerms', {
-                required: 'Please accept the Terms of Service and Privacy Policy',
+                required: t('auth.register.errors.termsRequired'),
               })}
             />
             <label htmlFor="accept-terms" className="text-sm text-ink-subtle">
-              I agree to the{' '}
+              {t('auth.register.termsAgree')}{' '}
               <Link to="/terms" className="text-link underline">
-                Terms of Service
+                {t('auth.register.termsOfService')}
               </Link>{' '}
-              and{' '}
+              {t('auth.register.termsAnd')}{' '}
               <Link to="/privacy" className="text-link underline">
-                Privacy Policy
+                {t('auth.register.privacyPolicy')}
               </Link>
             </label>
           </div>
@@ -133,20 +136,20 @@ export default function Register() {
           )}
         </div>
         <div className="space-y-2">
-          <Button type="submit" fullWidth loading={isLoading}>Sign up</Button>
+          <Button type="submit" fullWidth loading={isLoading}>{t('auth.register.submit')}</Button>
           <Button
             type="button"
             variant="secondary"
             fullWidth
             iconLeft={GoogleLogo}
-            onClick={() => toast('Google sign-up is not wired up yet')}
+            onClick={() => toast(t('auth.register.googleUnavailable'))}
           >
-            Sign up with Google
+            {t('auth.register.google')}
           </Button>
         </div>
         <p className="mt-4 text-center text-sm text-ink-subtle">
-          Already have an account?{' '}
-          <Link to="/login" className="text-link underline">Log in</Link>
+          {t('auth.register.haveAccount')}{' '}
+          <Link to="/login" className="text-link underline">{t('auth.register.logIn')}</Link>
         </p>
       </form>
     </AuthCard>

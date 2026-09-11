@@ -1,4 +1,5 @@
 import type { Job } from '../data/jobs'
+import { tNow } from '../hooks/useTranslation'
 
 const escapeField = (value: string | null) => {
   const s = value ?? ''
@@ -6,7 +7,20 @@ const escapeField = (value: string | null) => {
 }
 
 export function downloadJobCsv(job: Job) {
-  const header = 'Business,Category,Rating,Reviews,Phone,Website,Emails,Address'
+  // Headers are user-visible data — resolved in the active locale at
+  // download time (tNow: this runs outside React).
+  const header = [
+    tNow('jobs.results.headers.business'),
+    tNow('jobs.results.headers.category'),
+    tNow('jobs.results.headers.rating'),
+    tNow('jobs.results.headers.reviews'),
+    tNow('jobs.results.headers.phone'),
+    tNow('jobs.results.headers.website'),
+    tNow('jobs.results.headers.emails'),
+    tNow('jobs.results.headers.address'),
+  ]
+    .map(escapeField)
+    .join(',')
   const rows = job.results.map((lead) =>
     [
       lead.name,

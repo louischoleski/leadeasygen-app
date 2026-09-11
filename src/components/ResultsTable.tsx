@@ -2,24 +2,33 @@ import { ArrowSquareOut, Envelope, Phone, Star } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useBilling } from '../data/billing'
 import type { Lead } from '../data/jobs'
+import { useTranslation } from '../hooks/useTranslation'
 import { Table } from './Table'
 
-function copyToClipboard(text: string, message: string) {
+function copyToClipboard(text: string, message: string, failedMessage: string) {
   navigator.clipboard
     .writeText(text)
     .then(() => toast.success(message))
-    .catch(() => toast.error('Failed to copy'))
+    .catch(() => toast.error(failedMessage))
 }
 
-const headings = ['Business', 'Category', 'Rating', 'Phone', 'Website', 'Emails', 'Address']
-
 export function ResultsTable({ leads }: { leads: Lead[] }) {
+  const { t } = useTranslation()
   const { subscriptionTier } = useBilling()
   // Lead data is the paid product: without a paid subscription the grid is
   // view-only — no drag-select of the raw values (the per-lead phone/email
   // copy buttons still work). A null tier means billing hasn't loaded yet;
   // treat it as unsubscribed so the gate never flashes open.
   const subscribed = subscriptionTier !== null && subscriptionTier !== 'free'
+  const headings = [
+    t('jobs.results.headers.business'),
+    t('jobs.results.headers.category'),
+    t('jobs.results.headers.rating'),
+    t('jobs.results.headers.phone'),
+    t('jobs.results.headers.website'),
+    t('jobs.results.headers.emails'),
+    t('jobs.results.headers.address'),
+  ]
   return (
     <div className="overflow-hidden rounded-md border border-hairline">
       <Table wrapperClassName="max-h-[60vh] overflow-y-auto" selectable={subscribed}>
@@ -65,7 +74,13 @@ export function ResultsTable({ leads }: { leads: Lead[] }) {
                     {lead.phone ? (
                       <button
                         type="button"
-                        onClick={() => copyToClipboard(lead.phone as string, 'Phone copied')}
+                        onClick={() =>
+                          copyToClipboard(
+                            lead.phone as string,
+                            t('jobs.results.phoneCopied'),
+                            t('jobs.results.copyFailed'),
+                          )
+                        }
                         className="inline-flex cursor-pointer items-center gap-1.5 text-ink transition-colors hover:text-link"
                       >
                         <Phone className="h-3.5 w-3.5 text-ink-subtle" aria-hidden="true" />
@@ -96,7 +111,13 @@ export function ResultsTable({ leads }: { leads: Lead[] }) {
                         type="button"
                         title={emailsFull}
                         onClick={() =>
-                          copyToClipboard(emailsFull, lead.emails.length > 1 ? 'Emails copied' : 'Email copied')
+                          copyToClipboard(
+                            emailsFull,
+                            lead.emails.length > 1
+                              ? t('jobs.results.emailsCopied')
+                              : t('jobs.results.emailCopied'),
+                            t('jobs.results.copyFailed'),
+                          )
                         }
                         className="inline-flex cursor-pointer items-center gap-1.5 text-ink transition-colors hover:text-link"
                       >

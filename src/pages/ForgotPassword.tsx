@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
+import { useTranslation } from '../hooks/useTranslation'
 import { applyAuthError } from '../lib/authErrors'
 
 interface ForgotValues {
@@ -12,6 +13,7 @@ interface ForgotValues {
 }
 
 export default function ForgotPassword() {
+  const { t } = useTranslation()
   const { forgotPassword, isLoading, sent } = useForgotPassword()
 
   const {
@@ -26,44 +28,44 @@ export default function ForgotPassword() {
     try {
       await forgotPassword(email.trim())
     } catch (err) {
-      applyAuthError(err, setError, { email: 'email' }, 'Could not send the reset email')
+      applyAuthError(err, setError, { email: 'email' }, t('auth.forgotPassword.failed'))
     }
   }
 
   if (sent) {
     return (
-      <AuthCard title="Check your inbox" subtitle="If an account exists for that email, a 6-digit reset code is on its way">
+      <AuthCard title={t('auth.forgotPassword.sentTitle')} subtitle={t('auth.forgotPassword.sentSubtitle')}>
         <CheckCircle className="mx-auto mb-4 h-10 w-10 text-success" aria-hidden="true" />
         <Button fullWidth asChild>
-          <Link to="/reset-password">Enter reset code</Link>
+          <Link to="/reset-password">{t('auth.forgotPassword.enterCode')}</Link>
         </Button>
         <p className="mt-4 text-center text-sm text-ink-subtle">
-          <Link to="/login" className="text-link underline">Back to login</Link>
+          <Link to="/login" className="text-link underline">{t('auth.forgotPassword.backToLogin')}</Link>
         </p>
       </AuthCard>
     )
   }
 
   return (
-    <AuthCard title="Forgot password" subtitle="Enter your email and we'll send you a 6-digit reset code">
+    <AuthCard title={t('auth.forgotPassword.title')} subtitle={t('auth.forgotPassword.subtitle')}>
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
-          label="Email"
+          label={t('auth.forgotPassword.email')}
           id="email"
           type="email"
-          placeholder="m@example.com"
+          placeholder={t('auth.forgotPassword.emailPlaceholder')}
           iconLeft={Envelope}
           error={errors.email?.message}
           containerClassName="mb-6"
           {...register('email', {
-            required: 'Enter your email',
-            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Enter a valid email' },
+            required: t('auth.forgotPassword.errors.emailRequired'),
+            pattern: { value: /^\S+@\S+\.\S+$/, message: t('auth.forgotPassword.errors.emailInvalid') },
           })}
         />
-        <Button type="submit" fullWidth loading={isLoading}>Send reset code</Button>
+        <Button type="submit" fullWidth loading={isLoading}>{t('auth.forgotPassword.submit')}</Button>
         <p className="mt-4 text-center text-sm text-ink-subtle">
-          Remember your password?{' '}
-          <Link to="/login" className="text-link underline">Log in</Link>
+          {t('auth.forgotPassword.rememberPassword')}{' '}
+          <Link to="/login" className="text-link underline">{t('auth.forgotPassword.logIn')}</Link>
         </p>
       </form>
     </AuthCard>

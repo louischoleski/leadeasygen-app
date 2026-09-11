@@ -7,6 +7,7 @@ import { JobList } from '../components/JobList'
 import { ScrapeForm } from '../components/ScrapeForm'
 import { useBilling } from '../data/billing'
 import { useJobs } from '../data/jobs'
+import { useTranslation } from '../hooks/useTranslation'
 
 function StatCard({ label, value, icon: StatIcon }: { label: string; value: number; icon: Icon }) {
   return (
@@ -23,12 +24,13 @@ function StatCard({ label, value, icon: StatIcon }: { label: string; value: numb
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation()
   const { creditBalance, creditsUnlimited } = useBilling()
   const { jobs, activeJobs, completedJobs } = useJobs()
 
   useEffect(() => {
-    document.title = 'LeadEasyGen — Dashboard'
-  }, [])
+    document.title = `${t('common.appName')} — ${t('dashboard.title')}`
+  }, [t])
 
   const totalLeads = jobs.reduce(
     (sum, job) => sum + (job.status === 'completed' ? job.results.length : 0),
@@ -47,24 +49,24 @@ export default function Dashboard() {
             <Coin className="h-5 w-5 text-primary" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-sm text-ink-subtle">Available Credits</p>
+            <p className="text-sm text-ink-subtle">{t('dashboard.availableCredits')}</p>
             <p className="text-2xl font-bold text-ink">
-              {creditsUnlimited ? 'Unlimited' : creditBalance}
+              {creditsUnlimited ? t('dashboard.unlimited') : creditBalance}
             </p>
           </div>
         </div>
         {!creditsUnlimited && (
           <Button asChild variant="secondary">
-            <Link to="/billing">Buy Credits</Link>
+            <Link to="/billing">{t('dashboard.buyCredits')}</Link>
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard label="Active Jobs" value={activeJobs.length} icon={Spinner} />
-        <StatCard label="Completed" value={completedJobs.length} icon={CheckCircle} />
-        <StatCard label="Leads Found" value={totalLeads} icon={Users} />
-        <StatCard label="This Month" value={jobsThisMonth.length} icon={Calendar} />
+        <StatCard label={t('dashboard.stats.activeJobs')} value={activeJobs.length} icon={Spinner} />
+        <StatCard label={t('dashboard.stats.completed')} value={completedJobs.length} icon={CheckCircle} />
+        <StatCard label={t('dashboard.stats.leadsFound')} value={totalLeads} icon={Users} />
+        <StatCard label={t('dashboard.stats.thisMonth')} value={jobsThisMonth.length} icon={Calendar} />
       </div>
 
       <ScrapeForm />

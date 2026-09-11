@@ -8,34 +8,40 @@ import { Table } from './Table'
 import { SectionHeader } from './SectionHeader'
 import { parseUserAgent } from '../lib/userAgent'
 import { RECENT_LIST_LIMIT } from '../constants/lists'
+import { useTranslation } from '../hooks/useTranslation'
+import { currentLocale } from '../hooks/useLocale'
+import { localeTags, type Messages } from '../locales'
 
-const methodLabel: Record<string, string> = {
-  password: 'Password',
-  mfa: '2FA',
-  'oauth-google': 'Google',
-  phone: 'Phone',
+// The login-event `method` values are open-ended API strings, so resolve them
+// through the message tree and fall back to the raw value.
+function methodLabel(m: Messages, method: string): string {
+  return (m.settings.loginHistory.methods as Record<string, string | undefined>)[method] ?? method
 }
 
 function formatDate(iso: string) {
   const d = new Date(iso)
+  const tag = localeTags[currentLocale()]
   return {
-    date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    date: d.toLocaleDateString(tag, { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: d.toLocaleTimeString(tag, { hour: 'numeric', minute: '2-digit' }),
   }
 }
 
 const csvEscape = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
 
-function exportCsv(events: ILoginEventDTO[]) {
+function exportCsv(events: ILoginEventDTO[], m: Messages) {
   if (events.length === 0) {
-    toast.error('No login history to export')
+    toast.error(m.settings.loginHistory.exportEmpty)
     return
   }
-  const header = 'Date,Time,Method,Status,Device,IP Address'
+  const columns = m.settings.loginHistory.csv
+  const header = [columns.date, columns.time, columns.method, columns.status, columns.device, columns.ip]
+    .map(csvEscape)
+    .join(',')
   const rows = events.map((e) => {
     const { date, time } = formatDate(e.createdAt)
     const ua = parseUserAgent(e.userAgent)
-    return [date, time, methodLabel[e.method] ?? e.method, e.outcome, ua.summary, e.ipAddress ?? '']
+    return [date, time, methodLabel(m, e.method), e.outcome, ua.summary, e.ipAddress ?? '']
       .map(csvEscape)
       .join(',')
   })
@@ -49,6 +55,7 @@ function exportCsv(events: ILoginEventDTO[]) {
 }
 
 export function LoginHistoryCard() {
+  const { t, m } = useTranslation()
   // Fetch a small buffer (export can use the fuller set) but only render the
   // most recent RECENT_LIST_LIMIT until this card gets real pagination.
   const { events, isLoading, error } = useLoginHistory({ limit: 20 })
@@ -58,33 +65,33 @@ export function LoginHistoryCard() {
     <Card as="section" id="activity" className="scroll-mt-20 p-5">
       <SectionHeader
         icon={ClockCounterClockwise}
-        title="Login History"
-        description="Review recent login attempts to your account."
+        title={t('settings.loginHistory.title')}
+        description={t('settings.loginHistory.description')}
         action={
-          <Button variant="secondary" size="sm" onClick={() => exportCsv(events)} disabled={events.length === 0}>
+          <Button variant="secondary" size="sm" onClick={() => exportCsv(events, m)} disabled={events.length === 0}>
             <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
-            Export history
+            {t('settings.loginHistory.export')}
           </Button>
         }
       />
 
       {error ? (
-        <p className="mt-4 text-sm text-error">Couldn't load login history. {error.message}</p>
+        <p className="mt-4 text-sm text-error">{t('settings.loginHistory.loadFailed')} {error.message}</p>
       ) : isLoading ? (
-        <p className="mt-4 text-sm text-ink-subtle">Loading…</p>
+        <p className="mt-4 text-sm text-ink-subtle">{t('settings.loginHistory.loading')}</p>
       ) : events.length === 0 ? (
-        <p className="mt-4 text-sm text-ink-subtle">No login attempts recorded yet.</p>
+        <p className="mt-4 text-sm text-ink-subtle">{t('settings.loginHistory.empty')}</p>
       ) : (
         <>
           <div className="mt-4 overflow-hidden rounded-md border border-hairline">
             <Table>
                 <thead>
                   <tr className="border-b border-hairline bg-surface-2 text-left text-xs font-medium tracking-wider text-ink-subtle uppercase">
-                    <th className="h-10 px-4">Date &amp; time</th>
-                    <th className="h-10 px-4">Device</th>
-                    <th className="h-10 px-4">IP address</th>
-                    <th className="h-10 px-4">Method</th>
-                    <th className="h-10 px-4">Status</th>
+                    <th className="h-10 px-4">{t('settings.loginHistory.headers.dateTime')}</th>
+                    <th className="h-10 px-4">{t('settings.loginHistory.headers.device')}</th>
+                    <th className="h-10 px-4">{t('settings.loginHistory.headers.ip')}</th>
+                    <th className="h-10 px-4">{t('settings.loginHistory.headers.method')}</th>
+                    <th className="h-10 px-4">{t('settings.loginHistory.headers.status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -102,7 +109,7 @@ export function LoginHistoryCard() {
                         <td className="p-4">
                           <code className="text-xs text-ink-muted">{e.ipAddress ?? '—'}</code>
                         </td>
-                        <td className="p-4 text-ink-muted">{methodLabel[e.method] ?? e.method}</td>
+                        <td className="p-4 text-ink-muted">{methodLabel(m, e.method)}</td>
                         <td className="p-4">
                           <span
                             className={
@@ -116,7 +123,7 @@ export function LoginHistoryCard() {
                             ) : (
                               <WarningCircle className="h-3.5 w-3.5" weight="fill" aria-hidden="true" />
                             )}
-                            {ok ? 'Success' : 'Failed'}
+                            {ok ? t('settings.loginHistory.success') : t('settings.loginHistory.failed')}
                           </span>
                         </td>
                       </tr>

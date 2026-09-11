@@ -1,4 +1,5 @@
 import { X } from '@phosphor-icons/react'
+import { useTranslation } from '../hooks/useTranslation'
 import { Button } from './Button'
 import { Card } from './Card'
 import { DialogShell } from './DialogShell'
@@ -33,18 +34,19 @@ export function CancelPlanDialog({
   onClose,
   confirmDisabled = false,
 }: CancelPlanDialogProps) {
+  const { t } = useTranslation()
   return (
     <DialogShell open={open} labelledBy="cancel-plan-title" onClose={onClose} wide>
       <Card className="p-6">
         <h2 id="cancel-plan-title" className="text-card-title text-ink">
-          Cancel your {planName} plan?
+          {t('billing.cancelDialog.title', { plan: planName })}
         </h2>
         <p className="mt-2 text-sm text-ink-subtle">
-          Cancelling stops recurring billing. You've already paid for this period, so {planName}{' '}
-          stays fully active until <span className="font-medium text-ink">{periodEnd}</span>.
+          {t('billing.cancelDialog.body', { plan: planName })}{' '}
+          <span className="font-medium text-ink">{periodEnd}</span>.
         </p>
 
-        <p className="mt-5 text-sm font-medium text-ink">After that, you'll lose access to</p>
+        <p className="mt-5 text-sm font-medium text-ink">{t('billing.cancelDialog.loseAccess')}</p>
         <ul className="mt-2 space-y-1.5">
           {lostFeatures.map((feature) => (
             <li key={feature} className="flex items-center gap-2 text-sm text-ink-subtle">
@@ -57,10 +59,10 @@ export function CancelPlanDialog({
 
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose} autoFocus>
-            Keep my {planName} plan
+            {t('billing.cancelDialog.keep', { plan: planName })}
           </Button>
           <Button variant="danger" onClick={onConfirm} disabled={confirmDisabled}>
-            Cancel plan
+            {t('billing.cancelDialog.confirm')}
           </Button>
         </div>
       </Card>

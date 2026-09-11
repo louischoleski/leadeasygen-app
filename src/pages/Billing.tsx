@@ -32,13 +32,20 @@ import {
   refreshBalance,
   refreshSubscription,
   subscriptionTiers,
+  tierDescription,
+  tierDisplayName,
+  tierFeatures,
   useBilling,
   type BillingCycle,
   type SubscriptionTier,
 } from '../data/billing'
 import { useJobs } from '../data/jobs'
+import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
 import { useDuplicatePurchaseGuard } from '../lib/useDuplicatePurchaseGuard'
+import { localeTags } from '../locales'
+
+type Translate = ReturnType<typeof useTranslation>['t']
 
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
@@ -47,6 +54,7 @@ const money = (minor: string, currency: string) =>
   `${new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(minor) / 100)}`
 
 function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
+  const { t, m } = useTranslation()
   const { subscriptionTier } = useBilling()
   const { purchase, isLoading: purchasing } = usePurchasePack()
   const { checkout, isLoading: checkingOut } = useWalletCheckout()
@@ -55,11 +63,14 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
   // The pack awaiting purchase confirmation — charging the saved card is
   // immediate, so we confirm the amount before it happens.
   const [pending, setPending] = useState<(typeof creditPacks)[number] | null>(null)
-  const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
+  const tier = subscriptionTiers.find((plan) => plan.id === subscriptionTier)
   // A paid plan includes unlimited credits — selling packs on top of it would
   // charge for something the subscription already covers (G5: hide packs while
   // subscribed). Enforced server-side too once GAP-1 lands in billing.
   const hasPaidPlan = !!tier && tier.priceMonthly > 0
+
+  // Packs are named by their credit count ("10 credits").
+  const packName = (credits: number | string) => t('billing.packs.name', { count: credits })
 
   // Charge the saved card in-app first — no redirect. The server tells us when it
   // can't (no card on file, or the card needs 3-D Secure) via `checkout_required`,
@@ -68,26 +79,26 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
     try {
       const result = await purchase(packId)
       if (result.status === 'credited') {
-        toast.success('Credits added to your balance')
+        toast.success(t('billing.packs.credited'))
         await refreshBalance()
         onPurchased?.() // refresh the invoices + activity tables in place
         return
       }
       if (result.status === 'processing') {
-        toast('Payment is processing — your balance will update shortly.')
+        toast(t('billing.packs.paymentProcessing'))
         await refreshBalance()
         onPurchased?.()
         return
       }
       if (result.status === 'declined') {
-        toast.error('Your saved card was declined — opening checkout to try another card.')
+        toast.error(t('billing.packs.declined'))
         // fall through to hosted checkout so they can pay with a different card
       }
       // checkout_required (no saved card / 3-D Secure) or declined → hosted checkout
       const url = await checkout({ packId })
       window.location.assign(url) // the payment webhook credits the wallet
     } catch {
-      toast.error('Could not complete the purchase. Please try again.')
+      toast.error(t('billing.packs.purchaseFailed'))
     }
   }
 
@@ -95,8 +106,7 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
     <section id="packages" className="scroll-mt-20 space-y-4">
       {hasPaidPlan && (
         <p className="rounded-lg border border-hairline bg-surface-2/50 px-4 py-3 text-sm text-ink-subtle">
-          Your {tier.name} plan already includes unlimited credits, so credit packs are unavailable
-          while it's active.
+          {t('billing.packs.unavailableWithPlan', { plan: tierDisplayName(m, tier.id) ?? tier.id })}
         </p>
       )}
       <div className="grid gap-4 md:grid-cols-3">
@@ -104,19 +114,19 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
           <Card key={pkg.id} className={cn('relative p-6', pkg.popular && 'border-primary shadow-sm')}>
             {pkg.popular && (
               <span className="absolute -top-2 right-4 rounded-md bg-primary px-2.5 py-0.5 text-xs font-semibold text-on-primary">
-                Best Value
+                {t('billing.packs.bestValue')}
               </span>
             )}
             <div className="mb-4">
-              <h3 className="text-lg font-bold text-ink">{pkg.name}</h3>
-              <p className="text-sm text-ink-subtle">{pkg.credits.toLocaleString()} credits</p>
+              <h3 className="text-lg font-bold text-ink">{packName(pkg.credits)}</h3>
+              <p className="text-sm text-ink-subtle">{packName(pkg.credits.toLocaleString())}</p>
             </div>
             <div className="mb-6">
               <span className="text-3xl font-bold text-ink">${pkg.price}</span>
-              <span className="text-ink-subtle"> one-time</span>
+              <span className="text-ink-subtle"> {t('billing.packs.oneTime')}</span>
             </div>
             <p className="mb-6 text-sm text-ink-subtle">
-              Good for ~{(pkg.credits * AVG_LEADS_PER_JOB).toLocaleString()} leads*
+              {t('billing.packs.goodFor', { count: (pkg.credits * AVG_LEADS_PER_JOB).toLocaleString() })}
             </p>
             <Button
               fullWidth
@@ -124,30 +134,39 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
               disabled={hasPaidPlan || isLoading}
               onClick={async () => {
                 // Warn before a repeat pack purchase within the recent window.
-                if (await confirmNotDuplicate({ amountCents: pkg.price * 100, label: `the ${pkg.name} pack` })) {
+                if (
+                  await confirmNotDuplicate({
+                    amountCents: pkg.price * 100,
+                    label: t('billing.packs.duplicateLabel', { name: packName(pkg.credits) }),
+                  })
+                ) {
                   setPending(pkg)
                 }
               }}
             >
-              Buy {pkg.name}
+              {t('billing.packs.buy', { name: packName(pkg.credits) })}
             </Button>
           </Card>
         ))}
       </div>
       <p className="text-xs text-ink-subtle">
-        *Based on the average yield of ~{AVG_LEADS_PER_JOB} leads per credit (1 credit = 1 scrape job).
-        Actual results vary with location and category.
+        {t('billing.packs.yieldNote', { count: AVG_LEADS_PER_JOB })}
       </p>
       <ConfirmDialog
         open={!!pending}
-        title={pending ? `Buy ${pending.name}?` : ''}
+        title={pending ? t('billing.packs.confirmTitle', { name: packName(pending.credits) }) : ''}
         description={
           pending
-            ? `This charges $${pending.price} to your card on file and adds ${pending.credits.toLocaleString()} credits. No card on file? You'll be taken to secure checkout.`
+            ? t('billing.packs.confirmDescription', {
+                price: pending.price,
+                count: pending.credits.toLocaleString(),
+              })
             : ''
         }
-        confirmLabel={isLoading ? 'Processing…' : `Pay $${pending?.price ?? ''}`}
-        cancelLabel="Cancel"
+        confirmLabel={
+          isLoading ? t('billing.packs.processing') : t('billing.packs.pay', { price: pending?.price ?? '' })
+        }
+        cancelLabel={t('billing.packs.cancel')}
         onConfirm={() => {
           const pack = pending
           setPending(null)
@@ -160,37 +179,43 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
   )
 }
 
-const invoiceStatusBadge = (status: string): { label: string; className: string } => {
+const invoiceStatusBadge = (t: Translate, status: string): { label: string; className: string } => {
   switch (status) {
     case 'paid':
-      return { label: 'Paid', className: 'bg-success/10 text-success' }
+      return { label: t('billing.invoices.status.paid'), className: 'bg-success/10 text-success' }
     case 'open':
     case 'draft':
-      return { label: status === 'open' ? 'Open' : 'Draft', className: 'bg-warning/10 text-warning' }
+      return {
+        label: status === 'open' ? t('billing.invoices.status.open') : t('billing.invoices.status.draft'),
+        className: 'bg-warning/10 text-warning',
+      }
     default:
+      // Unknown provider statuses fall back to the raw value, capitalized.
       return { label: status.charAt(0).toUpperCase() + status.slice(1), className: 'bg-error/10 text-error' }
   }
 }
 
-const invoiceDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+const invoiceDate = (iso: string, tag: string) =>
+  new Date(iso).toLocaleDateString(tag, { month: 'short', day: 'numeric', year: 'numeric' })
 
 // Subscription invoices from billing; each row links out to the provider-hosted
 // invoice / PDF (Anthropic-style: the list lives in-app, the document on Stripe).
 function InvoicesTable() {
+  const { t, locale } = useTranslation()
   const { invoices, isLoading, error } = useInvoices()
+  const tag = localeTags[locale]
 
   if (isLoading) {
-    return <Card className="p-12 text-center text-ink-subtle">Loading invoices…</Card>
+    return <Card className="p-12 text-center text-ink-subtle">{t('billing.invoices.loading')}</Card>
   }
   if (error) {
-    return <Card className="p-12 text-center text-error">Couldn't load invoices.</Card>
+    return <Card className="p-12 text-center text-error">{t('billing.invoices.loadFailed')}</Card>
   }
   if (invoices.length === 0) {
     return (
       <Card className="p-12 text-center">
         <Receipt className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
-        <p className="text-ink-subtle">No invoices yet.</p>
+        <p className="text-ink-subtle">{t('billing.invoices.empty')}</p>
       </Card>
     )
   }
@@ -198,7 +223,7 @@ function InvoicesTable() {
   const open = (inv: IInvoiceDTO, prefer: 'pdf' | 'hosted') => {
     const url = prefer === 'pdf' ? (inv.invoicePdf ?? inv.hostedInvoiceUrl) : (inv.hostedInvoiceUrl ?? inv.invoicePdf)
     if (url) window.open(url, '_blank', 'noopener,noreferrer')
-    else toast('This invoice has no link yet.')
+    else toast(t('billing.invoices.noLink'))
   }
 
   return (
@@ -206,7 +231,12 @@ function InvoicesTable() {
       <Table>
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
-              {['Date', 'Due', 'Total', 'Status'].map((heading) => (
+              {[
+                t('billing.invoices.headers.date'),
+                t('billing.invoices.headers.due'),
+                t('billing.invoices.headers.total'),
+                t('billing.invoices.headers.status'),
+              ].map((heading) => (
                 <th
                   key={heading}
                   scope="col"
@@ -219,24 +249,24 @@ function InvoicesTable() {
                 scope="col"
                 className="h-10 px-4 text-right text-xs font-medium tracking-wider text-ink-subtle uppercase"
               >
-                Actions
+                {t('billing.invoices.headers.actions')}
               </th>
             </tr>
           </thead>
           <tbody>
             {invoices.map((inv) => {
-              const badge = invoiceStatusBadge(inv.status)
+              const badge = invoiceStatusBadge(t, inv.status)
               // No id/number column — it's noise; a row is identified by its date.
-              const rowLabel = `invoice from ${invoiceDate(inv.created)}`
+              const rowLabel = t('billing.invoices.rowLabel', { date: invoiceDate(inv.created, tag) })
               return (
                 <tr
                   key={inv.id}
                   className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
                 >
-                  <td className="p-4 text-ink-subtle">{invoiceDate(inv.created)}</td>
+                  <td className="p-4 text-ink-subtle">{invoiceDate(inv.created, tag)}</td>
                   {/* Payment-terms due date — blank for anything paid on charge (pack
                       purchases, subscription renewals), populated for net-terms invoices. */}
-                  <td className="p-4 text-ink-subtle">{inv.dueDate ? invoiceDate(inv.dueDate) : '—'}</td>
+                  <td className="p-4 text-ink-subtle">{inv.dueDate ? invoiceDate(inv.dueDate, tag) : '—'}</td>
                   {/* amountDue is the invoice total; amountPaid is 0 until paid, so it would show $0.00 on open/dunning rows */}
                   <td className="p-4 font-medium text-ink">{money(inv.amountDue, inv.currency)}</td>
                   <td className="p-4">
@@ -259,7 +289,7 @@ function InvoicesTable() {
                           icon={Download}
                           variant="ghost"
                           size="sm"
-                          aria-label={`Download ${rowLabel} PDF`}
+                          aria-label={t('billing.invoices.downloadPdf', { row: rowLabel })}
                           onClick={() => open(inv, 'pdf')}
                         />
                       )}
@@ -267,9 +297,13 @@ function InvoicesTable() {
                         type="button"
                         onClick={() => open(inv, 'hosted')}
                         className="text-sm font-medium text-link hover:underline"
-                        aria-label={inv.invoicePdf ? `View ${rowLabel}` : `View ${rowLabel} receipt`}
+                        aria-label={
+                          inv.invoicePdf
+                            ? t('billing.invoices.viewRow', { row: rowLabel })
+                            : t('billing.invoices.viewReceipt', { row: rowLabel })
+                        }
                       >
-                        View
+                        {t('billing.invoices.view')}
                       </button>
                     </div>
                   </td>
@@ -288,63 +322,79 @@ function InvoicesTable() {
 // cards always frame lead counts as "~" averages, never promises.
 const AVG_LEADS_PER_JOB = 20
 
-const ledgerBadge: Record<string, { label: string; className: string }> = {
-  purchase: { label: 'Purchase', className: 'bg-primary/10 text-link' },
-  grant: { label: 'Grant', className: 'bg-success/10 text-success' },
-  usage: { label: 'Spend', className: 'bg-surface-2 text-ink-subtle' },
-  refund: { label: 'Refund', className: 'bg-success/10 text-success' },
-  adjustment: { label: 'Adjustment', className: 'bg-surface-2 text-ink-subtle' },
-  expiry: { label: 'Expired', className: 'bg-surface-2 text-ink-subtle' },
+const ledgerTypes = ['purchase', 'grant', 'usage', 'refund', 'adjustment', 'expiry'] as const
+type LedgerType = (typeof ledgerTypes)[number]
+
+const ledgerBadgeClass: Record<LedgerType, string> = {
+  purchase: 'bg-primary/10 text-link',
+  grant: 'bg-success/10 text-success',
+  usage: 'bg-surface-2 text-ink-subtle',
+  refund: 'bg-success/10 text-success',
+  adjustment: 'bg-surface-2 text-ink-subtle',
+  expiry: 'bg-surface-2 text-ink-subtle',
 }
 
-const ledgerDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+const ledgerDate = (iso: string, tag: string) =>
+  new Date(iso).toLocaleDateString(tag, { month: 'short', day: 'numeric', year: 'numeric' })
 
 // Ledger rows written before the worker composed human descriptions carry the
 // raw Maps URL ("Scrape completed: https://…/maps/search/<query>"). The ledger
 // is immutable, so rewrite those for display only — decode the URL back to its
 // search text. Newer rows arrive human-readable and pass through untouched.
-function ledgerDescription(description: string | null | undefined): string | null {
+function ledgerDescription(t: Translate, description: string | null | undefined): string | null {
   if (!description) return null
   const url = description.match(/^Scrape completed: https?:\/\/\S+$/)
   if (!url) return description
   const search = description.match(/\/maps\/search\/([^/?#\s]+)/)
-  if (!search) return 'Scrape completed'
+  if (!search) return t('billing.activity.scrapeCompleted')
   try {
-    return `Scrape completed: ${decodeURIComponent(search[1]).replace(/\+/g, ' ')}`
+    return t('billing.activity.scrapeCompletedQuery', {
+      query: decodeURIComponent(search[1]).replace(/\+/g, ' '),
+    })
   } catch {
-    return 'Scrape completed'
+    return t('billing.activity.scrapeCompleted')
   }
 }
 
 function CreditActivityTable() {
+  const { t, locale } = useTranslation()
   const { transactions, isLoading, error, hasMore, loadMore } = useWalletTransactions()
+  const tag = localeTags[locale]
 
   // Loading / error cards only on the INITIAL load — a failed `loadMore` sets
   // `error` too, and we must not wipe the rows already on screen for that.
   if (isLoading && transactions.length === 0) {
-    return <Card className="p-12 text-center text-ink-subtle">Loading activity…</Card>
+    return <Card className="p-12 text-center text-ink-subtle">{t('billing.activity.loading')}</Card>
   }
   if (error && transactions.length === 0) {
-    return <Card className="p-12 text-center text-error">Couldn't load credit activity.</Card>
+    return <Card className="p-12 text-center text-error">{t('billing.activity.loadFailed')}</Card>
   }
   if (transactions.length === 0) {
     return (
       <Card className="p-12 text-center">
         <Coin className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
-        <p className="text-ink-subtle">No credit activity yet.</p>
+        <p className="text-ink-subtle">{t('billing.activity.empty')}</p>
       </Card>
     )
   }
 
-  const badgeFor = (t: IWalletTransactionDTO) => ledgerBadge[t.type] ?? ledgerBadge.adjustment
+  const badgeFor = (entry: IWalletTransactionDTO) => {
+    const type: LedgerType = (ledgerTypes as readonly string[]).includes(entry.type)
+      ? (entry.type as LedgerType)
+      : 'adjustment'
+    return { label: t(`billing.activity.types.${type}`), className: ledgerBadgeClass[type] }
+  }
 
   return (
     <Card className="overflow-hidden">
       <Table>
           <thead>
             <tr className="border-b border-hairline bg-surface-2">
-              {['Date', 'Description', 'Type'].map((heading) => (
+              {[
+                t('billing.activity.headers.date'),
+                t('billing.activity.headers.description'),
+                t('billing.activity.headers.type'),
+              ].map((heading) => (
                 <th
                   key={heading}
                   scope="col"
@@ -353,7 +403,7 @@ function CreditActivityTable() {
                   {heading}
                 </th>
               ))}
-              {['Amount', 'Balance'].map((heading) => (
+              {[t('billing.activity.headers.amount'), t('billing.activity.headers.balance')].map((heading) => (
                 <th
                   key={heading}
                   scope="col"
@@ -373,8 +423,8 @@ function CreditActivityTable() {
                   key={entry.id}
                   className="border-b border-hairline transition-colors last:border-b-0 hover:bg-surface-2/50"
                 >
-                  <td className="p-4 text-ink-subtle">{ledgerDate(entry.createdAt)}</td>
-                  <td className="p-4 text-ink">{ledgerDescription(entry.description) ?? badge.label}</td>
+                  <td className="p-4 text-ink-subtle">{ledgerDate(entry.createdAt, tag)}</td>
+                  <td className="p-4 text-ink">{ledgerDescription(t, entry.description) ?? badge.label}</td>
                   <td className="p-4">
                     <span
                       className={cn(
@@ -399,9 +449,9 @@ function CreditActivityTable() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => void loadMore().catch(() => toast.error('Could not load more activity.'))}
+            onClick={() => void loadMore().catch(() => toast.error(t('billing.activity.loadMoreFailed')))}
           >
-            Load more
+            {t('billing.activity.loadMore')}
           </Button>
         </div>
       )}
@@ -410,6 +460,7 @@ function CreditActivityTable() {
 }
 
 function PaymentMethodCard() {
+  const { t } = useTranslation()
   const { paymentMethod, isLoading, refresh } = usePaymentMethod()
   const { remove, isLoading: removing } = useRemovePaymentMethod()
   const [editing, setEditing] = useState(false)
@@ -418,21 +469,23 @@ function PaymentMethodCard() {
     try {
       await remove()
       await refresh()
-      toast.success('Card removed')
+      toast.success(t('billing.paymentMethod.removed'))
     } catch {
-      toast.error('Could not remove the card. Please try again.')
+      toast.error(t('billing.paymentMethod.removeFailed'))
     }
   }
 
   if (isLoading) {
-    return <Card className="p-12 text-center text-ink-subtle">Loading…</Card>
+    return <Card className="p-12 text-center text-ink-subtle">{t('billing.paymentMethod.loading')}</Card>
   }
 
   // Add / replace a card in-page (embedded Payment Element — no redirect).
   if (editing) {
     return (
       <Card className="p-6">
-        <p className="mb-4 font-medium text-ink">{paymentMethod ? 'Replace card' : 'Add a card'}</p>
+        <p className="mb-4 font-medium text-ink">
+          {paymentMethod ? t('billing.paymentMethod.replaceCard') : t('billing.paymentMethod.addCard')}
+        </p>
         <AddPaymentMethod
           onSaved={() => {
             setEditing(false)
@@ -448,11 +501,11 @@ function PaymentMethodCard() {
     return (
       <Card className="p-12 text-center">
         <CreditCard className="mx-auto mb-3 h-10 w-10 text-ink-subtle" aria-hidden="true" />
-        <p className="text-ink-subtle">No payment methods on file.</p>
-        <p className="mt-1 text-xs text-ink-subtle">Add a card to buy credits or subscribe without leaving the page.</p>
+        <p className="text-ink-subtle">{t('billing.paymentMethod.empty')}</p>
+        <p className="mt-1 text-xs text-ink-subtle">{t('billing.paymentMethod.emptyHint')}</p>
         <div className="mt-4 flex justify-center">
           <Button iconLeft={Plus} onClick={() => setEditing(true)}>
-            Add a card
+            {t('billing.paymentMethod.addCard')}
           </Button>
         </div>
       </Card>
@@ -472,16 +525,19 @@ function PaymentMethodCard() {
               {brand} •••• {paymentMethod.last4}
             </p>
             <p className="text-sm text-ink-subtle">
-              Expires {String(paymentMethod.expMonth).padStart(2, '0')}/{paymentMethod.expYear}
+              {t('billing.paymentMethod.expires', {
+                month: String(paymentMethod.expMonth).padStart(2, '0'),
+                year: paymentMethod.expYear,
+              })}
             </p>
           </div>
         </div>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={() => setEditing(true)} disabled={removing}>
-            Update
+            {t('billing.paymentMethod.update')}
           </Button>
           <Button variant="secondary" onClick={() => void onRemove()} disabled={removing}>
-            {removing ? 'Removing…' : 'Remove'}
+            {removing ? t('billing.paymentMethod.removing') : t('billing.paymentMethod.remove')}
           </Button>
         </div>
       </div>
@@ -490,6 +546,7 @@ function PaymentMethodCard() {
 }
 
 function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: BillingCycle; setBillingCycle: (c: BillingCycle) => void }) {
+  const { t, m } = useTranslation()
   const { subscriptionTier } = useBilling()
   const { checkout, isLoading } = useCheckout()
   const { confirm: confirmNotDuplicate, dialog: duplicateDialog } = useDuplicatePurchaseGuard()
@@ -498,20 +555,21 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
   // mid-period would mean owing a prorated refund. The only path down is
   // Cancel Subscription, which runs to the end of the billing period.
   const effectiveTierId = subscriptionTier ?? 'free'
-  const rank = (id: string) => subscriptionTiers.findIndex((t) => t.id === id)
+  const rank = (id: string) => subscriptionTiers.findIndex((plan) => plan.id === id)
   const currentRank = rank(effectiveTierId)
 
   const choose = async (tier: SubscriptionTier) => {
     // Guard against an accidental repeat subscription (latency / double-click).
     const amountCents = (billingCycle === 'annual' ? tier.priceAnnual * 12 : tier.priceMonthly) * 100
-    if (!(await confirmNotDuplicate({ amountCents, label: `the ${tier.name} plan` }))) return
+    const label = t('billing.plans.duplicateLabel', { name: tierDisplayName(m, tier.id) ?? tier.id })
+    if (!(await confirmNotDuplicate({ amountCents, label }))) return
     try {
       const url = await checkout({ plan: tier.id, interval: billingCycle === 'annual' ? 'year' : 'month' })
       window.location.assign(url)
     } catch (err) {
       // Surface the server's reason (e.g. "Already on Unlimited (month)…") rather
       // than a generic message.
-      toast.error(err instanceof FonderieApiError ? err.explanation : 'Could not start checkout. Please try again.')
+      toast.error(err instanceof FonderieApiError ? err.explanation : t('billing.plans.checkoutFailed'))
     }
   }
 
@@ -528,7 +586,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
               billingCycle === 'monthly' ? 'bg-surface-1 text-ink shadow-sm' : 'text-ink-subtle hover:text-ink',
             )}
           >
-            Monthly
+            {t('billing.plans.monthly')}
           </button>
           <button
             type="button"
@@ -539,9 +597,9 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
               billingCycle === 'annual' ? 'bg-surface-1 text-ink shadow-sm' : 'text-ink-subtle hover:text-ink',
             )}
           >
-            Annual
+            {t('billing.plans.annual')}
             <span className="ml-1.5 rounded-md bg-success/10 px-1.5 py-0.5 text-xs font-semibold text-success">
-              Save 20%
+              {t('billing.plans.save')}
             </span>
           </button>
         </div>
@@ -559,19 +617,21 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
             >
               {tier.popular && (
                 <span className="absolute -top-2 right-4 rounded-md bg-primary px-2.5 py-0.5 text-xs font-semibold text-on-primary shadow">
-                  Popular
+                  {t('billing.plans.popular')}
                 </span>
               )}
               <div className="mb-4">
-                <h3 className="text-lg font-bold text-ink">{tier.name}</h3>
-                <p className="text-sm text-ink-subtle">{tier.description}</p>
+                <h3 className="text-lg font-bold text-ink">{tierDisplayName(m, tier.id) ?? tier.id}</h3>
+                <p className="text-sm text-ink-subtle">{tierDescription(m, tier.id)}</p>
               </div>
               <div className="mb-6">
                 <span className="text-3xl font-bold text-ink">${price}</span>
-                <span className="text-ink-subtle">/{billingCycle === 'monthly' ? 'mo' : 'mo, billed annually'}</span>
+                <span className="text-ink-subtle">
+                  {billingCycle === 'monthly' ? t('billing.plans.perMonth') : t('billing.plans.perMonthAnnual')}
+                </span>
               </div>
               <ul className="mb-6 space-y-2">
-                {tier.features.map((feature) => (
+                {tierFeatures(m, tier.id).map((feature) => (
                   <li key={feature} className="flex items-center gap-2 text-sm text-ink">
                     <Check className="h-4 w-4 shrink-0 text-success" weight="bold" aria-hidden="true" />
                     {feature}
@@ -581,16 +641,15 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
               <div className="mt-auto">
                 {current ? (
                   <Button variant="secondary" fullWidth disabled>
-                    Current Plan
+                    {t('billing.plans.currentPlan')}
                   </Button>
                 ) : isLower ? (
                   <>
                     <Button variant="secondary" fullWidth disabled>
-                      Downgrade unavailable
+                      {t('billing.plans.downgradeUnavailable')}
                     </Button>
                     <p className="mt-2 text-center text-xs text-ink-subtle">
-                      To move down, cancel your current plan — it stays active until the end of the
-                      billing period.
+                      {t('billing.plans.downgradeNote')}
                     </p>
                   </>
                 ) : (
@@ -600,7 +659,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
                     disabled={isLoading}
                     onClick={() => void choose(tier)}
                   >
-                    Subscribe
+                    {t('billing.plans.subscribe')}
                   </Button>
                 )}
               </div>
@@ -614,6 +673,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
 }
 
 export default function Billing() {
+  const { t, m, locale } = useTranslation()
   const { creditBalance, grantedCredits, purchasedCredits, grantedExpiresAt, subscriptionTier, creditsUnlimited } = useBilling()
   const { activeJobs } = useJobs()
   const { cancel, isLoading: cancelling } = useCancelSubscription()
@@ -641,16 +701,18 @@ export default function Billing() {
       void refreshBalance()
       void refreshSubscription()
       void refreshSub({ force: true })
-      toast.success('Payment complete', { description: 'Your account has been updated.' })
+      toast.success(t('billing.page.paymentComplete'), { description: t('billing.page.paymentCompleteDetail') })
     } else if (status === 'cancelled') {
-      toast('Checkout cancelled — no charge was made.')
+      toast(t('billing.page.checkoutCancelled'))
     }
     setSearchParams({}, { replace: true })
-  }, [searchParams, setSearchParams, refreshSub])
+  }, [searchParams, setSearchParams, refreshSub, t])
 
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
   // Card is always shown; a null subscription displays under the free tier's limits
   const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier) ?? subscriptionTiers[0]
+  const activeTierName = tierDisplayName(m, activeTier.id) ?? activeTier.id
+  const freeFeatures = tierFeatures(m, 'free')
   // Unlimited-plan users can't buy credit packs, so keep them on the plans view
   // and hide the Buy Credits toggle entirely.
   const showSubscriptionView = creditsUnlimited || showSubscription
@@ -669,11 +731,11 @@ export default function Billing() {
     try {
       await cancel() // at period end by default — access continues until paid-through
       await Promise.all([refreshSubscription(), refreshSub({ force: true })])
-      toast.success('Subscription cancelled', {
-        description: 'You keep access until the end of the current billing period.',
+      toast.success(t('billing.page.subscriptionCancelled'), {
+        description: t('billing.page.subscriptionCancelledDetail'),
       })
     } catch {
-      toast.error('Could not cancel the subscription. Please try again.')
+      toast.error(t('billing.page.cancelFailed'))
     }
   }
 
@@ -683,26 +745,26 @@ export default function Billing() {
     try {
       await reactivate()
       await Promise.all([refreshSubscription(), refreshSub({ force: true })])
-      toast.success('Subscription resumed', {
-        description: 'Your plan will keep renewing as normal.',
+      toast.success(t('billing.page.subscriptionResumed'), {
+        description: t('billing.page.subscriptionResumedDetail'),
       })
     } catch {
       // 409 → already fully canceled; the fix is a fresh checkout, not a resume.
-      toast.error('Could not resume — the plan may have already ended. Start a new checkout to re-subscribe.')
+      toast.error(t('billing.page.resumeFailed'))
     }
   }
 
   // A paid subscription set to cancel at period end (not yet fully canceled).
   const scheduledToCancel = subscription?.cancelAtPeriodEnd === true && subscription?.status !== 'canceled'
   const periodEnd = subscription?.currentPeriodEnd
-    ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+    ? new Date(subscription.currentPeriodEnd).toLocaleDateString(localeTags[locale])
     : '—'
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-ink">Billing</h1>
-        <p className="text-ink-subtle">Manage your credits and subscription.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-ink">{t('billing.page.title')}</h1>
+        <p className="text-ink-subtle">{t('billing.page.subtitle')}</p>
       </div>
 
       <Card className="overflow-hidden">
@@ -712,29 +774,29 @@ export default function Billing() {
               <Coin className="h-7 w-7 text-primary" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-sm text-ink-subtle">Available Credits</p>
+              <p className="text-sm text-ink-subtle">{t('billing.page.availableCredits')}</p>
               <p className="text-4xl font-bold tracking-tight text-ink">
-                {creditsUnlimited ? 'Unlimited' : creditBalance}
+                {creditsUnlimited ? t('billing.page.unlimited') : creditBalance}
               </p>
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             {!creditsUnlimited && (
               <Button iconLeft={Plus} onClick={showPackages}>
-                Buy Credits
+                {t('billing.page.buyCredits')}
               </Button>
             )}
             <Button variant="secondary" iconLeft={Crown} onClick={showPlans}>
-              View Plans
+              {t('billing.page.viewPlans')}
             </Button>
           </div>
         </div>
         {payAsYouGo && (
           <div className="border-t border-hairline bg-surface-2/50 px-6 py-3">
             <p className="text-sm text-ink-subtle">
-              You're on pay-as-you-go.{' '}
+              {t('billing.page.payAsYouGo')}{' '}
               <button type="button" onClick={showPlans} className="cursor-pointer text-link underline">
-                Subscribe for unlimited
+                {t('billing.page.subscribeForUnlimited')}
               </button>
             </p>
           </div>
@@ -744,26 +806,26 @@ export default function Billing() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <CurrentPlanCard
-            planName={activeTier.name}
+            planName={activeTierName}
             billingCycle={billingCycle}
             // Free plans aren't billed — show when the monthly credit allowance
             // renews instead of an empty billing date.
-            dateLabel={activeTier.id === 'free' ? 'Credits reset' : undefined}
+            dateLabel={activeTier.id === 'free' ? t('billing.page.creditsReset') : undefined}
             nextBillingDate={
               activeTier.id !== 'free'
                 ? periodEnd
                 : grantedExpiresAt
-                  ? new Date(grantedExpiresAt).toLocaleDateString()
+                  ? new Date(grantedExpiresAt).toLocaleDateString(localeTags[locale])
                   : '—'
             }
             metrics={[
-              { label: 'Active jobs', used: activeJobs.length, total: activeTier.limits.activeJobs },
+              { label: t('billing.page.activeJobs'), used: activeJobs.length, total: activeTier.limits.activeJobs },
               // Monthly plan credits — how many of the cycle's use-it-or-lose-it
               // allowance remain (the grant resets each period). Shown as remaining
               // so "how much is left this month" reads at a glance; purchased packs
               // are a separate, never-expiring bar below.
               {
-                label: 'Monthly credits',
+                label: t('billing.page.monthlyCredits'),
                 used: grantedCredits,
                 total: activeTier.limits.creditsPerMonth,
                 mode: 'remaining',
@@ -779,10 +841,12 @@ export default function Billing() {
           />
           <CancelPlanDialog
             open={confirmingCancel}
-            planName={activeTier.name}
-            periodEnd="the end of your billing period"
-            lostFeatures={activeTier.features.filter((f) => !subscriptionTiers[0].features.includes(f))}
-            fallbackNote={`Afterwards you move to the Free plan: ${subscriptionTiers[0].features.join(' · ').toLowerCase()}.`}
+            planName={activeTierName}
+            periodEnd={t('billing.page.periodEndFallback')}
+            lostFeatures={tierFeatures(m, activeTier.id).filter((f) => !freeFeatures.includes(f))}
+            fallbackNote={t('billing.page.freeFallbackNote', {
+              features: freeFeatures.join(' · ').toLowerCase(),
+            })}
             onConfirm={() => void confirmCancel()}
             onClose={() => setConfirmingCancel(false)}
             confirmDisabled={cancelling}
@@ -792,19 +856,19 @@ export default function Billing() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-ink">
-                {showSubscriptionView ? 'Subscription Plans' : 'Credit Packs'}
+                {showSubscriptionView ? t('billing.page.plansTitle') : t('billing.page.packsTitle')}
               </h2>
               <p className="text-sm text-ink-subtle">
-                {showSubscriptionView ? 'Recurring plans for unlimited scraping' : 'One-time purchases, never expire'}
+                {showSubscriptionView ? t('billing.page.plansSubtitle') : t('billing.page.packsSubtitle')}
               </p>
             </div>
             {!creditsUnlimited && (
               <Toggle
                 pressed={showSubscription}
                 onPressedChange={setShowSubscription}
-                unpressedLabel="Buy Credits"
-                pressedLabel="Subscribe"
-                aria-label="Choose billing mode"
+                unpressedLabel={t('billing.page.buyCredits')}
+                pressedLabel={t('billing.plans.subscribe')}
+                aria-label={t('billing.page.toggleMode')}
               />
             )}
           </div>
@@ -819,9 +883,9 @@ export default function Billing() {
       <div>
         <Tabs
           tabs={[
-            { id: 'history', label: 'Invoices' },
-            { id: 'activity', label: 'Credit Activity' },
-            { id: 'methods', label: 'Payment Method' },
+            { id: 'history', label: t('billing.page.tabInvoices') },
+            { id: 'activity', label: t('billing.page.tabActivity') },
+            { id: 'methods', label: t('billing.page.tabPaymentMethod') },
           ]}
           activeTab={activeTab}
           onChange={setActiveTab}

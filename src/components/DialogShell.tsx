@@ -2,6 +2,7 @@ import { X } from '@phosphor-icons/react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { IconButton } from './IconButton'
+import { useTranslation } from '../hooks/useTranslation'
 
 interface DialogShellProps {
   open: boolean
@@ -22,6 +23,7 @@ interface DialogShellProps {
  * overlay itself; Escape closes; focus returns to the opener on close.
  */
 export function DialogShell({ open, labelledBy, onClose, wide, children }: DialogShellProps) {
+  const { t } = useTranslation()
   const restoreRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export function DialogShell({ open, labelledBy, onClose, wide, children }: Dialo
             icon={X}
             size="sm"
             variant="ghost"
-            aria-label="Close dialog"
+            aria-label={t('common.dialog.close')}
             className="absolute top-2 right-2"
             onClick={onClose}
           />
