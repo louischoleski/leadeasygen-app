@@ -15,7 +15,7 @@ import {
   User,
   Warning,
 } from '@phosphor-icons/react'
-import profile from '../assets/profile.jpg'
+import { Avatar } from '../components/Avatar'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -156,11 +156,7 @@ function ProfileCard() {
         description="Your account details and contact information."
       />
       <div className="mt-4 flex flex-wrap items-center gap-4">
-        <img
-          src={user?.profileImageUrl || profile}
-          alt=""
-          className="h-16 w-16 rounded-full object-cover"
-        />
+        <Avatar src={user?.profileImageUrl} className="h-16 w-16" />
         <div className="min-w-0 flex-1">
           <h2 className="font-medium text-ink">{userDisplayName(user)}</h2>
           <p className="truncate text-sm text-ink-subtle">{user?.email}</p>

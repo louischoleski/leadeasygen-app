@@ -6,15 +6,16 @@ import { registerViaUi } from './helpers/auth'
 const AVATAR = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'avatar.png')
 
 /**
- * Regression for the top-nav avatar not reflecting an upload: the Navbar
- * rendered the bundled placeholder unconditionally instead of the session's
- * user.profileImageUrl, so a changed avatar only showed in the Settings card.
+ * Avatar lifecycle through the real UI:
+ *  - a fresh account shows the neutral UserCircle placeholder (no <img>) in both
+ *    the Settings card and the top nav;
+ *  - uploading reflects the served /media/:id image in BOTH places (regression
+ *    for the nav previously pinned to a static placeholder);
+ *  - removing reverts both to the icon and deletes the stored asset.
  *
- * Drives the real upload through the UI and asserts BOTH the Settings card and
- * the nav-bar avatar switch to the served /media/:id URL. Needs the backend
- * stack up (no email needed — the app runs with verification disabled).
+ * Needs the backend stack up (no email — the app runs with verification off).
  */
-test('uploaded avatar shows in the top nav, not just the profile card', async ({ page }) => {
+test('avatar upload reflects in the top nav; remove reverts to the neutral icon', async ({ page }) => {
   test.setTimeout(60_000)
 
   const email = `avatar-${Date.now()}@leadeasygen.dev`
@@ -22,30 +23,27 @@ test('uploaded avatar shows in the top nav, not just the profile card', async ({
 
   await page.goto('/settings')
 
-  const navAvatar = page.getByRole('button', { name: /^Account:/ }).locator('img')
-  // Before upload the nav shows the bundled placeholder — never a /media/ URL.
-  const before = (await navAvatar.getAttribute('src')) ?? ''
-  expect(before).not.toContain('/media/')
+  const navImg = page.getByRole('button', { name: /^Account:/ }).locator('img')
+  const cardImg = page.locator('#profile img')
 
-  // The "Change avatar" input is hidden; setInputFiles fires its change handler.
+  // Fresh account: gender-neutral icon placeholder — no <img> in either spot.
+  await expect(navImg).toHaveCount(0)
+  await expect(cardImg).toHaveCount(0)
+
+  // The "Change" input is hidden; setInputFiles fires its change handler.
   await page.setInputFiles('input[type="file"]', AVATAR)
   await expect(page.getByText('Avatar updated')).toBeVisible({ timeout: 20_000 })
 
-  const cardAvatar = page.locator('#profile img').first()
-  // The fix: both the profile card AND the nav bar now point at the served asset.
-  await expect(cardAvatar).toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
-  await expect(navAvatar).toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
+  // Both the profile card AND the nav bar now render the served asset.
+  await expect(cardImg).toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
+  await expect(navImg).toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
+  const uploadedUrl = await navImg.getAttribute('src')
+  expect(await cardImg.getAttribute('src')).toBe(uploadedUrl)
 
-  const cardSrc = await cardAvatar.getAttribute('src')
-  const navSrc = await navAvatar.getAttribute('src')
-  expect(navSrc).toBe(cardSrc)
-  const uploadedUrl = navSrc as string
-
-  // Remove reverts both avatars to the bundled placeholder and deletes the asset.
+  // Remove reverts both to the neutral icon (no <img>) and deletes the asset.
   await page.locator('#profile').getByRole('button', { name: 'Remove' }).click()
   await expect(page.getByText('Avatar removed')).toBeVisible({ timeout: 20_000 })
-  await expect(cardAvatar).not.toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
-  await expect(navAvatar).not.toHaveAttribute('src', /\/media\//, { timeout: 15_000 })
-  // The stored asset is gone (deleted), so the served URL now 404s.
-  expect((await page.request.get(uploadedUrl)).status()).toBe(404)
+  await expect(cardImg).toHaveCount(0, { timeout: 15_000 })
+  await expect(navImg).toHaveCount(0, { timeout: 15_000 })
+  expect((await page.request.get(uploadedUrl as string)).status()).toBe(404)
 })

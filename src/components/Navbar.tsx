@@ -1,7 +1,7 @@
 import { Coin, Globe, List, MagnetStraight, MagnifyingGlass, Monitor, Moon, Sun, X } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import profile from '../assets/profile.jpg'
+import { Avatar } from './Avatar'
 import { subscriptionTiers, useBilling } from '../data/billing'
 import { useAppSession, userDisplayName } from '../lib/session'
 import { IconButton } from './IconButton'
@@ -168,11 +168,7 @@ export default function Navbar({ onToggleNav }: { onToggleNav: () => void }) {
             <span className="block text-sm font-medium text-ink">{userDisplayName(user)}</span>
             {planName && <span className="block text-xs text-ink-subtle">{planName} plan</span>}
           </span>
-          <img
-            src={user?.profileImageUrl || profile}
-            alt=""
-            className="h-9 w-9 rounded-full object-cover"
-          />
+          <Avatar src={user?.profileImageUrl} className="h-9 w-9" />
         </button>
         {accountOpen && (
           <div role="menu" className="card absolute top-full right-0 z-40 mt-1 w-52 p-1">
