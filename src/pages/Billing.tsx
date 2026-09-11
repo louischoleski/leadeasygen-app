@@ -617,7 +617,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
 }
 
 export default function Billing() {
-  const { creditBalance, grantedCredits, purchasedCredits, grantedExpiresAt, subscriptionTier } = useBilling()
+  const { creditBalance, grantedCredits, purchasedCredits, grantedExpiresAt, subscriptionTier, creditsUnlimited } = useBilling()
   const { activeJobs } = useJobs()
   const { cancel, isLoading: cancelling } = useCancelSubscription()
   // Detailed lifecycle state (cancel-scheduled? period end?) for the plan card —
@@ -654,6 +654,9 @@ export default function Billing() {
   const payAsYouGo = subscriptionTier === null || subscriptionTier === 'free'
   // Card is always shown; a null subscription displays under the free tier's limits
   const activeTier = subscriptionTiers.find((tier) => tier.id === subscriptionTier) ?? subscriptionTiers[0]
+  // Unlimited-plan users can't buy credit packs, so keep them on the plans view
+  // and hide the Buy Credits toggle entirely.
+  const showSubscriptionView = creditsUnlimited || showSubscription
 
   const showPackages = () => {
     setShowSubscription(false)
@@ -717,9 +720,11 @@ export default function Billing() {
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button iconLeft={Plus} onClick={showPackages}>
-              Buy Credits
-            </Button>
+            {!creditsUnlimited && (
+              <Button iconLeft={Plus} onClick={showPackages}>
+                Buy Credits
+              </Button>
+            )}
             <Button variant="secondary" iconLeft={Crown} onClick={showPlans}>
               View Plans
             </Button>
@@ -788,21 +793,23 @@ export default function Billing() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-ink">
-                {showSubscription ? 'Subscription Plans' : 'Credit Packs'}
+                {showSubscriptionView ? 'Subscription Plans' : 'Credit Packs'}
               </h2>
               <p className="text-sm text-ink-subtle">
-                {showSubscription ? 'Recurring plans for unlimited scraping' : 'One-time purchases, never expire'}
+                {showSubscriptionView ? 'Recurring plans for unlimited scraping' : 'One-time purchases, never expire'}
               </p>
             </div>
-            <Toggle
-              pressed={showSubscription}
-              onPressedChange={setShowSubscription}
-              unpressedLabel="Buy Credits"
-              pressedLabel="Subscribe"
-              aria-label="Choose billing mode"
-            />
+            {!creditsUnlimited && (
+              <Toggle
+                pressed={showSubscription}
+                onPressedChange={setShowSubscription}
+                unpressedLabel="Buy Credits"
+                pressedLabel="Subscribe"
+                aria-label="Choose billing mode"
+              />
+            )}
           </div>
-          {showSubscription ? (
+          {showSubscriptionView ? (
             <SubscriptionPlans billingCycle={billingCycle} setBillingCycle={setBillingCycle} />
           ) : (
             <CreditPacks onPurchased={() => setPurchaseNonce((n) => n + 1)} />

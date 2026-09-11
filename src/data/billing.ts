@@ -71,6 +71,14 @@ export const subscriptionTiers: SubscriptionTier[] = [
   },
 ]
 
+// A subscriber on an unlimited-credits plan can't buy credit packs — the server
+// blocks it (blockPacksWhileSubscribed) — so every "Buy credits" CTA is hidden
+// for them and job submission never gates on balance. Centralised so the whole
+// app agrees on when purchasing credits is even possible.
+export function hasUnlimitedCredits(subscriptionTier: string | null): boolean {
+  return subscriptionTiers.find((t) => t.id === subscriptionTier)?.limits.creditsPerMonth === null
+}
+
 // ── Cross-cutting store (balance + tier), sourced from billing ────────────────
 
 interface BillingState {
@@ -186,5 +194,5 @@ export function useBilling() {
     void refreshBalance()
     void refreshSubscription()
   }, [])
-  return current
+  return { ...current, creditsUnlimited: hasUnlimitedCredits(current.subscriptionTier) }
 }

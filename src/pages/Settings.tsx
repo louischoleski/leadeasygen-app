@@ -451,7 +451,7 @@ function SecurityCard() {
 }
 
 function CreditsCard() {
-  const { creditBalance, subscriptionTier } = useBilling()
+  const { creditBalance, subscriptionTier, creditsUnlimited } = useBilling()
   const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
   const planLabel = tier ? `the ${tier.name} plan` : 'pay-as-you-go'
 
@@ -467,7 +467,9 @@ function CreditsCard() {
               <span className="text-3xl font-bold text-ink">{creditBalance}</span>
               <span className="ml-1 text-sm text-ink-subtle">remaining</span>
             </div>
-            <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>
+            {!creditsUnlimited && (
+              <Button asChild><Link to="/billing#packages">Buy credits</Link></Button>
+            )}
             <Button asChild variant="secondary"><Link to="/billing">Manage billing</Link></Button>
           </div>
         }

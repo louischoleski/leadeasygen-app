@@ -23,7 +23,7 @@ function StatCard({ label, value, icon: StatIcon }: { label: string; value: numb
 }
 
 export default function Dashboard() {
-  const { creditBalance } = useBilling()
+  const { creditBalance, creditsUnlimited } = useBilling()
   const { jobs, activeJobs, completedJobs } = useJobs()
 
   useEffect(() => {
@@ -51,9 +51,11 @@ export default function Dashboard() {
             <p className="text-2xl font-bold text-ink">{creditBalance}</p>
           </div>
         </div>
-        <Button asChild variant="secondary">
-          <Link to="/billing">Buy Credits</Link>
-        </Button>
+        {!creditsUnlimited && (
+          <Button asChild variant="secondary">
+            <Link to="/billing">Buy Credits</Link>
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

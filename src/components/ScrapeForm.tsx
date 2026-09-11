@@ -31,7 +31,7 @@ interface ScrapeFormValues {
 }
 
 export function ScrapeForm() {
-  const { creditBalance, subscriptionTier } = useBilling()
+  const { creditBalance, subscriptionTier, creditsUnlimited } = useBilling()
   const { jobs } = useJobs()
 
   const {
@@ -48,7 +48,8 @@ export function ScrapeForm() {
   const keywords = useWatch({ control, name: 'keywords' })
   const keywordList = parseKeywords(keywords)
   const estimatedCost = jobCreditCost(keywordList.length)
-  const insufficient = creditBalance < estimatedCost
+  // Unlimited-plan users never run out — don't gate scraping on the balance.
+  const insufficient = !creditsUnlimited && creditBalance < estimatedCost
 
   const tier = subscriptionTiers.find((t) => t.id === subscriptionTier)
   const activeJobs = jobs.filter((j) => j.status === 'queued' || j.status === 'running').length
