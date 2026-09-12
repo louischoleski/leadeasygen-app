@@ -1,7 +1,7 @@
 import { useFonderieClient } from '@fonderie/react'
 import { useEffect, useRef } from 'react'
 import { setLocale, useLocale } from '../hooks/useLocale'
-import { isLocale } from '../locales'
+import { DEFAULT_LOCALE, isLocale } from '../locales'
 import { useAppSession } from './session'
 
 // Makes the locale a real account preference rather than a per-device setting:
@@ -25,11 +25,22 @@ export function LocalePreferenceSync() {
       return
     }
     if (hydratedFor.current !== user.id) {
-      // Adoption pass, once per signed-in user: the stored preference wins.
+      // Adoption pass, once per signed-in user.
       hydratedFor.current = user.id
-      serverLocale.current = user.preferences.locale
       const preferred = user.preferences.locale
-      if (isLocale(preferred) && preferred !== locale) setLocale(preferred)
+      serverLocale.current = preferred
+      if (preferred === locale) return
+      // A stored preference equal to the default is indistinguishable from
+      // "never chosen" (fresh accounts get the default), so the device's
+      // explicit pre-login choice — made on the login/register screens — is
+      // the fresher signal and gets pushed to the account. Any other valid
+      // stored value is a real account preference and wins over the device.
+      if (isLocale(preferred) && preferred !== DEFAULT_LOCALE) {
+        setLocale(preferred)
+      } else {
+        serverLocale.current = locale
+        client.auth.updatePreferences({ locale }).catch(() => undefined)
+      }
       return
     }
     if (locale === serverLocale.current) return

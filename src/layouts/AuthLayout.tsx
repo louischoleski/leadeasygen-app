@@ -1,5 +1,6 @@
 import { MagnetStraight } from '@phosphor-icons/react'
 import { Link, Outlet } from 'react-router-dom'
+import LocaleSwitcher from '../components/LocaleSwitcher'
 import { useTranslation } from '../hooks/useTranslation'
 
 export default function AuthLayout() {
@@ -15,6 +16,9 @@ export default function AuthLayout() {
           <span className="text-xs text-ink-subtle">{t('auth.layout.tagline')}</span>
         </div>
       </Link>
+      <div className="absolute top-4 right-4 md:top-8 md:right-8">
+        <LocaleSwitcher />
+      </div>
       <div className="w-full max-w-sm">
         <Outlet />
       </div>

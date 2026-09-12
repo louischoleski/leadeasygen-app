@@ -2,6 +2,7 @@ import { MagnetStraight } from '@phosphor-icons/react'
 import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '../hooks/useTranslation'
+import LocaleSwitcher from './LocaleSwitcher'
 
 interface LegalPageProps {
   title: string
@@ -18,12 +19,15 @@ export function LegalPage({ title, children }: LegalPageProps) {
   return (
     <main className="min-h-screen bg-canvas">
       <div className="mx-auto max-w-2xl px-6 py-12">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <MagnetStraight className="h-5 w-5 text-on-primary" aria-hidden="true" />
-          </div>
-          <span className="text-lg font-semibold tracking-tight text-ink">{t('common.appName')}</span>
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <MagnetStraight className="h-5 w-5 text-on-primary" aria-hidden="true" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight text-ink">{t('common.appName')}</span>
+          </Link>
+          <LocaleSwitcher />
+        </div>
         <h1 className="mt-10 text-3xl font-bold tracking-tight text-ink">{title}</h1>
         <p className="mt-1 text-sm text-ink-subtle">{t('legal.lastUpdated')}</p>
         <div className="mt-8 space-y-8">{children}</div>
