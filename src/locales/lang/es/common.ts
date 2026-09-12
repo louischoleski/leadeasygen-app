@@ -19,5 +19,9 @@ const common: typeof enCommon = {
     noOptions: 'Sin opciones',
     loading: 'Cargando...',
   },
+  errors: {
+    network: 'No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.',
+    unknown: 'Algo ha salido mal por nuestra parte. Inténtalo de nuevo.',
+  },
 }
 export default common

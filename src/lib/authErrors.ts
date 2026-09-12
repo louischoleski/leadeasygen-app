@@ -1,6 +1,7 @@
 import { FonderieApiError } from '@fonderie/react-auth'
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form'
 import { toast } from 'sonner'
+import { userErrorMessage } from './errors'
 
 // Routes a FonderieApiError onto the form field it belongs to; anything
 // unmapped falls back to a toast so no rejection is ever silent.
@@ -36,5 +37,5 @@ export function applyAuthError<T extends FieldValues>(
     toast.error(err.explanation || fallbackMessage)
     return
   }
-  toast.error(err instanceof Error ? err.message : fallbackMessage)
+  toast.error(userErrorMessage(err, fallbackMessage))
 }

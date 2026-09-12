@@ -19,5 +19,9 @@ const common = {
     noOptions: 'No options',
     loading: 'Loading...',
   },
+  errors: {
+    network: "Can't reach the server. Check your connection and try again.",
+    unknown: 'Something went wrong on our end. Please try again.',
+  },
 }
 export default common

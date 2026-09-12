@@ -10,6 +10,7 @@ import { SectionHeader } from './SectionHeader'
 import { parseUserAgent } from '../lib/userAgent'
 import { RECENT_LIST_LIMIT } from '../constants/lists'
 import { useTranslation } from '../hooks/useTranslation'
+import { userErrorMessage } from '../lib/errors'
 import { localeTags } from '../locales'
 
 function SessionRow({
@@ -82,7 +83,7 @@ export function ActiveSessionsCard() {
         toast.success(t('settings.sessions.terminated'))
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.sessions.terminateFailed'))
+      toast.error(userErrorMessage(err, t('settings.sessions.terminateFailed')))
     } finally {
       setBusy(false)
       setConfirming(null)

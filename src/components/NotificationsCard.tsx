@@ -9,6 +9,7 @@ import { SectionHeader } from './SectionHeader'
 import { Toggle } from './Toggle'
 import { useAppSession } from '../lib/session'
 import { useTranslation } from '../hooks/useTranslation'
+import { userErrorMessage } from '../lib/errors'
 
 type ChannelKey = 'email' | 'inApp' | 'sms' | 'push'
 
@@ -52,7 +53,7 @@ export function NotificationsCard() {
       await refresh({ force: true })
       toast.success(t('settings.notifications.updated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.notifications.updateFailed'))
+      toast.error(userErrorMessage(err, t('settings.notifications.updateFailed')))
     } finally {
       setSaving(false)
     }

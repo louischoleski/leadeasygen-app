@@ -23,6 +23,7 @@ import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { Toggle } from '../components/Toggle'
 import { tierDisplayName, useBilling } from '../data/billing'
+import { userErrorMessage } from '../lib/errors'
 import { useAppSession, userDisplayName } from '../lib/session'
 import { useTranslation } from '../hooks/useTranslation'
 import { localeNames, locales } from '../locales'
@@ -106,7 +107,7 @@ function ProfileCard() {
       await refresh({ force: true })
       toast.success(t('settings.profile.avatarUpdated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.profile.avatarUploadFailed'))
+      toast.error(userErrorMessage(err, t('settings.profile.avatarUploadFailed')))
     }
   }
 
@@ -122,7 +123,7 @@ function ProfileCard() {
       await refresh({ force: true })
       toast.success(t('settings.profile.avatarRemoved'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.profile.avatarRemoveFailed'))
+      toast.error(userErrorMessage(err, t('settings.profile.avatarRemoveFailed')))
     } finally {
       setIsRemoving(false)
     }
@@ -143,7 +144,7 @@ function ProfileCard() {
       await refresh({ force: true })
       toast.success(t('settings.profile.updated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.profile.updateFailed'))
+      toast.error(userErrorMessage(err, t('settings.profile.updateFailed')))
     } finally {
       setSaving(false)
     }
@@ -275,7 +276,7 @@ function SecurityCard() {
       await setup()
       enterMode('enrolling')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.security.mfa.setupFailed'))
+      toast.error(userErrorMessage(err, t('settings.security.mfa.setupFailed')))
     }
   }
 
@@ -307,7 +308,7 @@ function SecurityCard() {
         toast.success(t('settings.security.mfa.codesGenerated'))
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.security.mfa.invalidCode'))
+      toast.error(userErrorMessage(err, t('settings.security.mfa.invalidCode')))
     }
   }
 
@@ -330,7 +331,7 @@ function SecurityCard() {
       toast.success(t('settings.security.passwordChanged'))
       form.reset()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('settings.security.passwordChangeFailed'))
+      toast.error(userErrorMessage(err, t('settings.security.passwordChangeFailed')))
     }
   }
 
