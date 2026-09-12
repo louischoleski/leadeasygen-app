@@ -79,7 +79,7 @@ export default function HelpCenter() {
   )
 
   const soon = (label: string) =>
-    toast(t('help.soon.toast', { label }), { description: t('help.soon.description') })
+    toast.info(t('help.soon.toast', { label }), { description: t('help.soon.description') })
   const emailSupport = () => {
     window.location.href = `mailto:${SUPPORT_EMAIL}`
   }

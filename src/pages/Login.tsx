@@ -36,7 +36,7 @@ export default function Login() {
       const result = await login({ email: email.trim(), password })
       if (isMfaRequired(result)) {
         // Challenge UI lands with the MFA phase; surface the state honestly
-        toast(t('auth.login.mfaUnavailable'))
+        toast.info(t('auth.login.mfaUnavailable'))
         return
       }
       await refresh({ force: true })
@@ -90,7 +90,7 @@ export default function Login() {
             variant="secondary"
             fullWidth
             iconLeft={GoogleLogo}
-            onClick={() => toast(t('auth.login.googleUnavailable'))}
+            onClick={() => toast.info(t('auth.login.googleUnavailable'))}
           >
             {t('auth.login.google')}
           </Button>

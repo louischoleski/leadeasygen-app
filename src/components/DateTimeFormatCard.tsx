@@ -8,7 +8,7 @@ import { SectionHeader } from './SectionHeader'
 import { Select } from './Select'
 import { useAppSession } from '../lib/session'
 import { useTranslation } from '../hooks/useTranslation'
-import { userErrorMessage } from '../lib/errors'
+import { toastError } from '../lib/errors'
 import {
   DATE_FORMATS,
   DEFAULT_DATE_FORMAT,
@@ -45,7 +45,7 @@ export function DateTimeFormatCard() {
       await refresh({ force: true })
       toast.success(t('settings.datetime.updated'))
     } catch (err) {
-      toast.error(userErrorMessage(err, t('settings.datetime.updateFailed')))
+      toastError(err, t('settings.datetime.updateFailed'))
     } finally {
       setSaving(false)
     }

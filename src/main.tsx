@@ -32,7 +32,7 @@ const JobDetail = lazy(() => import('./pages/JobDetail'))
 
 function AppToaster() {
   const { theme } = useTheme()
-  return <Toaster position="top-right" theme={theme} />
+  return <Toaster position="top-right" theme={theme} richColors />
 }
 
 // Checkout results render as a dialog over /billing; these legacy paths (and

@@ -142,7 +142,7 @@ export default function Register() {
             variant="secondary"
             fullWidth
             iconLeft={GoogleLogo}
-            onClick={() => toast(t('auth.register.googleUnavailable'))}
+            onClick={() => toast.info(t('auth.register.googleUnavailable'))}
           >
             {t('auth.register.google')}
           </Button>

@@ -49,7 +49,7 @@ export default function VerifyEmail() {
   const handleResend = async () => {
     try {
       await resend()
-      toast(t('auth.verifyEmail.resendSuccess'), { description: t('auth.verifyEmail.resendSuccessDescription') })
+      toast.success(t('auth.verifyEmail.resendSuccess'), { description: t('auth.verifyEmail.resendSuccessDescription') })
     } catch (err) {
       applyAuthError(err, setError, {}, t('auth.verifyEmail.resendFailed'))
     }

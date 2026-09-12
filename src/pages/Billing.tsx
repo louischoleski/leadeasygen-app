@@ -41,7 +41,7 @@ import {
 import { useJobs } from '../data/jobs'
 import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
-import { userErrorMessage } from '../lib/errors'
+import { toastError } from '../lib/errors'
 import { useDuplicatePurchaseGuard } from '../lib/useDuplicatePurchaseGuard'
 import { localeTags } from '../locales'
 
@@ -85,7 +85,7 @@ function CreditPacks({ onPurchased }: { onPurchased?: () => void }) {
         return
       }
       if (result.status === 'processing') {
-        toast(t('billing.packs.paymentProcessing'))
+        toast.info(t('billing.packs.paymentProcessing'))
         await refreshBalance()
         onPurchased?.()
         return
@@ -223,7 +223,7 @@ function InvoicesTable() {
   const open = (inv: IInvoiceDTO, prefer: 'pdf' | 'hosted') => {
     const url = prefer === 'pdf' ? (inv.invoicePdf ?? inv.hostedInvoiceUrl) : (inv.hostedInvoiceUrl ?? inv.invoicePdf)
     if (url) window.open(url, '_blank', 'noopener,noreferrer')
-    else toast(t('billing.invoices.noLink'))
+    else toast.info(t('billing.invoices.noLink'))
   }
 
   return (
@@ -569,7 +569,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
     } catch (err) {
       // Surface the server's reason (e.g. "Already on Unlimited (month)…") rather
       // than a generic message.
-      toast.error(userErrorMessage(err, t('billing.plans.checkoutFailed')))
+      toastError(err, t('billing.plans.checkoutFailed'))
     }
   }
 
@@ -703,7 +703,7 @@ export default function Billing() {
       void refreshSub({ force: true })
       toast.success(t('billing.page.paymentComplete'), { description: t('billing.page.paymentCompleteDetail') })
     } else if (status === 'cancelled') {
-      toast(t('billing.page.checkoutCancelled'))
+      toast.info(t('billing.page.checkoutCancelled'))
     }
     setSearchParams({}, { replace: true })
   }, [searchParams, setSearchParams, refreshSub, t])
