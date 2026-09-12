@@ -1,5 +1,5 @@
 import { isMfaRequired, useLogin } from '@fonderie/react-auth'
-import { Envelope, GoogleLogo } from '@phosphor-icons/react'
+import { Envelope } from '@phosphor-icons/react'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -85,6 +85,24 @@ export default function Login() {
         />
         <div className="space-y-2">
           <Button type="submit" fullWidth loading={isLoading}>{t('auth.login.submit')}</Button>
+          {/* TODO: Google sign-in — hidden until the OAuth flow is wired end to end.
+              Showing a button that only raises "not available yet" reads as broken,
+              and on an auth screen that costs trust at the worst moment.
+
+              To re-enable:
+                1. Google Cloud: OAuth 2.0 Web client, authorized redirect URI
+                   <API_ORIGIN>/auth/google/callback (Google matches it exactly,
+                   so it must be re-registered if the API domain changes).
+                2. API: add 'google' to AuthModule providers + the google
+                   { clientId, clientSecret, redirectUri } secrets block, which
+                   mounts GET /auth/google and /auth/google/callback.
+                3. Decide how the session gets back to this SPA: the callback
+                   answers with JSON and sets SameSite=Strict cookies, so the app
+                   and API must be same-site (they are not on *.vercel.app) or the
+                   tokens need handing over explicitly.
+                4. Restore the GoogleLogo import, point this button at
+                   `${API_BASE_URL}/auth/google`, and drop the toast.
+                   The auth.*.google copy is already translated in en/fr/es.
           <Button
             type="button"
             variant="secondary"
@@ -94,6 +112,7 @@ export default function Login() {
           >
             {t('auth.login.google')}
           </Button>
+          */}
         </div>
         <p className="mt-4 text-center text-sm text-ink-subtle">
           {t('auth.login.noAccount')}{' '}

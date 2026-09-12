@@ -29,3 +29,5 @@ tests/e2e/.env.e2e
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.env*
