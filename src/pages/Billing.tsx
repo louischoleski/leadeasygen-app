@@ -1,6 +1,5 @@
 import { Check, Coin, CreditCard, Crown, Download, Plus, Receipt } from '@phosphor-icons/react'
 import {
-  FonderieApiError,
   useCancelSubscription,
   useCheckout,
   useInvoices,
@@ -42,6 +41,7 @@ import {
 import { useJobs } from '../data/jobs'
 import { useTranslation } from '../hooks/useTranslation'
 import { cn } from '../lib/cn'
+import { userErrorMessage } from '../lib/errors'
 import { useDuplicatePurchaseGuard } from '../lib/useDuplicatePurchaseGuard'
 import { localeTags } from '../locales'
 
@@ -569,7 +569,7 @@ function SubscriptionPlans({ billingCycle, setBillingCycle }: { billingCycle: Bi
     } catch (err) {
       // Surface the server's reason (e.g. "Already on Unlimited (month)…") rather
       // than a generic message.
-      toast.error(err instanceof FonderieApiError ? err.explanation : t('billing.plans.checkoutFailed'))
+      toast.error(userErrorMessage(err, t('billing.plans.checkoutFailed')))
     }
   }
 

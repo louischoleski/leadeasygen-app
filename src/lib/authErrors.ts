@@ -34,7 +34,7 @@ export function applyAuthError<T extends FieldValues>(
         }
       }
     }
-    toast.error(err.explanation || fallbackMessage)
+    toast.error(userErrorMessage(err, fallbackMessage))
     return
   }
   toast.error(userErrorMessage(err, fallbackMessage))
