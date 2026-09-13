@@ -1,6 +1,13 @@
 import type enAuth from '../en/auth'
 
 const auth: typeof enAuth = {
+  callback: {
+    title: 'Connexion en cours…',
+    working: 'Finalisation de votre connexion Google. Cela ne prend qu’un instant.',
+    failedTitle: 'Connexion impossible',
+    failed: 'Ce lien de connexion a expiré ou a déjà été utilisé. Veuillez réessayer.',
+    backToLogin: 'Retour à la connexion',
+  },
   login: {
     title: 'Connexion',
     subtitle: 'Entrez votre e-mail ci-dessous pour vous connecter à votre compte',

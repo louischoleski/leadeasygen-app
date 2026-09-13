@@ -1,6 +1,13 @@
 import type enAuth from '../en/auth'
 
 const auth: typeof enAuth = {
+  callback: {
+    title: 'Iniciando sesión…',
+    working: 'Finalizando tu inicio de sesión con Google. Solo tomará un momento.',
+    failedTitle: 'No se pudo completar el inicio de sesión',
+    failed: 'Ese enlace de inicio de sesión caducó o ya se usó. Inténtalo de nuevo.',
+    backToLogin: 'Volver al inicio de sesión',
+  },
   login: {
     title: 'Iniciar sesión',
     subtitle: 'Introduce tu correo electrónico para iniciar sesión en tu cuenta',

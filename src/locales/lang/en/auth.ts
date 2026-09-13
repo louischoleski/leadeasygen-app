@@ -1,4 +1,11 @@
 const auth = {
+  callback: {
+    title: 'Signing you in…',
+    working: 'Finishing your Google sign-in. This only takes a moment.',
+    failedTitle: 'Sign-in could not be completed',
+    failed: 'That sign-in link has expired or was already used. Please try again.',
+    backToLogin: 'Back to sign in',
+  },
   login: {
     title: 'Login',
     subtitle: 'Enter your email below to login to your account',

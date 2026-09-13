@@ -1,8 +1,9 @@
-import { useRegister } from '@fonderie/react-auth'
-import { Envelope, User } from '@phosphor-icons/react'
+import { useRegister, useAuthProviders } from '@fonderie/react-auth'
+import { Envelope, GoogleLogo, User } from '@phosphor-icons/react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
+import { API_BASE_URL } from '../lib/fonderie'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { useTranslation } from '../hooks/useTranslation'
@@ -18,6 +19,7 @@ interface RegisterValues {
 }
 
 export default function Register() {
+  const providers = useAuthProviders()
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { register: registerAccount, isLoading } = useRegister()
@@ -136,34 +138,25 @@ export default function Register() {
         </div>
         <div className="space-y-2">
           <Button type="submit" fullWidth loading={isLoading}>{t('auth.register.submit')}</Button>
-          {/* TODO: Google sign-in — hidden until the OAuth flow is wired end to end.
-              Showing a button that only raises "not available yet" reads as broken,
-              and on an auth screen that costs trust at the worst moment.
-
-              To re-enable:
-                1. Google Cloud: OAuth 2.0 Web client, authorized redirect URI
-                   <API_ORIGIN>/auth/google/callback (Google matches it exactly,
-                   so it must be re-registered if the API domain changes).
-                2. API: add 'google' to AuthModule providers + the google
-                   { clientId, clientSecret, redirectUri } secrets block, which
-                   mounts GET /auth/google and /auth/google/callback.
-                3. Decide how the session gets back to this SPA: the callback
-                   answers with JSON and sets SameSite=Strict cookies, so the app
-                   and API must be same-site (they are not on *.vercel.app) or the
-                   tokens need handing over explicitly.
-                4. Restore the GoogleLogo + sonner toast imports, point this button at
-                   `${API_BASE_URL}/auth/google`, and drop the toast.
-                   The auth.*.google copy is already translated in en/fr/es.
-          <Button
-            type="button"
-            variant="secondary"
-            fullWidth
-            iconLeft={GoogleLogo}
-            onClick={() => toast.info(t('auth.register.googleUnavailable'))}
-          >
-            {t('auth.register.google')}
-          </Button>
-          */}
+          {/* Rendered only when the API says it can honour Google. The server
+              holds the credentials, so it is the only honest source — a
+              build-time flag here would let the two disagree and the user
+              would land on Google's error page. Navigate TOP-LEVEL rather
+              than fetch(): the API's start route sets the CSRF state cookie,
+              and a cross-site fetch cannot reliably store it. */}
+          {providers.has('google') && (
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              iconLeft={GoogleLogo}
+              onClick={() => {
+                window.location.href = `${API_BASE_URL}/auth/google/start`
+              }}
+            >
+              {t('auth.register.google')}
+            </Button>
+          )}
         </div>
         <p className="mt-4 text-center text-sm text-ink-subtle">
           {t('auth.register.haveAccount')}{' '}

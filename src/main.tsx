@@ -15,6 +15,7 @@ import Billing from './pages/Billing'
 import ForgotPassword from './pages/ForgotPassword'
 import HelpArticle from './pages/HelpArticle'
 import HelpCenter from './pages/HelpCenter'
+import AuthCallback from './pages/AuthCallback'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import Privacy from './pages/Privacy'
@@ -69,6 +70,7 @@ createRoot(document.getElementById('root')!).render(
         </Route>
         <Route element={<GuestOnly />}>
           <Route element={<AuthLayout />}>
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
