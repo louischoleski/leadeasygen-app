@@ -92,6 +92,7 @@ const settings: typeof enSettings = {
     notConnected: 'No vinculada',
     connect: 'Vincular',
     disconnect: 'Desvincular',
+    disconnectFailed: 'No se pudo desvincular esa cuenta',
     disconnected: '{provider} se ha desvinculado',
   },
   security: {

@@ -92,6 +92,7 @@ const settings: typeof enSettings = {
     notConnected: 'Non associé',
     connect: 'Associer',
     disconnect: 'Dissocier',
+    disconnectFailed: 'Impossible de dissocier ce compte',
     disconnected: '{provider} a été dissocié',
   },
   security: {

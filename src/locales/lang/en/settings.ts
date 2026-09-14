@@ -90,6 +90,7 @@ const settings = {
     notConnected: 'Not connected',
     connect: 'Connect',
     disconnect: 'Disconnect',
+    disconnectFailed: 'Could not disconnect that account',
     disconnected: '{provider} was disconnected',
   },
   security: {

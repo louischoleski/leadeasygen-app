@@ -36,6 +36,7 @@ import { LoginHistoryCard } from '../components/LoginHistoryCard'
 import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
 import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
 import { NotificationsCard } from '../components/NotificationsCard'
+import { API_BASE_URL } from '../lib/fonderie'
 import { SectionHeader } from '../components/SectionHeader'
 import { useAuthProviders, useUnlinkOauth } from '@fonderie/react-auth'
 import { cn } from '../lib/cn'
@@ -47,6 +48,7 @@ const sections = [
   { id: 'datetime', icon: Clock },
   { id: 'notifications', icon: BellRinging },
   { id: 'security', icon: ShieldCheck },
+  { id: 'signin', icon: Key },
   { id: 'activity', icon: ClockCounterClockwise },
   { id: 'sessions', icon: Devices },
   { id: 'credits', icon: Coin },
@@ -57,13 +59,12 @@ const sections = [
 // and nothing to maintain; the browser/Node keeps it current. Engines without
 // Intl.supportedValuesOf (pre-2022 browsers) fall back to a short common set.
 // The sign-in section is conditional — a deployment with no OAuth provider has
-// nothing to link. The nav is built from the SAME decision as the card, or the
-// sidebar offers a link to a section that does not exist.
+// nothing to link. The nav is filtered by the SAME decision that renders the
+// card, or the sidebar offers a link to a section that does not exist. Filtered
+// rather than spliced so `sections` stays `as const` and the translation keys
+// stay type-checked.
 function visibleSections(showSignIn: boolean) {
-  if (!showSignIn) return sections
-  const out = [...sections]
-  out.splice(out.findIndex((s) => s.id === 'security') + 1, 0, { id: 'signin', icon: Key } as (typeof sections)[number])
-  return out
+  return showSignIn ? sections : sections.filter((s) => s.id !== 'signin')
 }
 
 const TIMEZONE_FALLBACK = ['UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Paris', 'Asia/Tokyo']
@@ -298,7 +299,7 @@ function SignInMethodsCard() {
       toast.success(t('settings.signIn.disconnected', { provider: labelFor(p) }))
       await refresh()
     } catch (err) {
-      toastError(err, t)
+      toastError(err, t('settings.signIn.disconnectFailed'))
     }
   }
 
