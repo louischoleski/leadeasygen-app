@@ -158,6 +158,19 @@ export default function Register() {
               {t('auth.register.google')}
             </Button>
           )}
+          {providers.has('apple') && (
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                window.location.href = `${API_BASE_URL}/auth/apple/start`
+              }}
+            >
+              <ProviderIcon provider="apple" />
+              {t('auth.register.apple')}
+            </Button>
+          )}
         </div>
         <p className="mt-4 text-center text-sm text-ink-subtle">
           {t('auth.register.haveAccount')}{' '}
