@@ -107,6 +107,19 @@ export default function Login() {
               {t('auth.login.google')}
             </Button>
           )}
+          {providers.has('apple') && (
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                window.location.href = `${API_BASE_URL}/auth/apple/start`
+              }}
+            >
+              <ProviderIcon provider="apple" />
+              {t('auth.login.apple')}
+            </Button>
+          )}
         </div>
         <p className="mt-4 text-center text-sm text-ink-subtle">
           {t('auth.login.noAccount')}{' '}
