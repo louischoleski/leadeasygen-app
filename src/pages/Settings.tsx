@@ -10,6 +10,7 @@ import {
   Devices,
   Envelope,
   Phone,
+  Key,
   ShieldCheck,
   Trash,
   User,
@@ -36,6 +37,7 @@ import { ActiveSessionsCard } from '../components/ActiveSessionsCard'
 import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
 import { NotificationsCard } from '../components/NotificationsCard'
 import { SectionHeader } from '../components/SectionHeader'
+import { useAuthProviders, useUnlinkOauth } from '@fonderie/react-auth'
 import { cn } from '../lib/cn'
 
 // Icons mirror each section's SectionHeader so the nav item visually maps to
@@ -54,6 +56,16 @@ const sections = [
 // The full IANA timezone list straight from the runtime (Intl) — no dependency
 // and nothing to maintain; the browser/Node keeps it current. Engines without
 // Intl.supportedValuesOf (pre-2022 browsers) fall back to a short common set.
+// The sign-in section is conditional — a deployment with no OAuth provider has
+// nothing to link. The nav is built from the SAME decision as the card, or the
+// sidebar offers a link to a section that does not exist.
+function visibleSections(showSignIn: boolean) {
+  if (!showSignIn) return sections
+  const out = [...sections]
+  out.splice(out.findIndex((s) => s.id === 'security') + 1, 0, { id: 'signin', icon: Key } as (typeof sections)[number])
+  return out
+}
+
 const TIMEZONE_FALLBACK = ['UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Paris', 'Asia/Tokyo']
 const timeZoneNames =
   typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : TIMEZONE_FALLBACK
@@ -252,6 +264,100 @@ function ProfileCard() {
 }
 
 type MfaMode = 'idle' | 'enrolling' | 'disabling' | 'regenerating'
+
+// Sign-in methods.
+//
+// Which providers exist is decided by the SERVER, not by this build. Shipping a
+// "Connect Google" button that a deployment cannot honour sends the user to
+// Google and lands them on an error page this app cannot explain — so the whole
+// card is gated on /auth/providers, exactly as the login screen is.
+//
+// Two further facts come from the user, not from config:
+//   • `provider` — what this account is actually linked to
+//   • `hasPassword` — whether unlinking is even permitted. An account created BY
+//     the provider has no other credential, so removing it would be account
+//     deletion. The server refuses (409), and the button is disabled with a
+//     reason rather than letting the user discover that by being refused.
+function SignInMethodsCard() {
+  const { t } = useTranslation()
+  const { user, refresh } = useAppSession()
+  const providers = useAuthProviders()
+  const { unlinkOauth, isLoading } = useUnlinkOauth()
+
+  const OAUTH = ['google', 'apple'] as const
+  const supported = OAUTH.filter((p) => providers.has(p))
+  const linked = (user?.provider ?? '') as string
+
+  // Nothing to offer and nothing to undo — render nothing at all rather than an
+  // empty card explaining its own emptiness.
+  if (supported.length === 0 && !linked) return null
+
+  const handleUnlink = async (p: string) => {
+    try {
+      await unlinkOauth(p)
+      toast.success(t('settings.signIn.disconnected', { provider: labelFor(p) }))
+      await refresh()
+    } catch (err) {
+      toastError(err, t)
+    }
+  }
+
+  function labelFor(p: string) {
+    return p.charAt(0).toUpperCase() + p.slice(1)
+  }
+
+  return (
+    <Card as="section" id="signin" className="scroll-mt-20 p-5">
+      <SectionHeader
+        icon={Key}
+        title={t('settings.signIn.title')}
+        description={t('settings.signIn.description')}
+      />
+      <ul className="mt-4 space-y-3">
+        {/* A provider the account is linked to is listed even when the server no
+            longer offers it, so a stale link can still be removed. */}
+        {Array.from(new Set([...supported, ...(linked ? [linked] : [])])).map((p) => {
+          const isLinked = linked === p
+          const canUnlink = isLinked && (user?.hasPassword ?? false)
+          return (
+            <li key={p} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line p-3">
+              <div className="min-w-0">
+                <p className="font-medium text-ink">{labelFor(p)}</p>
+                <p className="text-sm text-ink-subtle">
+                  {isLinked
+                    ? user?.hasPassword
+                      ? t('settings.signIn.connected')
+                      : t('settings.signIn.connectedOnlyMethod')
+                    : t('settings.signIn.notConnected')}
+                </p>
+              </div>
+              {isLinked ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={!canUnlink || isLoading}
+                  onClick={() => void handleUnlink(p)}
+                >
+                  {t('settings.signIn.disconnect')}
+                </Button>
+              ) : (
+                providers.has(p) && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => { window.location.href = `${API_BASE_URL}/auth/${p}/start` }}
+                  >
+                    {t('settings.signIn.connect')}
+                  </Button>
+                )
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
+  )
+}
 
 function SecurityCard() {
   const { t } = useTranslation()
@@ -524,7 +630,17 @@ function DangerCard() {
   )
 }
 
+// Whether this deployment can link ANY provider, plus whether this account
+// already has one. Asked of the server, never assumed from the build.
+function useShowSignInMethods() {
+  const providers = useAuthProviders()
+  const { user } = useAppSession()
+  const supported = (['google', 'apple'] as const).some((p) => providers.has(p))
+  return supported || !!user?.provider
+}
+
 export default function Settings() {
+  const showSignIn = useShowSignInMethods()
   const { t } = useTranslation()
   return (
     <div className="w-full">
@@ -537,7 +653,7 @@ export default function Settings() {
           defaultValue="profile"
           onChange={(e) => document.getElementById(e.target.value)?.scrollIntoView({ behavior: 'smooth' })}
         >
-          {sections.map((s) => (
+          {visibleSections(showSignIn).map((s) => (
             <option key={s.id} value={s.id}>{t(`settings.sections.${s.id}`)}</option>
           ))}
         </select>
@@ -548,7 +664,7 @@ export default function Settings() {
           aria-label={t('settings.sectionsNav')}
         >
           <ul className="space-y-1">
-            {sections.map((s) => (
+            {visibleSections(showSignIn).map((s) => (
               <li key={s.id}>
                 <a
                   href={`#${s.id}`}
@@ -568,6 +684,7 @@ export default function Settings() {
           <ProfileCard />
           <DateTimeFormatCard />
           <NotificationsCard />
+          {showSignIn && <SignInMethodsCard />}
           <SecurityCard />
           <LoginHistoryCard />
           <ActiveSessionsCard />
