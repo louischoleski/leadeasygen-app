@@ -1,11 +1,12 @@
 import { isMfaRequired, useLogin, useAuthProviders } from '@fonderie/react-auth'
-import { Envelope, GoogleLogo } from '@phosphor-icons/react'
+import { Envelope } from '@phosphor-icons/react'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AuthCard from '../components/AuthCard'
 import { API_BASE_URL } from '../lib/fonderie'
 import { Button } from '../components/Button'
+import { ProviderIcon } from '../components/ProviderIcon'
 import { Input } from '../components/Input'
 import { useTranslation } from '../hooks/useTranslation'
 import { applyAuthError } from '../lib/authErrors'
@@ -98,11 +99,11 @@ export default function Login() {
               type="button"
               variant="secondary"
               fullWidth
-              iconLeft={GoogleLogo}
               onClick={() => {
                 window.location.href = `${API_BASE_URL}/auth/google/start`
               }}
             >
+              <ProviderIcon provider="google" />
               {t('auth.login.google')}
             </Button>
           )}

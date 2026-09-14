@@ -18,6 +18,7 @@ import {
 } from '@phosphor-icons/react'
 import { Avatar } from '../components/Avatar'
 import { Button } from '../components/Button'
+import { ProviderIcon } from '../components/ProviderIcon'
 import { Card } from '../components/Card'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { Input } from '../components/Input'
@@ -322,15 +323,21 @@ function SignInMethodsCard() {
           const canUnlink = isLinked && (user?.hasPassword ?? false)
           return (
             <li key={p} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line p-3">
-              <div className="min-w-0">
-                <p className="font-medium text-ink">{labelFor(p)}</p>
-                <p className="text-sm text-ink-subtle">
-                  {isLinked
-                    ? user?.hasPassword
-                      ? t('settings.signIn.connected')
-                      : t('settings.signIn.connectedOnlyMethod')
-                    : t('settings.signIn.notConnected')}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                {/* The brand mark is what a user scans for — it identifies the
+                    row faster than reading the word, and matches the button
+                    they originally clicked on the sign-in screen. */}
+                <ProviderIcon provider={p as 'google' | 'apple'} className="h-6 w-6 shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium text-ink">{labelFor(p)}</p>
+                  <p className="text-sm text-ink-subtle">
+                    {isLinked
+                      ? user?.hasPassword
+                        ? t('settings.signIn.connected')
+                        : t('settings.signIn.connectedOnlyMethod')
+                      : t('settings.signIn.notConnected')}
+                  </p>
+                </div>
               </div>
               {isLinked ? (
                 <Button

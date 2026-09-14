@@ -1,10 +1,11 @@
 import { useRegister, useAuthProviders } from '@fonderie/react-auth'
-import { Envelope, GoogleLogo, User } from '@phosphor-icons/react'
+import { Envelope, User } from '@phosphor-icons/react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
 import { API_BASE_URL } from '../lib/fonderie'
 import { Button } from '../components/Button'
+import { ProviderIcon } from '../components/ProviderIcon'
 import { Input } from '../components/Input'
 import { useTranslation } from '../hooks/useTranslation'
 import { applyAuthError } from '../lib/authErrors'
@@ -149,11 +150,11 @@ export default function Register() {
               type="button"
               variant="secondary"
               fullWidth
-              iconLeft={GoogleLogo}
               onClick={() => {
                 window.location.href = `${API_BASE_URL}/auth/google/start`
               }}
             >
+              <ProviderIcon provider="google" />
               {t('auth.register.google')}
             </Button>
           )}
