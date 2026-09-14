@@ -197,7 +197,8 @@ const settings = {
     delete: 'Delete account',
     confirmTitle: 'Delete account?',
     confirmDescription: 'All jobs, results, and remaining credits are permanently removed. This cannot be undone.',
-    notWired: 'Account deletion is not wired up yet',
+    deleted: 'Your account has been deleted',
+    deleteFailed: 'Could not delete your account',
   },
   device: {
     unknown: 'Unknown',

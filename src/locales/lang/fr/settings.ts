@@ -204,7 +204,8 @@ const settings: typeof enSettings = {
     confirmTitle: 'Supprimer le compte ?',
     confirmDescription:
       'Toutes les tâches, tous les résultats et les crédits restants seront définitivement supprimés. Cette action est irréversible.',
-    notWired: "La suppression du compte n'est pas encore disponible",
+    deleted: 'Votre compte a été supprimé',
+    deleteFailed: 'Impossible de supprimer votre compte',
   },
   device: {
     unknown: 'Inconnu',
