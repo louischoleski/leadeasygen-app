@@ -16,6 +16,9 @@ export const statusConfig: Record<JobStatus, { className: string }> = {
   running: { className: 'bg-primary/10 text-link' },
   completed: { className: 'bg-success/10 text-success' },
   failed: { className: 'bg-error/10 text-error' },
+  // Neutral, not error-toned: the user asked for this to stop, so it is not a
+  // failure and must not look like one.
+  cancelled: { className: 'bg-surface-2 text-ink-subtle' },
 }
 
 const formatDate = (timestamp: number, localeTag: string) =>
@@ -29,9 +32,11 @@ const formatDate = (timestamp: number, localeTag: string) =>
 interface JobCardProps {
   job: Job
   onRetry: (jobId: string) => void
+  // Optional so a surface that does not own the action can still render a card.
+  onCancel?: (jobId: string) => void
 }
 
-export function JobCard({ job, onRetry }: JobCardProps) {
+export function JobCard({ job, onRetry, onCancel }: JobCardProps) {
   const { t, m, locale } = useTranslation()
   const status = statusConfig[job.status]
 
@@ -90,6 +95,14 @@ export function JobCard({ job, onRetry }: JobCardProps) {
               <Link to={`/jobs/${job.id}`}>{t('jobs.card.viewLeads', { count: job.results.length })}</Link>
             </Button>
           </>
+        )}
+        {/* Only while queued: once a scrape starts there is a real browser
+            running and the server refuses (409), so offering it then would be a
+            button that cannot do what it says. */}
+        {job.status === 'queued' && onCancel && (
+          <Button size="sm" variant="ghost" onClick={() => onCancel(job.id)}>
+            {t('jobs.card.cancel')}
+          </Button>
         )}
         {job.status === 'failed' && (
           <Button size="sm" variant="secondary" onClick={() => onRetry(job.id)}>
