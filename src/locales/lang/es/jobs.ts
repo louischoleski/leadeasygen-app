@@ -6,6 +6,7 @@ const jobs: typeof enJobs = {
     running: 'En curso',
     completed: 'Completada',
     failed: 'Fallida',
+    cancelled: 'Cancelada',
   },
   categories: {
     'Local Business': 'Negocio local',
@@ -32,6 +33,7 @@ const jobs: typeof enJobs = {
     keywordsLeft: 'Quedan {remaining} de {total} palabras clave',
     viewLeads: 'Ver {count} leads',
     retry: 'Reintentar',
+    cancel: 'Cancelar',
   },
   list: {
     tabActive: 'Activas ({count})',
@@ -40,6 +42,9 @@ const jobs: typeof enJobs = {
     emptyHistory: 'Aún no hay tareas completadas.',
     retryInsufficient: 'No tienes créditos suficientes para reintentar esta tarea',
     restarted: 'Tarea de extracción reiniciada',
+    cancelled: 'Búsqueda cancelada — sin créditos cobrados',
+    cancelledPartly: '{count} ya iniciada(s): terminarán, el resto se canceló',
+    cancelTooLate: 'Demasiado tarde para cancelar — la búsqueda ya empezó',
   },
   form: {
     title: 'Nueva tarea de extracción',

@@ -4,6 +4,7 @@ const jobs = {
     running: 'Running',
     completed: 'Completed',
     failed: 'Failed',
+    cancelled: 'Cancelled',
   },
   // Display labels for the scrape categories. The KEYS are the canonical
   // values sent to the server (data/jobs.ts jobCategories) — never rename them.
@@ -33,6 +34,7 @@ const jobs = {
     keywordsLeft: '{remaining} of {total} keywords left',
     viewLeads: 'View {count} leads',
     retry: 'Retry',
+    cancel: 'Cancel',
   },
   list: {
     tabActive: 'Active ({count})',
@@ -41,6 +43,9 @@ const jobs = {
     emptyHistory: 'No completed jobs yet.',
     retryInsufficient: 'Not enough credits to retry this job',
     restarted: 'Scrape job restarted',
+    cancelled: 'Search cancelled — no credits charged',
+    cancelledPartly: '{count} already started and will finish; the rest were cancelled',
+    cancelTooLate: 'Too late to cancel — the search has already started',
   },
   form: {
     title: 'New scrape job',

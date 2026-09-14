@@ -10,6 +10,7 @@ import {
   getTask,
   listTasks,
   retryTask,
+  cancelTask,
   type ApiLead,
   type ApiTask,
 } from '../lib/api'
@@ -23,7 +24,7 @@ import { refreshBalance } from './billing'
  * cached for the session.
  */
 
-export type JobStatus = 'queued' | 'running' | 'completed' | 'failed'
+export type JobStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
 
 // Mirrors the scraper's wire payload (see api/src/scraper/engine.ts)
 export interface Lead {
@@ -86,6 +87,9 @@ const taskStatusToJob: Record<ApiTask['status'], JobStatus> = {
   scraping: 'running',
   complete: 'completed',
   error: 'failed',
+  // Terminal, and deliberately NOT 'failed': the user asked for this to stop.
+  // Rendering it as a failure would read as something having gone wrong.
+  cancelled: 'cancelled',
 }
 
 let tasks: ApiTask[] = []
@@ -123,12 +127,19 @@ function buildJobs(): Job[] {
   for (const [id, group] of groups) {
     const params = group.find((t) => t.params)?.params ?? null
     const statuses = group.map((t) => taskStatusToJob[t.status] ?? 'queued')
-    const terminal = statuses.filter((s) => s === 'completed' || s === 'failed').length
+    const terminal = statuses.filter(
+      (s) => s === 'completed' || s === 'failed' || s === 'cancelled',
+    ).length
 
     let status: JobStatus
     if (statuses.some((s) => s === 'running')) status = 'running'
     else if (statuses.some((s) => s === 'queued')) status = terminal > 0 ? 'running' : 'queued'
-    else status = statuses.some((s) => s === 'failed') ? 'failed' : 'completed'
+    else if (statuses.some((s) => s === 'failed')) status = 'failed'
+    // Cancelled only wins when NOTHING ran. A job where one keyword finished and
+    // another was cancelled did produce leads, and labelling the whole thing
+    // 'cancelled' would hide them.
+    else if (statuses.every((s) => s === 'cancelled')) status = 'cancelled'
+    else status = 'completed'
 
     const results = group.flatMap((t) => resultsCache.get(t.id) ?? [])
     const keywords = group.map((t) => t.params?.keyword ?? '').filter(Boolean)
@@ -311,6 +322,40 @@ export async function retryJob(id: string): Promise<CreateJobResult | null> {
   return { ok: true, creditCost: retried }
 }
 
+/**
+ * Cancel the tasks of a job the worker has not started yet.
+ *
+ * Only 'pending' tasks can be cancelled — once a scrape begins there is a real
+ * browser running and nothing here can stop it, so the server answers 409 and
+ * we leave that task alone. A job with several keywords can be partly underway,
+ * so this reports how many were actually stopped rather than claiming the whole
+ * job was cancelled.
+ *
+ * Worth doing even though the window is short: the wallet is charged on
+ * COMPLETION, so cancelling a mistyped search is the difference between it
+ * costing nothing and costing a credit — and a pending task also blocks
+ * re-running the corrected search, because the server treats it as a duplicate.
+ */
+export async function cancelJob(id: string): Promise<{ cancelled: number; alreadyRunning: number }> {
+  const pending = tasks.filter((t) => groupKey(t) === id && t.status === 'pending')
+  let cancelled = 0
+  let alreadyRunning = 0
+  for (const task of pending) {
+    try {
+      await cancelTask(task.id)
+      cancelled++
+    } catch (err) {
+      // 409 = the worker claimed it between our read and this call. Expected,
+      // not an error: the poll interval is seconds and the worker runs every
+      // minute, so this race is normal rather than exceptional.
+      if (apiErrorStatus(err) === 409) alreadyRunning++
+      else throw err
+    }
+  }
+  void refresh()
+  return { cancelled, alreadyRunning }
+}
+
 export function useJobs() {
   const current = useSyncExternalStore(subscribe, () => jobs)
   return {
@@ -319,5 +364,6 @@ export function useJobs() {
     completedJobs: current.filter((job) => job.status === 'completed' || job.status === 'failed'),
     createJob,
     retryJob,
+    cancelJob,
   }
 }

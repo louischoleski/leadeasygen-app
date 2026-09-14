@@ -10,7 +10,7 @@ import { fonderie } from './fonderie'
  * `@fonderie/react-billing` hooks.
  */
 
-export type ApiTaskStatus = 'pending' | 'scraping' | 'complete' | 'error'
+export type ApiTaskStatus = 'pending' | 'scraping' | 'complete' | 'error' | 'cancelled'
 
 /** Structured form parameters the api stores alongside the derived Maps URL. */
 export interface ApiTaskParams {
@@ -114,3 +114,9 @@ export const createTask = (input: CreateTaskInput) =>
 
 export const retryTask = (id: string) =>
   fonderie.post(`/v1/tasks/${id}/retry`) as unknown as Promise<CreatedTask>
+
+// Cancel a task the worker has not claimed yet. Only 'pending' can be
+// cancelled — the server refuses with 409 once a scrape has started, because a
+// browser is already running and nothing here can stop it.
+export const cancelTask = (id: string) =>
+  fonderie.post(`/v1/tasks/${id}/cancel`) as unknown as Promise<{ status: string; taskId: string }>
