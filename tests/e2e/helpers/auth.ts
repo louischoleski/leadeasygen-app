@@ -42,6 +42,23 @@ export async function verifyEmailViaUi(page: Page, code: string): Promise<void> 
   await expect(page).toHaveURL('/')
 }
 
+/**
+ * What the navbar actually shows for the signed-in user.
+ *
+ * It renders `Account: {userDisplayName(user)}` — the person's NAME, falling
+ * back to the local part of their email. Never the full address. Asserting on
+ * `creds.email` therefore could not match, which is why this suite failed on
+ * every run: the helper was written against an older navbar and nobody noticed
+ * because the failure looked like a flaky timeout ("element(s) not found").
+ *
+ * Mirrors src/lib/session.tsx#userDisplayName deliberately — if that changes,
+ * this is the one place to follow it.
+ */
+export function expectedAccountName(creds: Credentials): string {
+  const name = (creds.name ?? 'Ella Twoee').trim()
+  return name || creds.email.split('@')[0]!
+}
+
 /** Fill and submit the /login form. Does not assert the outcome. */
 export async function submitLogin(page: Page, creds: Credentials): Promise<void> {
   await page.goto('/login')
@@ -54,7 +71,9 @@ export async function submitLogin(page: Page, creds: Credentials): Promise<void>
 export async function loginViaUi(page: Page, creds: Credentials): Promise<void> {
   await submitLogin(page, creds)
   await expect(page).toHaveURL('/', { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: new RegExp(`Account: ${creds.email}`, 'i') })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: new RegExp(`Account: ${expectedAccountName(creds)}`, 'i') }),
+  ).toBeVisible()
 }
 
 /** Open the account menu and log out; expect a redirect back to /login. */

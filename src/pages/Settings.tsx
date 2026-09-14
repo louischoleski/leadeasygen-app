@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   BellRinging,
@@ -38,7 +38,7 @@ import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
 import { NotificationsCard } from '../components/NotificationsCard'
 import { API_BASE_URL } from '../lib/fonderie'
 import { SectionHeader } from '../components/SectionHeader'
-import { useAuthProviders, useUnlinkOauth } from '@fonderie/react-auth'
+import { useAccountData, useAuthProviders, useUnlinkOauth } from '@fonderie/react-auth'
 import { cn } from '../lib/cn'
 
 // Icons mirror each section's SectionHeader so the nav item visually maps to
@@ -600,7 +600,27 @@ function CreditsCard() {
 
 function DangerCard() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { deleteUser, isLoading } = useAccountData()
+  const { refresh } = useAppSession()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+
+  // The server soft-deletes and clears the auth cookies; the hook then drops the
+  // stored token, so the client is already signed out by the time this resolves.
+  // The session context still holds the old user, so refresh() is what makes the
+  // rest of the app agree — without it the user lands on a logged-in shell for
+  // an account that no longer exists.
+  const handleDelete = async () => {
+    setConfirmingDelete(false)
+    try {
+      await deleteUser()
+      toast.success(t('settings.danger.deleted'))
+      await refresh()
+      navigate('/login', { replace: true })
+    } catch (err) {
+      toastError(err, t('settings.danger.deleteFailed'))
+    }
+  }
 
   return (
     <Card as="section" id="danger" className="scroll-mt-20 border-error/40 bg-error/5 p-5">
@@ -611,7 +631,7 @@ function DangerCard() {
         tone="error"
       />
       <div className="mt-4">
-        <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+        <Button variant="danger" disabled={isLoading} onClick={() => setConfirmingDelete(true)}>
           {t('settings.danger.delete')}
         </Button>
       </div>
@@ -621,10 +641,7 @@ function DangerCard() {
         description={t('settings.danger.confirmDescription')}
         confirmLabel={t('settings.danger.delete')}
         danger
-        onConfirm={() => {
-          setConfirmingDelete(false)
-          toast.error(t('settings.danger.notWired'))
-        }}
+        onConfirm={() => void handleDelete()}
         onClose={() => setConfirmingDelete(false)}
       />
     </Card>

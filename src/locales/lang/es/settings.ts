@@ -204,7 +204,8 @@ const settings: typeof enSettings = {
     confirmTitle: '¿Eliminar la cuenta?',
     confirmDescription:
       'Todos los trabajos, resultados y créditos restantes se eliminarán permanentemente. Esto no se puede deshacer.',
-    notWired: 'La eliminación de la cuenta aún no está disponible',
+    deleted: 'Tu cuenta ha sido eliminada',
+    deleteFailed: 'No se pudo eliminar tu cuenta',
   },
   device: {
     unknown: 'Desconocido',
