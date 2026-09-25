@@ -28,19 +28,12 @@ const nav: typeof enNav = {
   sidebar: {
     categories: {
       main: 'Principal',
-      appPages: "Pages de l'application",
     },
     links: {
       dashboard: 'Tableau de bord',
       billing: 'Facturation',
       settings: 'Paramètres',
       helpCenter: "Centre d'aide",
-    },
-    common: 'Commun',
-    commonLinks: {
-      login: 'Connexion',
-      register: 'Inscription',
-      forgotPassword: 'Mot de passe oublié',
     },
     language: 'Langue',
     theme: 'Thème',

@@ -26,19 +26,12 @@ const nav = {
   sidebar: {
     categories: {
       main: 'Main',
-      appPages: 'App Pages',
     },
     links: {
       dashboard: 'Dashboard',
       billing: 'Billing',
       settings: 'Settings',
       helpCenter: 'Help Center',
-    },
-    common: 'Common',
-    commonLinks: {
-      login: 'Login',
-      register: 'Register',
-      forgotPassword: 'Forgot password',
     },
     language: 'Language',
     theme: 'Theme',

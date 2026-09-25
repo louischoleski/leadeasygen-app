@@ -21,7 +21,6 @@ const categoryClass = 'mt-2.5 px-6 py-2 text-eyebrow text-ink'
 const itemClass = 'mx-2 flex h-11 items-center rounded-lg px-4 transition-colors'
 const linkClass = `${itemClass} text-ink-muted hover:bg-surface-2/50 hover:text-ink`
 const activeClass = `${itemClass} bg-surface-2 font-medium text-link`
-const subLinkClass = `${itemClass} pl-8 text-ink-muted hover:bg-surface-2/50 hover:text-ink`
 
 type Props = {
   open: boolean
@@ -29,7 +28,6 @@ type Props = {
 }
 
 export default function Sidebar({ open, onNavigate }: Props) {
-  const [commonOpen, setCommonOpen] = useState(false)
   const { mode, setThemeMode } = useTheme()
   const { t, m, locale } = useTranslation()
   const [localeOpen, setLocaleOpen] = useState(false)
@@ -67,41 +65,6 @@ export default function Sidebar({ open, onNavigate }: Props) {
               </NavLink>
             </li>
           ))}
-          <li className={categoryClass}>{t('nav.sidebar.categories.appPages')}</li>
-          <li>
-            <button
-              type="button"
-              onClick={() => setCommonOpen((o) => !o)}
-              aria-expanded={commonOpen}
-              className={`${linkClass} w-[calc(100%-1rem)] cursor-pointer justify-between`}
-            >
-              {t('nav.sidebar.common')}
-              <CaretDown
-                size={14}
-                aria-hidden="true"
-                className={`transition-transform ${commonOpen ? '' : '-rotate-90'}`}
-              />
-            </button>
-            {commonOpen && (
-              <ul>
-                <li>
-                  <NavLink to="/login" onClick={onNavigate} className={subLinkClass}>
-                    {t('nav.sidebar.commonLinks.login')}
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/register" onClick={onNavigate} className={subLinkClass}>
-                    {t('nav.sidebar.commonLinks.register')}
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/forgot-password" onClick={onNavigate} className={subLinkClass}>
-                    {t('nav.sidebar.commonLinks.forgotPassword')}
-                  </NavLink>
-                </li>
-              </ul>
-            )}
-          </li>
         </ul>
       </nav>
 
