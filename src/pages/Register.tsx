@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../lib/fonderie'
 import { Button } from '../components/Button'
 import { ProviderIcon } from '../components/ProviderIcon'
 import { Input } from '../components/Input'
+import { useLocale } from '../hooks/useLocale'
 import { useTranslation } from '../hooks/useTranslation'
 import { applyAuthError } from '../lib/authErrors'
 import { useAppSession } from '../lib/session'
@@ -23,6 +24,7 @@ export default function Register() {
   const providers = useAuthProviders()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { locale } = useLocale()
   const { register: registerAccount, isLoading } = useRegister()
   const { refresh } = useAppSession()
 
@@ -42,6 +44,9 @@ export default function Register() {
         password,
         firstName,
         lastName: rest.join(' ') || undefined,
+        // The language this page is in: the verification email arrives in it
+        // instead of the account default, before any preference sync runs.
+        locale,
       })
       await refresh({ force: true })
       navigate('/')
