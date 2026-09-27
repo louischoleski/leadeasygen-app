@@ -12,6 +12,7 @@ import { RECENT_LIST_LIMIT } from '../constants/lists'
 import { useTranslation } from '../hooks/useTranslation'
 import { toastError } from '../lib/errors'
 import { localeTags } from '../locales'
+import { formatLocation } from '../lib/location'
 
 function SessionRow({
   session,
@@ -48,6 +49,7 @@ function SessionRow({
           <div className="space-y-0.5 text-sm text-ink-subtle">
             <div>{ua.summary}</div>
             <div>{session.ipAddress ?? t('settings.sessions.unknownIp')}</div>
+            {formatLocation(session.location) && <div>{formatLocation(session.location)}</div>}
             <div>{signedIn}</div>
           </div>
         </div>

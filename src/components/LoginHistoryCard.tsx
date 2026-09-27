@@ -1,5 +1,6 @@
 import { CheckCircle, ClockCounterClockwise, Download, WarningCircle } from '@phosphor-icons/react'
 import { useLoginHistory } from '@fonderie/react-auth'
+import { formatLocation } from '../lib/location'
 import type { ILoginEventDTO } from '@fonderie/react-auth'
 import { toast } from 'sonner'
 import { Button } from './Button'
@@ -35,13 +36,13 @@ function exportCsv(events: ILoginEventDTO[], m: Messages) {
     return
   }
   const columns = m.settings.loginHistory.csv
-  const header = [columns.date, columns.time, columns.method, columns.status, columns.device, columns.ip]
+  const header = [columns.date, columns.time, columns.method, columns.status, columns.device, columns.ip, columns.location]
     .map(csvEscape)
     .join(',')
   const rows = events.map((e) => {
     const { date, time } = formatDate(e.createdAt)
     const ua = parseUserAgent(e.userAgent)
-    return [date, time, methodLabel(m, e.method), e.outcome, ua.summary, e.ipAddress ?? '']
+    return [date, time, methodLabel(m, e.method), e.outcome, ua.summary, e.ipAddress ?? '', formatLocation(e.location) ?? '']
       .map(csvEscape)
       .join(',')
   })
@@ -108,6 +109,9 @@ export function LoginHistoryCard() {
                         <td className="p-4 text-ink-muted">{ua.summary}</td>
                         <td className="p-4">
                           <code className="text-xs text-ink-muted">{e.ipAddress ?? '—'}</code>
+                          {formatLocation(e.location) && (
+                            <div className="text-xs text-ink-subtle">{formatLocation(e.location)}</div>
+                          )}
                         </td>
                         <td className="p-4 text-ink-muted">{methodLabel(m, e.method)}</td>
                         <td className="p-4">

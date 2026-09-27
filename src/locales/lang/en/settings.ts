@@ -151,6 +151,7 @@ const settings = {
       status: 'Status',
       device: 'Device',
       ip: 'IP Address',
+      location: 'Location',
     },
     // Keyed by the login-event `method` value from the API.
     methods: {
@@ -158,6 +159,7 @@ const settings = {
       mfa: '2FA',
       'oauth-google': 'Google',
       phone: 'Phone',
+      registration: 'Sign-up',
     },
     success: 'Success',
     failed: 'Failed',
