@@ -13,7 +13,7 @@
 		"test:e2e:ui": "playwright test --ui"
 	},
 	"dependencies": {
-		"@fonderie/client": "^1.4.0",
+		"@fonderie/client": "^1.5.0",
 		"@fonderie/react": "^0.3.0",
 		"@fonderie/react-auth": "^0.11.0",
 		"@fonderie/react-billing": "^0.9.1",
