@@ -2,6 +2,7 @@ import { MagnetStraight } from '@phosphor-icons/react'
 import { Link, Outlet } from 'react-router-dom'
 import LocaleSwitcher from '../components/LocaleSwitcher'
 import { useTranslation } from '../hooks/useTranslation'
+import { MaintenanceBanner } from '../components/MaintenanceBanner'
 
 export default function AuthLayout() {
   const { t } = useTranslation()
@@ -20,6 +21,7 @@ export default function AuthLayout() {
         <LocaleSwitcher />
       </div>
       <div className="w-full max-w-sm">
+        <MaintenanceBanner className="mb-4" />
         <Outlet />
       </div>
     </main>

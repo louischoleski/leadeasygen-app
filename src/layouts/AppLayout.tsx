@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import { useViewport } from '../hooks/useViewport'
+import { MaintenanceBanner } from '../components/MaintenanceBanner'
 
 export default function AppLayout() {
   const { isMobile, isDesktop } = useViewport()
@@ -41,6 +42,7 @@ export default function AppLayout() {
       <Sidebar open={navOpen} onNavigate={closeIfMobile} />
       <main className={`pt-14 transition-[margin] duration-300 ${navOpen ? 'md:ml-[200px]' : ''}`}>
         <div className="p-4 md:p-6">
+          <MaintenanceBanner className="mb-4" />
           <Outlet />
         </div>
       </main>
