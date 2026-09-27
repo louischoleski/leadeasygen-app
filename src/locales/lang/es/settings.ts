@@ -147,6 +147,7 @@ const settings: typeof enSettings = {
       dateTime: 'Fecha y hora',
       device: 'Dispositivo',
       ip: 'Dirección IP',
+      location: 'Ubicación',
       method: 'Método',
       status: 'Estado',
     },

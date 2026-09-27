@@ -141,6 +141,7 @@ const settings = {
       dateTime: 'Date & time',
       device: 'Device',
       ip: 'IP address',
+      location: 'Location',
       method: 'Method',
       status: 'Status',
     },

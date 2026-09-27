@@ -91,6 +91,7 @@ export function LoginHistoryCard() {
                     <th className="h-10 px-4">{t('settings.loginHistory.headers.dateTime')}</th>
                     <th className="h-10 px-4">{t('settings.loginHistory.headers.device')}</th>
                     <th className="h-10 px-4">{t('settings.loginHistory.headers.ip')}</th>
+                    <th className="h-10 px-4">{t('settings.loginHistory.headers.location')}</th>
                     <th className="h-10 px-4">{t('settings.loginHistory.headers.method')}</th>
                     <th className="h-10 px-4">{t('settings.loginHistory.headers.status')}</th>
                   </tr>
@@ -109,10 +110,10 @@ export function LoginHistoryCard() {
                         <td className="p-4 text-ink-muted">{ua.summary}</td>
                         <td className="p-4">
                           <code className="text-xs text-ink-muted">{e.ipAddress ?? '—'}</code>
-                          {formatLocation(e.location) && (
-                            <div className="text-xs text-ink-subtle">{formatLocation(e.location)}</div>
-                          )}
                         </td>
+                        {/* "—" when unknown: rows from before location was recorded, or a
+                            request the platform could not place. */}
+                        <td className="p-4 text-ink-muted">{formatLocation(e.location) ?? '—'}</td>
                         <td className="p-4 text-ink-muted">{methodLabel(m, e.method)}</td>
                         <td className="p-4">
                           <span
