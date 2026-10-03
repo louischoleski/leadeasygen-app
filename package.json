@@ -13,11 +13,11 @@
 		"test:e2e:ui": "playwright test --ui"
 	},
 	"dependencies": {
-		"@fonderie/client": "^1.12.0",
-		"@fonderie/react": "^0.3.0",
-		"@fonderie/react-auth": "^0.11.0",
-		"@fonderie/react-billing": "^0.9.1",
-		"@fonderie/react-media": "^0.1.0",
+		"@fonderie/client": "^3.5.0",
+		"@fonderie/react": "^0.9.0",
+		"@fonderie/react-auth": "^0.11.7",
+		"@fonderie/react-billing": "^0.11.2",
+		"@fonderie/react-media": "^0.2.6",
 		"@phosphor-icons/react": "^2.1.10",
 		"@stripe/react-stripe-js": "^6.9.0",
 		"@stripe/stripe-js": "^9.15.0",

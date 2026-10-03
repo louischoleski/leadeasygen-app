@@ -1,18 +1,35 @@
 import { WarningCircle } from '@phosphor-icons/react'
-import { useFlag, useRemoteConfig } from '@fonderie/react'
+import { useFonderieClient, useRemoteConfig } from '@fonderie/react'
+import { useEffect } from 'react'
 
 // An operator-set notice shown to everyone — signed in or not — without a
 // deploy: set MAINTENANCE_MESSAGE in /_admin → Config & secrets and every open
-// tab shows it within five minutes (a fresh page load shows it at once);
-// clear it and the banner goes away. Rendered as plain text, never HTML.
+// tab shows it within five minutes, or as soon as the tab is looked at again
+// (a fresh page load shows it at once); clear it and the banner goes away.
+// Rendered as plain text, never HTML.
+//
+// useRemoteConfig is live over @fonderie/sse where the API serves the stream;
+// this API does not, so the banner re-reads the config itself.
 //
 // '' is the safe fallback: before the config loads, or if it cannot be
 // reached, there is simply no banner.
 const REFRESH_MS = 5 * 60_000
 
 export function MaintenanceBanner({ className = '' }: { className?: string }) {
-  useRemoteConfig({ refreshMs: REFRESH_MS })
-  const raw = useFlag<unknown>('MAINTENANCE_MESSAGE', '')
+  const client = useFonderieClient()
+  const raw = useRemoteConfig<unknown>('MAINTENANCE_MESSAGE', '')
+  useEffect(() => {
+    const reload = () => void client.config.load()
+    const timer = setInterval(reload, REFRESH_MS)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') reload()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [client])
   const message = typeof raw === 'string' ? raw.trim() : ''
   if (!message) return null
   return (
