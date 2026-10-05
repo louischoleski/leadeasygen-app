@@ -521,15 +521,24 @@ function PaymentMethodCard() {
             <CreditCard className="h-6 w-6 text-primary" aria-hidden="true" />
           </div>
           <div>
-            <p className="font-medium text-ink">
-              {brand} •••• {paymentMethod.last4}
-            </p>
-            <p className="text-sm text-ink-subtle">
-              {t('billing.paymentMethod.expires', {
-                month: String(paymentMethod.expMonth).padStart(2, '0'),
-                year: paymentMethod.expYear,
-              })}
-            </p>
+            {paymentMethod.type === 'link' ? (
+              // Stripe Link: no card details — the Link account is what pays.
+              <p className="font-medium text-ink">
+                Link{paymentMethod.email ? ` · ${paymentMethod.email}` : ''}
+              </p>
+            ) : (
+              <>
+                <p className="font-medium text-ink">
+                  {brand} •••• {paymentMethod.last4}
+                </p>
+                <p className="text-sm text-ink-subtle">
+                  {t('billing.paymentMethod.expires', {
+                    month: String(paymentMethod.expMonth).padStart(2, '0'),
+                    year: paymentMethod.expYear,
+                  })}
+                </p>
+              </>
+            )}
           </div>
         </div>
         <div className="flex gap-3">
