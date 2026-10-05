@@ -88,3 +88,12 @@ export function formatDateTime(
 ): string {
   return `${formatDate(input, dateFmt)} ${formatTime(input, timeFmt)}`
 }
+
+// A calendar day spelled out in the active language ("November 4, 2026",
+// "4 novembre 2026") — for dates a person must not misread, like when an
+// account is permanently deleted. Empty for an unparseable value.
+export function formatLongDate(input: Date | number | string): string {
+  const d = input instanceof Date ? input : new Date(input)
+  if (Number.isNaN(d.getTime())) return ''
+  return new Intl.DateTimeFormat(localeTags[currentLocale()], { dateStyle: 'long' }).format(d)
+}

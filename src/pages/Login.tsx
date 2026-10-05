@@ -1,6 +1,7 @@
+import { pendingDeletionOf, type IPendingDeletion } from '@fonderie/client'
 import { isMfaRequired, useLogin, useMfaLogin, useAuthProviders } from '@fonderie/react-auth'
 import { Envelope } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
@@ -8,9 +9,12 @@ import { API_BASE_URL } from '../lib/fonderie'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { OtpInput } from '../components/OtpInput'
+import { PendingDeletionView } from '../components/PendingDeletionView'
 import { ProviderIcon } from '../components/ProviderIcon'
 import { useTranslation } from '../hooks/useTranslation'
+import { clearAccountClosedNotice, peekAccountClosedNotice } from '../lib/accountNotice'
 import { applyAuthError } from '../lib/authErrors'
+import { formatLongDate } from '../lib/dateFormat'
 import { toastError } from '../lib/errors'
 import { useAppSession } from '../lib/session'
 
@@ -39,6 +43,13 @@ export default function Login() {
   const [mfaToken, setMfaToken] = useState<string | null>(null)
   const [mfaCode, setMfaCode] = useState('')
   const [useBackupCode, setUseBackupCode] = useState(false)
+  // Set when the credentials were right but the account is closed and
+  // waiting for its deletion date: offer to keep it instead of the form.
+  const [pendingDeletion, setPendingDeletion] = useState<IPendingDeletion | null>(null)
+  // The account was just closed from settings: say when it goes. Read once;
+  // cleared on leaving so it does not greet the next visit.
+  const [closedDeleteOn] = useState(peekAccountClosedNotice)
+  useEffect(() => () => clearAccountClosedNotice(), [])
 
   const {
     register,
@@ -63,6 +74,11 @@ export default function Login() {
       }
       await finishLogin()
     } catch (err) {
+      const pending = pendingDeletionOf(err)
+      if (pending) {
+        setPendingDeletion(pending)
+        return
+      }
       applyAuthError(
         err,
         setError,
@@ -82,12 +98,28 @@ export default function Login() {
       // only when it succeeds; a wrong code leaves it valid, so keep the
       // step open and let the user retry rather than sending them back.
       setMfaCode('')
+      const pending = pendingDeletionOf(err)
+      if (pending) {
+        setMfaToken(null)
+        setPendingDeletion(pending)
+        return
+      }
       toastError(err, t('auth.login.mfa.failed'))
     }
   }
 
   const backupReady = useBackupCode && BACKUP_CODE.test(mfaCode.trim())
   const totpReady = !useBackupCode && mfaCode.length === 6
+
+  if (pendingDeletion) {
+    return (
+      <PendingDeletionView
+        pending={pendingDeletion}
+        onRestored={finishLogin}
+        onBack={() => setPendingDeletion(null)}
+      />
+    )
+  }
 
   if (mfaToken) {
     return (
@@ -159,6 +191,12 @@ export default function Login() {
 
   return (
     <AuthCard title={t('auth.login.title')} subtitle={t('auth.login.subtitle')}>
+      {closedDeleteOn && (
+        <div role="status" className="mb-4 rounded-lg border border-hairline bg-surface-2 px-3 py-2 text-sm text-ink">
+          <p className="font-medium">{t('auth.login.accountClosed', { date: formatLongDate(closedDeleteOn) })}</p>
+          <p className="mt-1 text-ink-subtle">{t('auth.login.accountClosedHint')}</p>
+        </div>
+      )}
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
           label={t('auth.login.email')}

@@ -201,13 +201,29 @@ const settings: typeof enSettings = {
   },
   danger: {
     title: 'Zona de peligro',
-    description:
-      'Elimina permanentemente tu cuenta y todos los datos asociados. Esto no se puede deshacer.',
+    summary:
+      'Cierra tu cuenta. Se elimina permanentemente 30 días después, a menos que vuelvas a iniciar sesión antes para conservarla.',
     delete: 'Eliminar cuenta',
     confirmTitle: '¿Eliminar la cuenta?',
-    confirmDescription:
-      'Todos los trabajos, resultados y créditos restantes se eliminarán permanentemente. Esto no se puede deshacer.',
-    deleted: 'Tu cuenta ha sido eliminada',
+    explain: {
+      closesNow:
+        'Tu cuenta se cierra de inmediato: se cierra la sesión en todos tus dispositivos y se cancela cualquier suscripción.',
+      deletedLater:
+        'Después de 30 días, tu perfil, trabajos, resultados y créditos restantes se eliminan permanentemente. Esto no se puede deshacer.',
+      keep: '¿Cambiaste de opinión? Inicia sesión antes de esa fecha y elige «Conservar mi cuenta».',
+      sendCode: 'Para confirmar que eres tú, enviaremos un código de 6 dígitos a {email}.',
+    },
+    sendCode: 'Enviarme un código',
+    codeSent: 'Enviamos un código de 6 dígitos a {email}. Caduca en {minutes} minutos.',
+    codeSentShort: 'Enviamos un código de 6 dígitos a {email}.',
+    codeLabel: 'Código de confirmación',
+    mfaHint:
+      'La autenticación en dos pasos está activada: introduce también un código de tu aplicación de autenticación.',
+    resend: 'Enviar un código nuevo',
+    resendIn: 'Enviar un código nuevo en {seconds} s',
+    resent: 'Un código nuevo va en camino',
+    sendFailed: 'No se pudo enviar el código',
+    confirm: 'Eliminar mi cuenta',
     deleteFailed: 'No se pudo eliminar tu cuenta',
   },
   device: {

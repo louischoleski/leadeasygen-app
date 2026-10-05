@@ -201,13 +201,29 @@ const settings: typeof enSettings = {
   },
   danger: {
     title: 'Zone de danger',
-    description:
-      'Supprimez définitivement votre compte et toutes les données associées. Cette action est irréversible.',
+    summary:
+      'Fermez votre compte. Il est définitivement supprimé 30 jours plus tard, sauf si vous vous reconnectez d’ici là pour le conserver.',
     delete: 'Supprimer le compte',
     confirmTitle: 'Supprimer le compte ?',
-    confirmDescription:
-      'Toutes les tâches, tous les résultats et les crédits restants seront définitivement supprimés. Cette action est irréversible.',
-    deleted: 'Votre compte a été supprimé',
+    explain: {
+      closesNow:
+        'Votre compte est fermé immédiatement : vous êtes déconnecté sur tous vos appareils et tout abonnement est résilié.',
+      deletedLater:
+        'Après 30 jours, votre profil, vos tâches, vos résultats et vos crédits restants sont définitivement supprimés. Cette action est irréversible.',
+      keep: 'Vous changez d’avis ? Connectez-vous avant cette date et choisissez « Conserver mon compte ».',
+      sendCode: 'Pour confirmer qu’il s’agit bien de vous, nous allons envoyer un code à 6 chiffres à {email}.',
+    },
+    sendCode: 'M’envoyer un code',
+    codeSent: 'Nous avons envoyé un code à 6 chiffres à {email}. Il expire dans {minutes} minutes.',
+    codeSentShort: 'Nous avons envoyé un code à 6 chiffres à {email}.',
+    codeLabel: 'Code de confirmation',
+    mfaHint:
+      'La double authentification est activée : saisissez aussi un code de votre application d’authentification.',
+    resend: 'Envoyer un nouveau code',
+    resendIn: 'Envoyer un nouveau code dans {seconds} s',
+    resent: 'Un nouveau code est en route',
+    sendFailed: 'Impossible d’envoyer le code',
+    confirm: 'Supprimer mon compte',
     deleteFailed: 'Impossible de supprimer votre compte',
   },
   device: {

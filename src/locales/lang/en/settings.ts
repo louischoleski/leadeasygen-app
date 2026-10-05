@@ -196,11 +196,27 @@ const settings = {
   },
   danger: {
     title: 'Danger zone',
-    description: 'Permanently delete your account and all associated data. This cannot be undone.',
+    summary:
+      'Close your account. It is permanently deleted 30 days later, unless you sign in again before then to keep it.',
     delete: 'Delete account',
     confirmTitle: 'Delete account?',
-    confirmDescription: 'All jobs, results, and remaining credits are permanently removed. This cannot be undone.',
-    deleted: 'Your account has been deleted',
+    explain: {
+      closesNow: 'Your account closes right away: you are signed out on every device and any subscription is cancelled.',
+      deletedLater:
+        'After 30 days, your profile, jobs, results and remaining credits are permanently deleted. This cannot be undone.',
+      keep: 'Changed your mind? Sign in before then and choose “Keep my account”.',
+      sendCode: 'To confirm it is you, we will email a 6-digit code to {email}.',
+    },
+    sendCode: 'Email me a code',
+    codeSent: 'We sent a 6-digit code to {email}. It expires in {minutes} minutes.',
+    codeSentShort: 'We sent a 6-digit code to {email}.',
+    codeLabel: 'Confirmation code',
+    mfaHint: 'Two-factor authentication is on: also enter a code from your authenticator app.',
+    resend: 'Send a new code',
+    resendIn: 'Send a new code in {seconds}s',
+    resent: 'A new code is on its way',
+    sendFailed: 'Could not send the code',
+    confirm: 'Delete my account',
     deleteFailed: 'Could not delete your account',
   },
   device: {

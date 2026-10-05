@@ -20,7 +20,8 @@ import { Avatar } from '../components/Avatar'
 import { Button } from '../components/Button'
 import { ProviderIcon } from '../components/ProviderIcon'
 import { Card } from '../components/Card'
-import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DeleteAccountDialog } from '../components/DeleteAccountDialog'
+import { setAccountClosedNotice } from '../lib/accountNotice'
 import { Input } from '../components/Input'
 import { Select } from '../components/Select'
 import { Toggle } from '../components/Toggle'
@@ -39,7 +40,7 @@ import { DateTimeFormatCard } from '../components/DateTimeFormatCard'
 import { NotificationsCard } from '../components/NotificationsCard'
 import { API_BASE_URL } from '../lib/fonderie'
 import { SectionHeader } from '../components/SectionHeader'
-import { useAccountData, useAuthProviders, useUnlinkOauth } from '@fonderie/react-auth'
+import { useAuthProviders, useUnlinkOauth } from '@fonderie/react-auth'
 import { cn } from '../lib/cn'
 
 // Icons mirror each section's SectionHeader so the nav item visually maps to
@@ -608,25 +609,23 @@ function CreditsCard() {
 function DangerCard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { deleteUser, isLoading } = useAccountData()
-  const { refresh } = useAppSession()
-  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const { user, refresh } = useAppSession()
+  const [deleting, setDeleting] = useState(false)
 
-  // The server soft-deletes and clears the auth cookies; the hook then drops the
-  // stored token, so the client is already signed out by the time this resolves.
-  // The session context still holds the old user, so refresh() is what makes the
-  // rest of the app agree — without it the user lands on a logged-in shell for
-  // an account that no longer exists.
-  const handleDelete = async () => {
-    setConfirmingDelete(false)
+  // Confirming ends every session server-side and the hook has already dropped
+  // the stored token. The session context still holds the old user, so
+  // refresh() is what makes the rest of the app agree — without it the user
+  // lands on a logged-in shell for an account that is closed. The deletion
+  // date travels to the sign-in page, which says when the account goes.
+  const handleClosed = async (deleteOn: string) => {
+    setDeleting(false)
+    setAccountClosedNotice(deleteOn)
     try {
-      await deleteUser()
-      toast.success(t('settings.danger.deleted'))
       await refresh()
-      navigate('/login', { replace: true })
     } catch (err) {
-      toastError(err, t('settings.danger.deleteFailed'))
+      toastError(err)
     }
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -634,23 +633,21 @@ function DangerCard() {
       <SectionHeader
         icon={Warning}
         title={t('settings.danger.title')}
-        description={t('settings.danger.description')}
+        description={t('settings.danger.summary')}
         tone="error"
       />
       <div className="mt-4">
-        <Button variant="danger" disabled={isLoading} onClick={() => setConfirmingDelete(true)}>
+        <Button variant="danger" onClick={() => setDeleting(true)}>
           {t('settings.danger.delete')}
         </Button>
       </div>
-      <ConfirmDialog
-        open={confirmingDelete}
-        title={t('settings.danger.confirmTitle')}
-        description={t('settings.danger.confirmDescription')}
-        confirmLabel={t('settings.danger.delete')}
-        danger
-        onConfirm={() => void handleDelete()}
-        onClose={() => setConfirmingDelete(false)}
-      />
+      {deleting && (
+        <DeleteAccountDialog
+          email={user?.email ?? ''}
+          onClose={() => setDeleting(false)}
+          onClosed={(deleteOn) => void handleClosed(deleteOn)}
+        />
+      )}
     </Card>
   )
 }

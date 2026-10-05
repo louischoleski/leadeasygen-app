@@ -1,5 +1,6 @@
-import { useRegister, useAuthProviders } from '@fonderie/react-auth'
+import { FonderieApiError, useRegister, useAuthProviders } from '@fonderie/react-auth'
 import { Envelope, User } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthCard from '../components/AuthCard'
@@ -27,6 +28,9 @@ export default function Register() {
   const { locale } = useLocale()
   const { register: registerAccount, isLoading } = useRegister()
   const { refresh } = useAppSession()
+  // The address belongs to a closed account waiting for its deletion date:
+  // its owner keeps it by signing in, not by registering again.
+  const [pendingDeletion, setPendingDeletion] = useState(false)
 
   const {
     register,
@@ -38,6 +42,7 @@ export default function Register() {
 
   const onSubmit = async ({ name, email, password }: RegisterValues) => {
     const [firstName, ...rest] = name.trim().split(/\s+/)
+    setPendingDeletion(false)
     try {
       await registerAccount({
         email: email.trim(),
@@ -51,6 +56,10 @@ export default function Register() {
       await refresh({ force: true })
       navigate('/')
     } catch (err) {
+      if (err instanceof FonderieApiError && err.reason === 'ACCOUNT_PENDING_DELETION') {
+        setPendingDeletion(true)
+        return
+      }
       applyAuthError(
         err,
         setError,
@@ -68,6 +77,12 @@ export default function Register() {
 
   return (
     <AuthCard title={t('auth.register.title')} subtitle={t('auth.register.subtitle')}>
+      {pendingDeletion && (
+        <div role="alert" className="mb-4 rounded-lg border border-error/40 bg-error/5 px-3 py-2 text-sm text-ink">
+          {t('auth.register.pendingDeletion')}{' '}
+          <Link to="/login" className="text-link underline">{t('auth.register.pendingDeletionSignIn')}</Link>
+        </div>
+      )}
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
           label={t('auth.register.name')}
