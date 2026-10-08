@@ -16,7 +16,7 @@ import { registerViaUi, verifyEmailViaUi } from './helpers/auth'
 const PASSWORD = 'TestPassw0rd!2026'
 
 test.describe('email verification', () => {
-  test.skip(!hasInboxCreds(), 'E2E_IMAP_USER / E2E_IMAP_PASS not set — see tests/e2e/README.md')
+  test.skip(!hasInboxCreds(), 'No test inbox (E2E_MAILPIT_URL or E2E_IMAP_USER / E2E_IMAP_PASS) — see tests/e2e/README.md')
 
   test('a new user can register and verify their email through the UI', async ({ page }) => {
     const email = `e2e-${Date.now()}@leadeasygen.dev`

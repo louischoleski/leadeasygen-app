@@ -7,8 +7,12 @@ Playwright specs that drive the app in a real browser against a running backend.
 - **API + database up.** The app talks to the api on `http://localhost:3000`
   (see the repo root for how to start the api, its Postgres, and the SSH tunnel).
 - **A test inbox** for the email-dependent specs. The api sends transactional
-  mail over SMTP; the tests read the code back over IMAP. We use
-  [Ethereal](https://ethereal.email) (a capture-only mailbox) in dev.
+  mail over SMTP; the tests read the code back. Two options:
+  - **Mailpit** (what CI uses — no account, no secrets): run
+    `docker run -d -p 1025:1025 -p 8025:8025 -e MP_SMTP_AUTH_ACCEPT_ANY=1 -e MP_SMTP_AUTH_ALLOW_INSECURE=1 axllent/mailpit`,
+    start the api with `SMTP_HOST=localhost SMTP_PORT=1025 SMTP_SECURE=false SMTP_USER=e2e SMTP_PASS=e2e`,
+    and set `E2E_MAILPIT_URL=http://localhost:8025`. Open that URL to see the mail.
+  - **IMAP** against a real capture mailbox such as [Ethereal](https://ethereal.email).
 
 ## Configure
 
@@ -24,13 +28,15 @@ set -a && . tests/e2e/.env.e2e && set +a
 | Variable        | Default              | Purpose                          |
 | --------------- | -------------------- | -------------------------------- |
 | `E2E_BASE_URL`  | `http://localhost:5173` | App URL under test            |
+| `E2E_MAILPIT_URL` | —                     | Mailpit API base; when set, the inbox is read from Mailpit and the IMAP variables are ignored |
 | `E2E_IMAP_HOST` | `imap.ethereal.email`   | Test-inbox IMAP host          |
 | `E2E_IMAP_PORT` | `993`                   | IMAP port (implicit TLS)      |
 | `E2E_IMAP_USER` | —                       | Inbox login (required)        |
 | `E2E_IMAP_PASS` | —                       | Inbox password (required)     |
 
-Specs that need the inbox **skip themselves** when `E2E_IMAP_USER` /
-`E2E_IMAP_PASS` are unset, so the suite stays green where email is unreachable.
+Specs that need the inbox **skip themselves** when neither `E2E_MAILPIT_URL`
+nor `E2E_IMAP_USER` / `E2E_IMAP_PASS` is set, so the suite stays green where
+email is unreachable.
 
 ## Run
 

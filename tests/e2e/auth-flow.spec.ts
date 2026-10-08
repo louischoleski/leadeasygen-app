@@ -24,7 +24,7 @@ import {
  */
 
 test.describe('full auth flow', () => {
-  test.skip(!hasInboxCreds(), 'E2E_IMAP_USER / E2E_IMAP_PASS not set — see tests/e2e/README.md')
+  test.skip(!hasInboxCreds(), 'No test inbox (E2E_MAILPIT_URL or E2E_IMAP_USER / E2E_IMAP_PASS) — see tests/e2e/README.md')
 
   // One user threads through every step, so run the steps in order.
   test.describe.configure({ mode: 'serial' })

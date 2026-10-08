@@ -58,6 +58,17 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # The test inbox: a local mail catcher. The API sends to it over SMTP
+      # (any login accepted on the plain local port) and the specs read it
+      # over its HTTP API. No secrets; nothing leaves the runner.
+      mailpit:
+        image: axllent/mailpit:v1.27
+        env:
+          MP_SMTP_AUTH_ACCEPT_ANY: '1'
+          MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+        ports:
+          - 1025:1025
+          - 8025:8025
 
     env:
       # --- backend the app talks to ---
@@ -65,18 +76,15 @@ jobs:
       JWT_SECRET: ci-e2e-jwt-secret-please-change-in-prod-0001
       VITE_API_URL: http://localhost:3000
       FRONTEND_URL: http://localhost:5173
-      # --- test inbox (Ethereal) from repo secrets; unset => email specs skip ---
-      # The same login is used to send (API SMTP) and to read (test IMAP).
-      SMTP_HOST: ${{ secrets.E2E_MAIL_USER != '' && 'smtp.ethereal.email' || '' }}
-      SMTP_PORT: '587'
+      # --- test inbox: the Mailpit service above (was Ethereal, whose
+      # credentials expired and turned these specs red) ---
+      SMTP_HOST: localhost
+      SMTP_PORT: '1025'
       SMTP_SECURE: 'false'
-      SMTP_USER: ${{ secrets.E2E_MAIL_USER }}
-      SMTP_PASS: ${{ secrets.E2E_MAIL_PASS }}
-      SMTP_FROM: LeadEasyGen <${{ secrets.E2E_MAIL_USER }}>
-      E2E_IMAP_HOST: imap.ethereal.email
-      E2E_IMAP_PORT: '993'
-      E2E_IMAP_USER: ${{ secrets.E2E_MAIL_USER }}
-      E2E_IMAP_PASS: ${{ secrets.E2E_MAIL_PASS }}
+      SMTP_USER: e2e
+      SMTP_PASS: e2e
+      SMTP_FROM: LeadEasyGen <noreply@leadeasygen.dev>
+      E2E_MAILPIT_URL: http://localhost:8025
 
     steps:
       - name: Checkout app

@@ -1,9 +1,14 @@
 import tls from 'node:tls'
 
 /**
- * Minimal IMAP reader for a test inbox (built for Ethereal, ethereal.email).
+ * Reads the test inbox the API's emails land in. Two backends:
  *
- * Credentials come from the environment so nothing secret is committed:
+ * - Mailpit (CI): a local mail catcher. Set E2E_MAILPIT_URL (e.g.
+ *   http://localhost:8025); messages are read through its HTTP API. No
+ *   secrets, nothing leaves the runner.
+ * - IMAP (e.g. an Ethereal account, ethereal.email) for local runs against a
+ *   real SMTP server. Credentials come from the environment so nothing secret
+ *   is committed:
  *   E2E_IMAP_HOST  (default: imap.ethereal.email)
  *   E2E_IMAP_PORT  (default: 993)
  *   E2E_IMAP_USER
@@ -31,8 +36,35 @@ export function inboxCreds(): ImapCreds | null {
   }
 }
 
+/** Mailpit's base URL when the inbox is a local Mailpit, else null. */
+export function mailpitUrl(): string | null {
+  const url = process.env.E2E_MAILPIT_URL
+  return url ? url.replace(/\/+$/, '') : null
+}
+
 export function hasInboxCreds(): boolean {
-  return inboxCreds() !== null
+  return mailpitUrl() !== null || inboxCreds() !== null
+}
+
+/**
+ * The newest Mailpit message to `recipient` (and, if given, with a subject
+ * containing `subjectIncludes`), as "Subject + body" text — or null.
+ */
+async function fetchNewestFromMailpit(base: string, recipient: string, subjectIncludes?: string): Promise<{ to: string; subject: string; text: string } | null> {
+  const query = `to:"${recipient}"` + (subjectIncludes ? ` subject:"${subjectIncludes}"` : '')
+  const list = await fetch(`${base}/api/v1/search?query=${encodeURIComponent(query)}&limit=1`)
+  if (!list.ok) throw new Error(`Mailpit search failed: ${list.status}`)
+  const found = (await list.json()) as { messages?: Array<{ ID: string }> }
+  const id = found.messages?.[0]?.ID
+  if (!id) return null
+  const res = await fetch(`${base}/api/v1/message/${id}`)
+  if (!res.ok) throw new Error(`Mailpit message ${id} failed: ${res.status}`)
+  const msg = (await res.json()) as { Subject?: string; Text?: string; To?: Array<{ Address?: string }> }
+  return {
+    to: (msg.To ?? []).map((t) => t.Address ?? '').join(', '),
+    subject: msg.Subject ?? '',
+    text: msg.Text ?? '',
+  }
 }
 
 /** Fetch the full raw text of the newest message in INBOX (headers + body). */
@@ -100,8 +132,22 @@ export async function waitForVerificationPin(
   recipient: string,
   { retries = 10, delayMs = 2000, subjectIncludes }: WaitForPinOptions = {},
 ): Promise<PinResult> {
+  const mailpit = mailpitUrl()
+  if (mailpit) {
+    for (let n = 0; n < retries; n++) {
+      const msg = await fetchNewestFromMailpit(mailpit, recipient, subjectIncludes)
+      const codes = msg?.text.match(/\b\d{6}\b/g) ?? []
+      if (msg && msg.to.includes(recipient) && codes.length > 0) {
+        return { code: codes[codes.length - 1], raw: `Subject: ${msg.subject}\n\n${msg.text}` }
+      }
+      await new Promise((res) => setTimeout(res, delayMs))
+    }
+    const want = subjectIncludes ? ` (subject ~ "${subjectIncludes}")` : ''
+    throw new Error(`No matching email for ${recipient}${want} in Mailpit after ${retries} attempts`)
+  }
+
   const creds = inboxCreds()
-  if (!creds) throw new Error('E2E_IMAP_USER / E2E_IMAP_PASS not set')
+  if (!creds) throw new Error('No test inbox: set E2E_MAILPIT_URL, or E2E_IMAP_USER / E2E_IMAP_PASS')
 
   for (let n = 0; n < retries; n++) {
     const raw = await fetchNewestRaw(creds)
